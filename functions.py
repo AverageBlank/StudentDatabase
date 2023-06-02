@@ -56,6 +56,7 @@ def IsProperStream(stream):
                 "commerce",
                 "cec",
                 "humanities",
+                "human",
             ]:
                 raise ValueError
             else:
@@ -63,6 +64,8 @@ def IsProperStream(stream):
                     stream = "mpc"
                 if stream == "commerce":
                     stream = "cec"
+                if stream == "human":
+                    stream = "humanities"
                 return stream
         except:
             stream = BetterInput("Enter a valid stream: ", "sentence", str)

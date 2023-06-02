@@ -1,6 +1,23 @@
 ##
 ########! Connecting to the server !########
 ### ! <-- Connecting to the server and creating necessary tables -->
+
+import customtkinter as ctk
+import tkinter as tk
+
+
+window = ctk.CTk()
+window.title("Student Management")
+window.geometry("500x400")
+window.resizable(False, False)
+window.configure()
+
+frame = ctk.CTkFrame(master=window)
+dashboardFrame = ctk.CTkFrame(master=window)
+
+frame.tkraise()
+
+
 def TBackend():
     # ! <-- Globals for easier life -->
     global BetterInput, IsProperName, dataframe, series, IsProperStream, db, con, cur, IsProperFcore, IsProperLang2WOF, IsProperLang2WF, IsProperLang3, IsProperRollNum, sleep, plt, pwinput, system, open_new_tab
@@ -120,28 +137,52 @@ def RegisterUser(User=None, Pass=None):
         print("Login Successful!")
 
 
+username = ctk.CTkEntry(master=frame, placeholder_text="Enter Username")
+username.pack(pady=10, padx=10)
+
+password = ctk.CTkEntry(frame, show="*", placeholder_text="Enter Password")
+password.pack(pady=10, padx=10)
+
+error_label = ctk.CTkLabel(master=frame, text="")
+error_label.pack(pady=5)
+
+login = ctk.CTkButton(
+    master=frame,
+    command=lambda: LoginUser(username.get(), password.get()),
+    text="Login",
+)
+login.pack(pady=10, padx=10)
+
+signup = ctk.CTkButton(
+    master=frame,
+    text="Sign Up",
+    command=lambda: RegisterUser(username.get(), password.get()),
+)
+signup.pack(pady=10, padx=10)
+
+
 ### ! <-- If Login is called -->
-def LoginUser(User=None, Pass=None):
+def LoginUser(User=None, Pass=None, errorlab=None):
     # ? Taking username incase not provided
     if User == None:
         User = input("Please enter the username: ")
     # ? Taking password incase not provided
     if Pass == None:
         Pass = pwinput("Please enter the Password: ")
-    # ? Running the login system
+    # ? Running the login systems
     cur.execute(f'select * from {db}.teacherDB where user="{User}"')
     userFetch = cur.fetchall()
     if len(userFetch) == 0:
         print("Username doesn't exist!")
-        sleep(2)
-        exit()
+        ctk.CTkMessagebox(title="Info", message="This is a CTkMessagebox!")
+        sleep(10)
     else:
         if userFetch[0][1] == Pass:
             print("Successful login!")
+            dashboardFrame.tkraise()
         else:
             print("Wrong Password")
-            sleep(5)
-            exit()
+            error_label.config(text="Wrong Password")  # Update the error label
 
 
 ### ! <-- If Change Password is called -->
@@ -3537,3 +3578,45 @@ def SchoolRecords():
 
     filename = f"All Student Records.html"
     open_new_tab(filename)
+
+
+from time import sleep
+import customtkinter as ctk
+import tkinter as tk
+import pymysql
+
+
+from TeacherBackend import (
+    AddMarks,
+    AddStudent,
+    ChangePass,
+    ClassRecords,
+    EditMarks,
+    EditStudent,
+    LoginUser,
+    RegisterUser,
+    RemoveMarks,
+    RemoveStudent,
+    ShowGraph,
+    StudentRecords,
+    TBackend,
+    SchoolRecords,
+)
+
+TBackend()
+# RegisterUser()
+# LoginUser()
+# AddStudent()
+# EditStudent()
+# RemoveStudent()
+# AddMarks()
+# EditMarks()
+# RemoveMarks()
+# ShowGraph()
+# StudentRecords()
+# ClassRecords()
+# SchoolRecords()
+
+
+frame.pack(pady=20, padx=60, fill="both", expand=True)
+window.mainloop()
