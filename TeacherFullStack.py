@@ -2,8 +2,9 @@
 ########! Connecting to the server !########
 ### ! <-- Connecting to the server and creating necessary tables -->
 
+from time import sleep
 import customtkinter as ctk
-import tkinter as tk
+from tkinter import messagebox
 
 
 window = ctk.CTk()
@@ -59,7 +60,7 @@ def TBackend():
 
     # ! <-- Connecting to MySQL -->
     db = "studentdatabase"
-    con = connect(host="localhost", user="root", password="1234", database="mysql")
+    con = connect(host="localhost", user="root", password="16computers", database="mysql")
     cur = con.cursor()
 
     # ! <-- Creating basic Databases and Tables -->
@@ -115,6 +116,50 @@ def TBackend():
     con.commit()
 
 
+### ! <-- If Login is called -->
+def LoginUser(User=None, Pass=None, errorlab=None):
+    # ? Taking username incase not provided
+    if User == None:
+        User = input("Please enter the username: ")
+    # ? Taking password incase not provided
+    if Pass == None:
+        Pass = pwinput("Please enter the Password: ")
+    # ? Running the login systems
+    cur.execute(f'select * from {db}.teacherDB where user="{User}"')
+    userFetch = cur.fetchall()
+    if len(userFetch) == 0:
+        print("Username doesn't exist!")
+        messagebox.showwarning('Error', "Username doesn't exist!")
+    else:
+        if userFetch[0][1] == Pass:
+            print("Successful login!")
+            dashboardFrame.tkraise()
+            dashboardFrame.pack()
+        else:
+            print("Wrong Password")
+            messagebox.showwarning('Error', "Wrong Password!")
+
+
+### ! <-- If Change Password is called -->
+def ChangePass(user: str, Pass: str):
+    cur.execute(f'select * from {db}.teacherDB where user="{user}"')
+    userFetch = cur.fetchall()[0]
+    if len(userFetch) == 0:
+        return "Username doesn't exist!"
+    else:
+        if userFetch[1] == Pass:
+            newPass = input("Enter a new password: ")
+            confPass = input("Confirm the password: ")
+            if newPass == confPass:
+                cur.execute(
+                    f"update {db}.teacherDB set pass='{newPass}' where user='{userFetch[0]}'"
+                )
+                con.commit()
+        else:
+            return "Wrong password"
+    print("The password has successfully been changed.")
+
+
 ########! Related to Login !########
 ### ! <-- If Signup is called -->
 def RegisterUser(User=None, Pass=None):
@@ -143,9 +188,6 @@ username.pack(pady=10, padx=10)
 password = ctk.CTkEntry(frame, show="*", placeholder_text="Enter Password")
 password.pack(pady=10, padx=10)
 
-error_label = ctk.CTkLabel(master=frame, text="")
-error_label.pack(pady=5)
-
 login = ctk.CTkButton(
     master=frame,
     command=lambda: LoginUser(username.get(), password.get()),
@@ -158,51 +200,11 @@ signup = ctk.CTkButton(
     text="Sign Up",
     command=lambda: RegisterUser(username.get(), password.get()),
 )
+TBackend()
 signup.pack(pady=10, padx=10)
+frame.pack(pady=20, padx=60, fill="both", expand=True)
+window.mainloop()
 
-
-### ! <-- If Login is called -->
-def LoginUser(User=None, Pass=None, errorlab=None):
-    # ? Taking username incase not provided
-    if User == None:
-        User = input("Please enter the username: ")
-    # ? Taking password incase not provided
-    if Pass == None:
-        Pass = pwinput("Please enter the Password: ")
-    # ? Running the login systems
-    cur.execute(f'select * from {db}.teacherDB where user="{User}"')
-    userFetch = cur.fetchall()
-    if len(userFetch) == 0:
-        print("Username doesn't exist!")
-        ctk.CTkMessagebox(title="Info", message="This is a CTkMessagebox!")
-        sleep(10)
-    else:
-        if userFetch[0][1] == Pass:
-            print("Successful login!")
-            dashboardFrame.tkraise()
-        else:
-            print("Wrong Password")
-            error_label.config(text="Wrong Password")  # Update the error label
-
-
-### ! <-- If Change Password is called -->
-def ChangePass(user: str, Pass: str):
-    cur.execute(f'select * from {db}.teacherDB where user="{user}"')
-    userFetch = cur.fetchall()[0]
-    if len(userFetch) == 0:
-        return "Username doesn't exist!"
-    else:
-        if userFetch[1] == Pass:
-            newPass = input("Enter a new password: ")
-            confPass = input("Confirm the password: ")
-            if newPass == confPass:
-                cur.execute(
-                    f"update {db}.teacherDB set pass='{newPass}' where user='{userFetch[0]}'"
-                )
-                con.commit()
-        else:
-            return "Wrong password"
-    print("The password has successfully been changed.")
 
 
 ########! Related to student info !########
@@ -3579,44 +3581,3 @@ def SchoolRecords():
     filename = f"All Student Records.html"
     open_new_tab(filename)
 
-
-from time import sleep
-import customtkinter as ctk
-import tkinter as tk
-import pymysql
-
-
-from TeacherBackend import (
-    AddMarks,
-    AddStudent,
-    ChangePass,
-    ClassRecords,
-    EditMarks,
-    EditStudent,
-    LoginUser,
-    RegisterUser,
-    RemoveMarks,
-    RemoveStudent,
-    ShowGraph,
-    StudentRecords,
-    TBackend,
-    SchoolRecords,
-)
-
-TBackend()
-# RegisterUser()
-# LoginUser()
-# AddStudent()
-# EditStudent()
-# RemoveStudent()
-# AddMarks()
-# EditMarks()
-# RemoveMarks()
-# ShowGraph()
-# StudentRecords()
-# ClassRecords()
-# SchoolRecords()
-
-
-frame.pack(pady=20, padx=60, fill="both", expand=True)
-window.mainloop()

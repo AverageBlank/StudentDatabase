@@ -1,14 +1,11 @@
-##
+#
 ########! Connecting to the server !########
 ### ! <-- Connecting to the server and creating necessary tables -->
 def TBackend():
     # ! <-- Globals for easier life -->
-    global BetterInput, IsProperName, dataframe, series, IsProperStream, db, con, cur, IsProperFcore, IsProperLang2WOF, IsProperLang2WF, IsProperLang3, IsProperRollNum, sleep, plt, pwinput, system, open_new_tab
+    global BetterInput, IsProperName, dataframe, series, IsProperStream, db, con, cur, IsProperFcore, IsProperLang2WOF, IsProperLang2WF, IsProperLang3, IsProperRollNum, sleep, plt, pwinput, open_new_tab, ClearScreen, IsProperAnswer, IsProperMarks
 
     # !  <-- Imports -->
-    # ? OS --> For running terminal commands
-    from os import system
-
     # ? Time --> For pausing the program
     from time import sleep
 
@@ -37,12 +34,15 @@ def TBackend():
         IsProperLang3,
         IsProperName,
         IsProperRollNum,
+        IsProperAnswer,
         IsProperStream,
+        IsProperMarks,
+        ClearScreen,
     )
 
     # ! <-- Connecting to MySQL -->
     db = "studentdatabase"
-    con = connect(host="localhost", user="root", password="1234", database="mysql")
+    con = connect(host="localhost", user="root", password="16computers", database="mysql")
     cur = con.cursor()
 
     # ! <-- Creating basic Databases and Tables -->
@@ -100,7 +100,9 @@ def TBackend():
 
 ########! Related to Login !########
 ### ! <-- If Signup is called -->
-def RegisterUser(User=None, Pass=None):
+def RegisterUser(User=None, Pass=None): 
+    # ? Clearing the screen
+    ClearScreen()
     # ? Taking username incase not provided
     if User == None:
         User = input("Please enter the username: ")
@@ -115,13 +117,15 @@ def RegisterUser(User=None, Pass=None):
         con.commit()
         print("Successfully created user.")
     else:
+        ClearScreen()
         print("This user already exists!")
         LoginUser(User, pwinput("Please enter the password for the user: "))
-        print("Login Successful!")
 
 
 ### ! <-- If Login is called -->
 def LoginUser(User=None, Pass=None):
+    # ? Clearing the screen
+    ClearScreen()
     # ? Taking username incase not provided
     if User == None:
         User = input("Please enter the username: ")
@@ -132,41 +136,31 @@ def LoginUser(User=None, Pass=None):
     cur.execute(f'select * from {db}.teacherDB where user="{User}"')
     userFetch = cur.fetchall()
     if len(userFetch) == 0:
+        ClearScreen()
         print("Username doesn't exist!")
-        sleep(2)
-        exit()
+        register = IsProperAnswer(input("Would you like to create a new user? ").lower())
+        if register == 'yes':
+            RegisterUser()
+        else:
+            ClearScreen()
+            print("Exiting Program")
+            exit()
     else:
         if userFetch[0][1] == Pass:
+            ClearScreen()
             print("Successful login!")
+            sleep(1)
         else:
+            ClearScreen()
             print("Wrong Password")
-            sleep(5)
             exit()
-
-
-### ! <-- If Change Password is called -->
-def ChangePass(user: str, Pass: str):
-    cur.execute(f'select * from {db}.teacherDB where user="{user}"')
-    userFetch = cur.fetchall()[0]
-    if len(userFetch) == 0:
-        return "Username doesn't exist!"
-    else:
-        if userFetch[1] == Pass:
-            newPass = input("Enter a new password: ")
-            confPass = input("Confirm the password: ")
-            if newPass == confPass:
-                cur.execute(
-                    f"update {db}.teacherDB set pass='{newPass}' where user='{userFetch[0]}'"
-                )
-                con.commit()
-        else:
-            return "Wrong password"
-    print("The password has successfully been changed.")
 
 
 ########! Related to student info !########
 # ! <-- Adding students -->
 def AddStudent():
+    # ? Clearing Screen
+    ClearScreen()
     # ? Name
     Name = IsProperName(
         BetterInput("Enter student's name: ", filter="sentence", type=str)
@@ -178,74 +172,84 @@ def AddStudent():
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
+                ClearScreen()
                 break
             else:
                 raise ValueError
+        except KeyboardInterrupt:
+            exit()
         except:
             print("This admission number already exists")
             AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
     # ? Class
-    Class = BetterInput(f"Enter {Name}'s class: ", "+", int)
-
-    # ! Categorizing by classes
-    if 1 <= Class <= 3:
-        # ? Asking for 2nd language name without french
-        Lang2Name = IsProperLang2WOF(
-            BetterInput(
-                f"Enter {Name}'s 2nd language (Hindi, Telugu): ", "sentence", str
+    while True:
+        Class = BetterInput(f"Enter {Name}'s class: ", "+", int)
+        # ! Categorizing by classes
+        if 1 <= Class <= 3:
+            # ? Asking for 2nd language name without french
+            Lang2Name = IsProperLang2WOF(
+                BetterInput(
+                    f"Enter {Name}'s 2nd language (Hindi, Telugu): ", "sentence", str
+                )
             )
-        )
-    elif Class == 4:
-        # ? Asking for 2nd language name with french
-        Lang2Name = IsProperLang2WF(
-            BetterInput(
-                f"Enter {Name}'s 2nd language (Hindi, Telugu, French): ",
-                "sentence",
-                str,
+        elif Class == 4:
+            # ? Asking for 2nd language name with french
+            Lang2Name = IsProperLang2WF(
+                BetterInput(
+                    f"Enter {Name}'s 2nd language (Hindi, Telugu, French): ",
+                    "sentence",
+                    str,
+                )
             )
-        )
-    elif 5 <= Class <= 8:
-        # ? Asking for 2nd language name with french
-        Lang2Name = IsProperLang2WF(
-            BetterInput(
-                f"Enter {Name}'s 2nd language (Hindi, Telugu, French): ",
-                "sentence",
-                str,
+        elif 5 <= Class <= 8:
+            # ? Asking for 2nd language name with french
+            Lang2Name = IsProperLang2WF(
+                BetterInput(
+                    f"Enter {Name}'s 2nd language (Hindi, Telugu, French): ",
+                    "sentence",
+                    str,
+                )
             )
-        )
-        # ? Asking for 3rd language name
-        Lang3Name = IsProperLang3(
-            BetterInput(
-                f"Enter {Name}'s 3rd language (Sanskrit, Hindi, Telugu, French): ",
-                "sentence",
-                str,
-            ),
-            Lang2Name,
-        )
-    elif 9 <= Class <= 10:
-        # ? Asking for 2nd language name with french
-        Lang2Name = IsProperLang2WF(
-            BetterInput(
-                f"Enter {Name}'s 2nd language (Hindi, Telugu, French): ",
-                "sentence",
-                str,
+            # ? Asking for 3rd language name
+            Lang3Name = IsProperLang3(
+                BetterInput(
+                    f"Enter {Name}'s 3rd language (Sanskrit, Hindi, Telugu, French): ",
+                    "sentence",
+                    str,
+                ),
+                Lang2Name,
             )
-        )
-    elif Class in [11, 12]:
-        # ! Categorizing by stream
-        Stream = IsProperStream(
-            BetterInput(
-                f"Enter {Name}'s stream (mpc, bipc, cec, humanities): ", "sentence", str
+        elif 9 <= Class <= 10:
+            # ? Asking for 2nd language name with french
+            Lang2Name = IsProperLang2WF(
+                BetterInput(
+                    f"Enter {Name}'s 2nd language (Hindi, Telugu, French): ",
+                    "sentence",
+                    str,
+                )
             )
-        )
-        # ? Asking for 5th core name
-        FcoreName = IsProperFcore(
-            BetterInput(
-                f"Enter {Name}'s Fcore (Mathematics, Psychology, Informatics Practices, Physical Education, Fine Arts): ",
-                "sentence",
-            ),
-            Stream,
-        )
+        elif Class in [11, 12]:
+            # ! Categorizing by stream
+            Stream = IsProperStream(
+                BetterInput(
+                    f"Enter {Name}'s stream (mpc, bipc, cec, humanities): ", "sentence", str
+                )
+            )
+            # ? Asking for 5th core name
+            FcoreName = IsProperFcore(
+                BetterInput(
+                    f"Enter {Name}'s Fcore (Mathematics, Psychology, Informatics Practices, Physical Education, Fine Arts): ",
+                    "sentence",
+                ),
+                Stream,
+            )
+        else:
+            ClearScreen()
+            print("Please enter a valid class.")
+            continue
+        break
+    # ? Clearing Screen
+    ClearScreen()
     # ? Section
     Section = BetterInput(f"Enter {Name}'s section: ", "upper", str)
     # ? Roll Number
@@ -269,7 +273,7 @@ def AddStudent():
         cur.execute(
             f"insert into {db}.catthree(AdmNum, Name, Class, Section, RollNumber, Lang2Name, Lang3Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}', '{Lang3Name}')"
         )
-    # ? Grade 9 - 12
+    # ? Grade 9 - 10
     elif 9 <= Class <= 10:
         cur.execute(
             f"insert into {db}.catfour(AdmNum, Name, Class, Section, RollNumber, Lang2Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}')"
@@ -296,11 +300,14 @@ def AddStudent():
                 f"insert into {db}.cateight(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
             )
     con.commit()
+    ClearScreen()
     print(f"{Name} has been successfully added.")
 
 
 # ! <-- Editing student information -->
 def EditStudent():
+    # ? Clearing Screen
+    ClearScreen()
     # ? Admission Number
     AdmNum = BetterInput(f"Enter admission number of the student: ", "+", int)
     while True:
@@ -311,9 +318,12 @@ def EditStudent():
                 raise ValueError
             else:
                 break
+        except KeyboardInterrupt:
+            exit()
         except:
             print("This admission number does not exist.")
             AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
+    ClearScreen()
     # ? Name
     Name = IsProperName(
         BetterInput("Enter new student's name: ", filter="sentence", type=str)
@@ -344,7 +354,13 @@ def EditStudent():
         if len(streamFetch) != 0:
             OldStream = "humanities"
     # ? New Class
-    NewClass = BetterInput(f"Enter {Name}'s new class: ", "+", int)
+    while True:
+        NewClass = BetterInput(f"Enter {Name}'s new class: ", "+", int)
+        if 1 > NewClass or NewClass > 12: 
+            ClearScreen()
+            print('Please enter a valid class.')
+            continue
+        break
     # ? Section
     Section = BetterInput("Enter student's new section: ", "upper", str)
     # ? Roll Number
@@ -355,6 +371,8 @@ def EditStudent():
     cur.execute(
         f"update {db}.allstudents set Name='{Name}', Class={NewClass}, Section='{Section}' where AdmNum={AdmNum}"
     )
+    # ? Clearing Screen
+    ClearScreen()
     # ! Choosing new subjects
     if 1 <= NewClass <= 3:
         # ? Asking for 2nd language name without french
@@ -527,13 +545,15 @@ def EditStudent():
                     f"insert into {db}.cateight(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                 )
     con.commit()
+    ClearScreen()
     print("Data has been successfully changed.")
 
 
-# ! <-- Removing the student -->
+# ! <-- Removing the student --> Add clearscreen
 def RemoveStudent():
-    AdmNum = BetterInput(f"Enter student's admission number to delete: ", "+", int)
+    ClearScreen()
     while True:
+        AdmNum = BetterInput(f"Enter student's admission number to delete: ", "+", int)
         cur.execute(f"select name from {db}.allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
@@ -542,9 +562,11 @@ def RemoveStudent():
             else:
                 Name = admNumFetch[0][0]
                 break
+        except KeyboardInterrupt:
+            exit()
         except:
             print("This admission number doesn't exist")
-            exit()
+    ClearScreen()
     AreYouSure = BetterInput(
         f"Are you sure you want to delete {Name}'s information? (Yes/No): ",
         type=str,
@@ -560,14 +582,18 @@ def RemoveStudent():
         cur.execute(f"delete from {db}.catseven where AdmNum={AdmNum}")
         cur.execute(f"delete from {db}.cateight where AdmNum={AdmNum}")
         con.commit()
+        ClearScreen()
         print("Successfully Deleted!")
     else:
+        ClearScreen()
         print("Action cancelled")
 
 
-########! Related to jarks !########
+########! Related to marks !########
 # ! <-- Adding Marks -->
 def AddMarks():
+    # ? Clearing the screen
+    ClearScreen()
     # ? Admission Number
     AdmNum = BetterInput(f"Enter admission number of student to add marks: ", "+", int)
     while True:
@@ -578,28 +604,31 @@ def AddMarks():
                 raise ValueError
             else:
                 break
+        except KeyboardInterrupt:
+            exit()
         except:
             print("This admission number does not exist.")
             AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
+    ClearScreen()
     Class = admNumFetch[0][0]
     if Class == 1:
-        English = BetterInput("Enter marks for English: ", "+", int)
-        Math = BetterInput("Enter marks for Mathematics: ", "+", int)
-        Science = BetterInput("Enter marks for Science: ", "+", int)
-        SocialSciences = BetterInput("Enter marks for Social Science: ", "+", int)
-        Lang2 = BetterInput("Enter marks for 2nd language: ", "+", int)
+        English = IsProperMarks("Enter marks for English: ")
+        Math = IsProperMarks("Enter marks for Mathematics: ")
+        Science = IsProperMarks("Enter marks for Science: ")
+        SocialSciences = IsProperMarks("Enter marks for Social Science: ")
+        Lang2 = IsProperMarks("Enter marks for 2nd language: ")
         Total = English + Math + Science + SocialSciences + Lang2
         Average = round((Total / 500) * 100, 2)
         cur.execute(
             f"update {db}.catone set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
     elif 2 <= Class <= 4:
-        English = BetterInput("Enter marks for English: ", "+", int)
-        Math = BetterInput("Enter marks for Mathematics: ", "+", int)
-        Science = BetterInput("Enter marks for Science: ", "+", int)
-        SocialSciences = BetterInput("Enter marks for Social Science: ", "+", int)
-        Lang2 = BetterInput("Enter marks for 2nd language: ", "+", int)
-        Computers = BetterInput("Enter marks for Computers: ", "+", int)
+        English = IsProperMarks("Enter marks for English: ")
+        Math = IsProperMarks("Enter marks for Mathematics: ")
+        Science = IsProperMarks("Enter marks for Science: ")
+        SocialSciences = IsProperMarks("Enter marks for Social Science: ")
+        Lang2 = IsProperMarks("Enter marks for 2nd language: ")
+        Computers = IsProperMarks("Enter marks for Computers: ")
         Total = English + Math + Science + SocialSciences + Lang2 + Computers
         Average = round((Total / 600) * 100, 2)
         cur.execute(
@@ -607,13 +636,13 @@ def AddMarks():
         )
 
     elif 5 <= Class <= 8:
-        English = BetterInput("Enter marks for English: ", "+", int)
-        Math = BetterInput("Enter marks for Mathematics: ", "+", int)
-        Science = BetterInput("Enter marks for Science: ", "+", int)
-        SocialSciences = BetterInput("Enter marks for Social Science: ", "+", int)
-        Lang2 = BetterInput("Enter marks for 2nd language: ", "+", int)
-        Lang3 = BetterInput("Enter marks for 3nd language: ", "+", int)
-        Computers = BetterInput("Enter marks for Computers: ", "+", int)
+        English = IsProperMarks("Enter marks for English: ", "+", int)
+        Math = IsProperMarks("Enter marks for Mathematics: ")
+        Science = IsProperMarks("Enter marks for Science: ")
+        SocialSciences = IsProperMarks("Enter marks for Social Science: ",)
+        Lang2 = IsProperMarks("Enter marks for 2nd language: ")
+        Lang3 = IsProperMarks("Enter marks for 3nd language: ")
+        Computers = IsProperMarks("Enter marks for Computers: ")
         Total = English + Math + Science + SocialSciences + Lang2 + Lang3 + Computers
         Average = round((Total / 700) * 100, 2)
         cur.execute(
@@ -621,11 +650,11 @@ def AddMarks():
         )
 
     elif 9 <= Class <= 10:
-        English = BetterInput("Enter marks for English: ", "+", int)
-        Math = BetterInput("Enter marks for Mathematics: ", "+", int)
-        Science = BetterInput("Enter marks for Science: ", "+", int)
-        SocialSciences = BetterInput("Enter marks for Social Science: ", "+", int)
-        Lang2 = BetterInput("Enter marks for 2nd language: ", "+", int)
+        English = IsProperMarks("Enter marks for English: ")
+        Math = IsProperMarks("Enter marks for Mathematics: ")
+        Science = IsProperMarks("Enter marks for Science: ")
+        SocialSciences = IsProperMarks("Enter marks for Social Science: ")
+        Lang2 = IsProperMarks("Enter marks for 2nd language: ")
         Total = English + Math + Science + SocialSciences + Lang2
         Average = round((Total / 500) * 100, 2)
         cur.execute(
@@ -638,11 +667,11 @@ def AddMarks():
         MPCFetch = cur.fetchall()
         if len(MPCFetch) != 0:
             FcoreName = MPCFetch[0][0]
-            English = BetterInput("Enter marks for English: ", "+", int)
-            Math = BetterInput("Enter marks for Mathematics: ", "+", int)
-            Physics = BetterInput("Enter marks for Physics: ", "+", int)
-            Chemistry = BetterInput("Enter marks for Chemistry: ", "+", int)
-            Fcore = BetterInput(f"Enter marks for {FcoreName}: ", "+", int)
+            English = IsProperMarks("Enter marks for English: ")
+            Math = IsProperMarks("Enter marks for Mathematics: ")
+            Physics = IsProperMarks("Enter marks for Physics: ")
+            Chemistry = IsProperMarks("Enter marks for Chemistry: ")
+            Fcore = IsProperMarks(f"Enter marks for {FcoreName}: ")
             Total = English + Math + Physics + Chemistry + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
@@ -654,11 +683,11 @@ def AddMarks():
         BiPCFetch = cur.fetchall()
         if len(BiPCFetch) != 0:
             FcoreName = BiPCFetch[0][0]
-            English = BetterInput("Enter marks for English: ", "+", int)
-            Biology = BetterInput("Enter marks for Biology: ", "+", int)
-            Physics = BetterInput("Enter marks for Physics: ", "+", int)
-            Chemistry = BetterInput("Enter marks for Chemistry: ", "+", int)
-            Fcore = BetterInput(f"Enter marks for {FcoreName}: ", "+", int)
+            English = IsProperMarks("Enter marks for English: ")
+            Biology = IsProperMarks("Enter marks for Biology: ")
+            Physics = IsProperMarks("Enter marks for Physics: ")
+            Chemistry = IsProperMarks("Enter marks for Chemistry: ")
+            Fcore = IsProperMarks(f"Enter marks for {FcoreName}: ")
             Total = English + Biology + Physics + Chemistry + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
@@ -670,13 +699,13 @@ def AddMarks():
         CECFetch = cur.fetchall()
         if len(CECFetch) != 0:
             FcoreName = CECFetch[0][0]
-            English = BetterInput("Enter marks for English: ", "+", int)
-            Accounts = BetterInput("Enter marks for Accounts: ", "+", int)
-            BusinessStudies = BetterInput(
-                "Enter marks for Business Studies: ", "+", int
+            English = IsProperMarks("Enter marks for English: ")
+            Accounts = IsProperMarks("Enter marks for Accounts: ")
+            BusinessStudies = IsProperMarks(
+                "Enter marks for Business Studies: "
             )
-            Econ = BetterInput("Enter marks for Economics: ", "+", int)
-            Fcore = BetterInput(f"Enter marks for {FcoreName}: ", "+", int)
+            Econ = IsProperMarks("Enter marks for Economics: ")
+            Fcore = IsProperMarks(f"Enter marks for {FcoreName}: ")
             Total = English + Accounts + BusinessStudies + Econ + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
@@ -688,22 +717,25 @@ def AddMarks():
         HumanitiesFetch = cur.fetchall()
         if len(HumanitiesFetch) != 0:
             FcoreName = HumanitiesFetch[0][0]
-            English = BetterInput("Enter marks for English: ", "+", int)
-            History = BetterInput("Enter marks for History: ", "+", int)
-            PolSci = BetterInput("Enter marks for Political Sciences: ", "+", int)
-            Econ = BetterInput("Enter marks for Economics: ", "+", int)
-            Fcore = BetterInput(f"Enter marks for {FcoreName}: ", "+", int)
+            English = IsProperMarks("Enter marks for English: ")
+            History = IsProperMarks("Enter marks for History: ")
+            PolSci = IsProperMarks("Enter marks for Political Sciences: ")
+            Econ = IsProperMarks("Enter marks for Economics: ")
+            Fcore = IsProperMarks(f"Enter marks for {FcoreName}: ")
             Total = English + History + PolSci + Econ + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
                 f"update {db}.cateight set English={English}, History={History}, PoliticalSciences={PolSci}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
     con.commit()
+    ClearScreen()
     print(f"Marks have successfully been added.")
 
 
 # ! <-- Editing Marks -->
 def EditMarks():
+    # ? Clearing the screen
+    ClearScreen()
     # ? Admission Number
     AdmNum = BetterInput(
         f"Enter admission number of student to change marks: ", "+", int
@@ -716,28 +748,31 @@ def EditMarks():
                 raise ValueError
             else:
                 break
+        except KeyboardInterrupt:
+            exit()
         except:
             print("This admission number does not exist.")
             AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
+    ClearScreen()
     Class = admNumFetch[0][0]
     if Class == 1:
-        English = BetterInput("Enter new marks for English: ", "+", int)
-        Math = BetterInput("Enter new marks for Mathematics: ", "+", int)
-        Science = BetterInput("Enter new marks for Science: ", "+", int)
-        SocialSciences = BetterInput("Enter new marks for Social Science: ", "+", int)
-        Lang2 = BetterInput("Enter new marks for 2nd language: ", "+", int)
+        English = IsProperMarks("Enter new marks for English: ")
+        Math = IsProperMarks("Enter new marks for Mathematics: ")
+        Science = IsProperMarks("Enter new marks for Science: ")
+        SocialSciences = IsProperMarks("Enter new marks for Social Science: ")
+        Lang2 = IsProperMarks("Enter new marks for 2nd language: ")
         Total = English + Math + Science + SocialSciences + Lang2
         Average = (Total / 500) * 100
         cur.execute(
             f"update {db}.catone set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
     elif 2 <= Class <= 4:
-        English = BetterInput("Enter new marks for English: ", "+", int)
-        Math = BetterInput("Enter new marks for Mathematics: ", "+", int)
-        Science = BetterInput("Enter new marks for Science: ", "+", int)
-        SocialSciences = BetterInput("Enter new marks for Social Science: ", "+", int)
-        Lang2 = BetterInput("Enter new marks for 2nd language: ", "+", int)
-        Computers = BetterInput("Enter new marks for Computers: ", "+", int)
+        English = IsProperMarks("Enter new marks for English: ")
+        Math = IsProperMarks("Enter new marks for Mathematics: ")
+        Science = IsProperMarks("Enter new marks for Science: ")
+        SocialSciences = IsProperMarks("Enter new marks for Social Science: ")
+        Lang2 = IsProperMarks("Enter new marks for 2nd language: ")
+        Computers = IsProperMarks("Enter new marks for Computers: ")
         Total = English + Math + Science + SocialSciences + Lang2 + Computers
         Average = (Total / 600) * 100
         cur.execute(
@@ -745,13 +780,13 @@ def EditMarks():
         )
 
     elif 5 <= Class <= 8:
-        English = BetterInput("Enter new marks for English: ", "+", int)
-        Math = BetterInput("Enter new marks for Mathematics: ", "+", int)
-        Science = BetterInput("Enter new marks for Science: ", "+", int)
-        SocialSciences = BetterInput("Enter new marks for Social Science: ", "+", int)
-        Lang2 = BetterInput("Enter new marks for 2nd language: ", "+", int)
-        Lang3 = BetterInput("Enter new marks for 3nd language: ", "+", int)
-        Computers = BetterInput("Enter new marks for Computers: ", "+", int)
+        English = IsProperMarks("Enter new marks for English: ")
+        Math = IsProperMarks("Enter new marks for Mathematics: ")
+        Science = IsProperMarks("Enter new marks for Science: ")
+        SocialSciences = IsProperMarks("Enter new marks for Social Science: ")
+        Lang2 = IsProperMarks("Enter new marks for 2nd language: ")
+        Lang3 = IsProperMarks("Enter new marks for 3nd language: ")
+        Computers = IsProperMarks("Enter new marks for Computers: ")
         Total = English + Math + Science + SocialSciences + Lang2 + Lang3 + Computers
         Average = (Total / 700) * 100
         cur.execute(
@@ -759,11 +794,11 @@ def EditMarks():
         )
 
     elif 9 <= Class <= 10:
-        English = BetterInput("Enter new marks for English: ", "+", int)
-        Math = BetterInput("Enter new marks for Mathematics: ", "+", int)
-        Science = BetterInput("Enter new marks for Science: ", "+", int)
-        SocialSciences = BetterInput("Enter new marks for Social Science: ", "+", int)
-        Lang2 = BetterInput("Enter new marks for 2nd language: ", "+", int)
+        English = IsProperMarks("Enter new marks for English: ")
+        Math = IsProperMarks("Enter new marks for Mathematics: ")
+        Science = IsProperMarks("Enter new marks for Science: ")
+        SocialSciences = IsProperMarks("Enter new marks for Social Science: ")
+        Lang2 = IsProperMarks("Enter new marks for 2nd language: ")
         Total = English + Math + Science + SocialSciences + Lang2
         Average = (Total / 500) * 100
         cur.execute(
@@ -776,11 +811,11 @@ def EditMarks():
         MPCFetch = cur.fetchall()
         if len(MPCFetch) != 0:
             FcoreName = MPCFetch[0][0]
-            English = BetterInput("Enter new marks for English: ", "+", int)
-            Math = BetterInput("Enter new marks for Mathematics: ", "+", int)
-            Physics = BetterInput("Enter new marks for Physics: ", "+", int)
-            Chemistry = BetterInput("Enter new marks for Chemistry: ", "+", int)
-            Fcore = BetterInput(f"Enter new marks for {FcoreName}: ", "+", int)
+            English = IsProperMarks("Enter new marks for English: ")
+            Math = IsProperMarks("Enter new marks for Mathematics: ")
+            Physics = IsProperMarks("Enter new marks for Physics: ")
+            Chemistry = IsProperMarks("Enter new marks for Chemistry: ")
+            Fcore = IsProperMarks(f"Enter new marks for {FcoreName}: ")
             Total = English + Math + Physics + Chemistry + Fcore
             Average = (Total / 500) * 100
             cur.execute(
@@ -792,11 +827,11 @@ def EditMarks():
         BiPCFetch = cur.fetchall()
         if len(BiPCFetch) != 0:
             FcoreName = BiPCFetch[0][0]
-            English = BetterInput("Enter new marks for English: ", "+", int)
-            Biology = BetterInput("Enter new marks for Biology: ", "+", int)
-            Physics = BetterInput("Enter new marks for Physics: ", "+", int)
-            Chemistry = BetterInput("Enter new marks for Chemistry: ", "+", int)
-            Fcore = BetterInput(f"Enter new marks for {FcoreName}: ", "+", int)
+            English = IsProperMarks("Enter new marks for English: ")
+            Biology = IsProperMarks("Enter new marks for Biology: ")
+            Physics = IsProperMarks("Enter new marks for Physics: ")
+            Chemistry = IsProperMarks("Enter new marks for Chemistry: ")
+            Fcore = IsProperMarks(f"Enter new marks for {FcoreName}: ")
             Total = English + Biology + Physics + Chemistry + Fcore
             Average = (Total / 500) * 100
             cur.execute(
@@ -808,13 +843,13 @@ def EditMarks():
         CECFetch = cur.fetchall()
         if len(CECFetch) != 0:
             FcoreName = CECFetch[0][0]
-            English = BetterInput("Enter new marks for English: ", "+", int)
-            Accounts = BetterInput("Enter new marks for Accounts: ", "+", int)
-            BusinessStudies = BetterInput(
-                "Enter new marks for Business Studies: ", "+", int
+            English = IsProperMarks("Enter new marks for English: ")
+            Accounts = IsProperMarks("Enter new marks for Accounts: ")
+            BusinessStudies = IsProperMarks(
+                "Enter new marks for Business Studies: "
             )
-            Econ = BetterInput("Enter new marks for Economics: ", "+", int)
-            Fcore = BetterInput(f"Enter new marks for {FcoreName}: ", "+", int)
+            Econ = IsProperMarks("Enter new marks for Economics: ")
+            Fcore = IsProperMarks(f"Enter new marks for {FcoreName}: ")
             Total = English + Accounts + BusinessStudies + Econ + Fcore
             Average = (Total / 500) * 100
             cur.execute(
@@ -826,26 +861,29 @@ def EditMarks():
         HumanitiesFetch = cur.fetchall()
         if len(HumanitiesFetch) != 0:
             FcoreName = HumanitiesFetch[0][0]
-            English = BetterInput("Enter new marks for English: ", "+", int)
-            History = BetterInput("Enter new marks for History: ", "+", int)
-            PolSci = BetterInput("Enter new marks for Political Sciences: ", "+", int)
-            Econ = BetterInput("Enter new marks for Economics: ", "+", int)
-            Fcore = BetterInput(f"Enter new marks for {FcoreName}: ", "+", int)
+            English = IsProperMarks("Enter new marks for English: ")
+            History = IsProperMarks("Enter new marks for History: ")
+            PolSci = IsProperMarks("Enter new marks for Political Sciences: ")
+            Econ = IsProperMarks("Enter new marks for Economics: ")
+            Fcore = IsProperMarks(f"Enter new marks for {FcoreName}: ")
             Total = English + History + PolSci + Econ + Fcore
             Average = (Total / 500) * 100
             cur.execute(
                 f"update {db}.cateight set English={English}, History={History}, PoliticalSciences={PolSci}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
-    print("Marks have been successfully changed.")
     con.commit()
+    ClearScreen()
+    print("Marks have been successfully changed.")
 
 
 # ! <-- Removing Marks -->
 def RemoveMarks():
-    AdmNum = BetterInput(
-        f"Enter admission number of student to remove marks: ", "+", int
-    )
+    # ? Clearing the screen
+    ClearScreen()
     while True:
+        AdmNum = BetterInput(
+            f"Enter admission number of student to remove marks: ", "+", int
+        )
         cur.execute(f"select name from {db}.allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
@@ -854,9 +892,11 @@ def RemoveMarks():
             else:
                 Name = admNumFetch[0][0]
                 break
+        except KeyboardInterrupt:
+            exit()
         except:
             print("This admission number does not exist.")
-            exit()
+    ClearScreen()
     AreYouSure = BetterInput(
         f"Are you sure you want to delete the marks of {Name}? (Yes/No): ",
         type=str,
@@ -887,13 +927,16 @@ def RemoveMarks():
             f"update {db}.cateight set English=Null, History=Null, PoliticalSciences=Null, Economics=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         con.commit()
+        ClearScreen()
         print("Successfully deleted!")
     else:
+        ClearScreen()
         print("Action cancelled")
 
 
 ########! Related to viewing data !########
 # ! <-- Showing graph for Marks and Subjects -->
+# TODO Show Graph -> Add Clear Screens
 def ShowGraph():
     # ? Admission Number
     AdmNum = BetterInput(f"Enter admission number to view mark statistics: ", "+", int)
@@ -905,6 +948,8 @@ def ShowGraph():
                 raise ValueError
             else:
                 break
+        except KeyboardInterrupt:
+            exit()
         except:
             print("This admission number does not exist.")
             AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
@@ -1023,12 +1068,14 @@ def ShowGraph():
         plt.xlabel("Subjects")
         plt.ylabel("Marks")
         plt.show()
-
+    except KeyboardInterrupt:
+            exit()
     except:
         print("Marks do not exist.")
 
 
 # ! <-- Displaying individual student records -->
+# TODO Student Records -> Add Clear Screens
 def StudentRecords():
     # ? Admission Number
     AdmNum = BetterInput(
@@ -1042,6 +1089,8 @@ def StudentRecords():
                 raise ValueError
             else:
                 break
+        except KeyboardInterrupt:
+                exit()
         except:
             print("This admission number does not exist.")
             AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
@@ -1251,7 +1300,7 @@ def StudentRecords():
                 prompt = f"{res[1]}'s report card: "
 
     # ! Displaying Records/Report Card
-    system("clear|cls")
+    ClearScreen()
     print(prompt)
     print()
     Result = series(result).to_string()
@@ -1259,6 +1308,7 @@ def StudentRecords():
 
 
 # ! <-- Displaying one categories records -->
+# TODO Class Records -> Add Clear Screens
 def ClassRecords(Class=None):
     # ? Class for the records
     if Class == None:
@@ -1270,6 +1320,8 @@ def ClassRecords(Class=None):
                 if 0 > Class or Class > 12:
                     raise ValueError
                 break
+            except KeyboardInterrupt:
+                    exit()
             except:
                 print("Please enter a valid class")
     if Class == 1:
@@ -1971,6 +2023,8 @@ def ClassRecords(Class=None):
         # ? For the other classes creating 1 dataframe
         try:
             df = dataframe(result)
+        except KeyboardInterrupt:
+                exit()
         except:
             print("Data for this class is not available.")
         with open(f"Class {Grade} Record.html", "w") as f:
@@ -1988,7 +2042,9 @@ def ClassRecords(Class=None):
 
 
 # ! <-- Displaying all students in the school -->
+# TODO School Records -> Add Clear Screens
 def SchoolRecords():
+    
     # ? Grade 1
     cur.execute(f"select * from {db}.catone where class=1")
     res = cur.fetchall()
