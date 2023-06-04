@@ -8,7 +8,7 @@
 global dataframe, series, pwinput, open_new_tab
 
 # ? Importing os to get operating system and to run commands in terminal
-from os import name, system
+from os import name, system, popen
 
 # ? Importing string to have a valid name without symbols
 from string import digits, punctuation
@@ -326,11 +326,46 @@ def ClearScreen():
 def Backend():
     global db, con, cur
     # ! <-- Connecting to MySQL -->
-    db = "studentdatabase"
-    con = connect(
-        host="localhost", user="root", password="16computers", database="mysql"
-    )
+    ### ! <-- MySQL Smart Password System --> ! ###
+    try:
+        if name == "nt":
+            chk = popen("cd %userprofile% && dir").read()
+            CWD = popen("cd %userprofile% && chdir").read()
+            CWD = CWD[:-1] + "\\"
+            if "mysqlpassword" in chk:
+                p = popen("cd %userprofile% && more mysqlpassword").read()
+                p = p[:-1]
+            else:
+                raise ValueError
+        elif name == "posix":
+            chk = popen("ls ~").read()
+            CWD = popen("cd ~ && pwd").read()
+            if "mysqlpassword" in chk:
+                p = popen("cat ~/mysqlpassword").read()
+            else:
+                raise ValueError
+    except ValueError:
+        # ? Clear the screen
+        ClearScreen()
+        # * Running this if password is not saved 
+        while True:
+            p = input("Please type in your MySQL Password: ")
+            try:
+                # ? Connecting
+                con = connect(user="root", host="localhost", password=p)
+                cur = con.cursor()
+                # ? Saving the password
+                a = open(CWD[:-1] + "/mysqlpassword", "w")
+                a.write(p)
+                a.close()
+                break
+            except: 
+                print("Password was wrong, please try again.")
+    # ? Connecting to the MySQL server
+    con = connect(user="root", host="localhost", password=p)
     cur = con.cursor()
+
+    db = "studentdatabase"
 
     # ! <-- Creating basic Databases and Tables -->
     cur.execute(f"create database if not exists {db}")
