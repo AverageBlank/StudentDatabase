@@ -1,48 +1,339 @@
-#
+## Starting of the program
+# * ------ Made by Aaloke, Hemanth and Hussain
+#! --------------------------------------------------
+#! ---------- Imports
+#! --------------------------------------------------
+# region Imports
+
+# ? <-- Globals for easier life -->
+global dataframe, series, pwinput, open_new_tab
+
+# ? Importing os to get operating system and to run commands in terminal
+from os import name, system
+
+# ? Importing string to have a valid name without symbols
+from string import digits, punctuation
+
+# ? Time --> For pausing the program
+from time import sleep
+
+# ? Web Browser --> For opening dataframe on browser
+from webbrowser import open_new_tab
+
+# ? Matplotlib --> for plotting a graph
+from matplotlib.pyplot import bar, show, title, xlabel, ylabel
+
+# ? Pandas --> for storing data
+from pandas import DataFrame as dataframe
+from pandas import Series as series
+
+# ? PWInputs --> for inputting passwords
+from pwinput import pwinput
+
+# ? PyMySQL --> for connecting to MySQL
+from pymysql import connect
+
+# endregion
+#! --------------------------------------------------
+#! --------------------------------------------------
+
+
+#! --------------------------------------------------
+#! ---------- Functions
+#! --------------------------------------------------
+# region Functions
+# ! Function to edit the inputted content to our desired parameters
+def BetterInput(prompt, filter="None", type=str, error="Enter a proper value."):
+    # ? To check for input parameters and returning the desired input.
+    while True:
+        try:
+            # ? If type is string, check for filters
+            if type == str:
+                inp = input(prompt)
+                if filter.lower() == "lower":
+                    return inp.lower()
+                elif filter.lower() == "upper":
+                    return inp.upper()
+                elif filter.lower() == "sentence":
+                    return inp.title()
+                else:
+                    return inp
+            # ? If type is int, check for filters
+            elif type == int:
+                inp = int(input(prompt))
+                if filter.lower() in ["positive", "+"]:
+                    return abs(inp)
+                elif filter.lower() in ["negative", "-"]:
+                    return -abs(inp)
+                else:
+                    return inp
+            # ? If type is float, check for filters
+            elif type == float:
+                inp = float(input(prompt))
+                if filter.lower() in ["positive", "+"]:
+                    return abs(inp)
+                elif filter.lower() in ["negative", "-"]:
+                    return -abs(inp)
+                else:
+                    return inp
+        except KeyboardInterrupt:
+            exit()
+        except:
+            print(error)
+
+
+def IsProperMarks(prompt):
+    # ? To check for input parameters and returning the desired input.
+    while True:
+        try:
+            # ? Rounds off the marks to the nearest integer value
+            marks = round(float(input(prompt)))
+            if 0 > marks or marks > 100:
+                # ? If marks aren't between 0 or 100, rejects the marks
+                raise AttributeError
+            else:
+                return marks
+        except KeyboardInterrupt:
+            # ? Checks for keyboard interruption to exit program early
+            exit()
+        except AttributeError:
+            print(f"Marks need to be less than 100 and greater than 0.")
+        except:
+            print("Enter valid marks.")
+
+
+# ! Function to avoid getting an error on a wrong yes/no question
+def IsProperAnswer(answer):
+    # ? Checks to see if answer is a yes or no
+    while True:
+        if answer not in ["yes", "no", "y", "n"]:
+            answer = input("Please type either yes or no: ").lower()
+        else:
+            return answer
+
+
+# ! Function to avoid getting an error on an improper name
+def IsProperName(name):
+    # ? Checks for alphanumeric symbols in a name and rejects it if one exists
+    NumericSymbols = [x for x in digits + punctuation]
+    while True:
+        try:
+            for i in name:
+                if i in NumericSymbols:
+                    raise ValueError
+            else:
+                # ? If no symbols or numbers in a name, return the name
+                return name
+        except KeyboardInterrupt:
+            # ? Checks for keyboard interruption to exit program early
+            exit()
+        except:
+            name = BetterInput("Enter a valid student's name: ", "sentence", str)
+
+
+# ! Function to avoid getting an error on an improper stream
+def IsProperStream(stream):
+    while True:
+        try:
+            # ? If stream is not within the given list, raise a ValueError
+            if stream.lower() not in [
+                "pcm",
+                "mpc",
+                "bipc",
+                "commerce",
+                "cec",
+                "humanities",
+                "human",
+            ]:
+                raise ValueError
+            else:
+                # ? If stream is valid, rename given stream to a common name to keep it uniform
+                if stream == "pcm":
+                    stream = "mpc"
+                if stream == "commerce":
+                    stream = "cec"
+                if stream == "human":
+                    stream = "humanities"
+                return stream
+        except KeyboardInterrupt:
+            # ? Checks for keyboard interruption to exit program early
+            exit()
+        except:
+            # ? If all checks fail, ask for input again.
+            stream = BetterInput("Enter a valid stream: ", "sentence", str)
+
+
+# ! Function to avoid getting an error on fcore input depending on user's stream
+def IsProperFcore(Fcore, Stream):
+    while True:
+        try:
+            # ? If 5th core is not valid, raise a ValueError
+            if Fcore.lower() not in [
+                "mathematics",
+                "math",
+                "maths",
+                "psychology",
+                "psy",
+                "informatics practices",
+                "ip",
+                "physical education",
+                "pe",
+                "fine arts",
+                "fa",
+            ]:
+                raise ValueError
+            else:
+                # ? When chosen stream is valid, rename it to a common name to keep it uniform
+                if Stream.lower() == "humanities" or Stream.lower() == "mpc":
+                    if Fcore.lower() in ["math", "mathematics", "maths"]:
+                        raise ValueError
+                if Fcore.lower() == "math" or Fcore.lower() == "maths":
+                    Fcore = "Mathematics"
+                if Fcore.lower() == "psy":
+                    Fcore = "Psychology"
+                if Fcore.lower() == "ip":
+                    Fcore = "Informatics Practices"
+                if Fcore.lower() == "pe":
+                    Fcore = "Physical Education"
+                if Fcore.lower() == "fa":
+                    Fcore = "Fine Arts"
+                return Fcore
+        except KeyboardInterrupt:
+            # ? Checks for keyboard interruption to exit program early
+            exit()
+        except:
+            # ? If checks fail, ask for an input again
+            Fcore = BetterInput("Enter a valid 5th core: ", "sentence", str)
+
+
+# ! Function to avoid getting an error on choosing a 2nd language, without including French
+def IsProperLang2WOF(Lang2Name):
+    while True:
+        try:
+            # ? Checks for improper languages given and raises error
+            if Lang2Name.lower() not in ["hindi", "h", "telugu", "t"]:
+                raise ValueError
+            else:
+                # ? Refactors given input into a uniform input for all
+                if Lang2Name.lower() == "h":
+                    Lang2Name = "Hindi"
+                if Lang2Name.lower() == "t":
+                    Lang2Name = "Telugu"
+                return Lang2Name
+        except KeyboardInterrupt:
+            # ? Checks for keyboard interruption to exit program early
+            exit()
+        except:
+            Lang2Name = BetterInput("Enter a valid 2nd Language: ", "sentence", str)
+
+
+# ! Function to avoid getting an error on choosing a 2nd language, including French
+def IsProperLang2WF(Lang2Name):
+    while True:
+        try:
+            # ? Checks for improper languages given and raises error
+            if Lang2Name.lower() not in ["hindi", "h", "telugu", "t", "french", "f"]:
+                raise ValueError
+            else:
+                # ? Refactors given input into a uniform input for all
+                if Lang2Name.lower() == "h":
+                    Lang2Name = "Hindi"
+                if Lang2Name.lower() == "t":
+                    Lang2Name = "Telugu"
+                if Lang2Name.lower() == "f":
+                    Lang2Name = "French"
+                return Lang2Name
+        except KeyboardInterrupt:
+            # ? Checks for keyboard interruption to exit program early
+            exit()
+        except:
+            Lang2Name = BetterInput("Enter a valid 2nd Language: ", "sentence", str)
+
+
+# ! Function to avoid getting an error on choosing a 3rd language
+def IsProperLang3(Lang3Name, Lang2Name):
+    while True:
+        try:
+            # ? Checks for improper languages given and raises error
+            if Lang3Name.lower() not in [
+                "hindi",
+                "h",
+                "telugu",
+                "t",
+                "french",
+                "f",
+                "sanskrit",
+                "s",
+            ]:
+                raise ValueError
+            else:
+                # ? Refactors given input of a language into a uniform input for all
+                if Lang3Name.lower() == "h":
+                    Lang3Name = "Hindi"
+                if Lang3Name.lower() == "t":
+                    Lang3Name = "Telugu"
+                if Lang3Name.lower() == "f":
+                    Lang3Name = "French"
+                if Lang3Name.lower() == "s":
+                    Lang3Name = "Sanskrit"
+                if Lang2Name == Lang3Name:
+                    raise ValueError
+                return Lang3Name
+        except KeyboardInterrupt:
+            # ? Checks for keyboard interruption to exit program early
+            exit()
+        except:
+            Lang3Name = BetterInput("Enter a valid 3rd Language: ", "sentence", str)
+
+
+# ! Function to avoid getting an error on a wrong roll number input
+def IsProperRollNum(RollNum):
+    # ? Checks for an incorrect roll number between 0 and 60
+    while True:
+        try:
+            if RollNum > 60 or RollNum <= 0:
+                raise ValueError
+            else:
+                return RollNum
+        except KeyboardInterrupt:
+            # ? Checks for keyboard interruption to exit program early
+            exit()
+        except:
+            RollNum = BetterInput("Enter a valid roll number: ", "+", int)
+
+
+# ! Function to clear the terminal screen depending on OS type
+def ClearScreen():
+    # ? Checks for OS type and then clears the terminal
+    sleep(0.5)
+    if name == "posix":
+        system("clear")
+    elif name == "nt":
+        system("cls")
+    print("-" * 70)
+    print("-" * 10, "This is a Student Management system")
+    print("-" * 70)
+    print()
+
+
+# endregion
+#! --------------------------------------------------
+#! --------------------------------------------------
+
+
+#! --------------------------------------------------
+#! ---------- Main Program
+#! --------------------------------------------------
+# region Main Program
 ########! Connecting to the server !########
 ### ! <-- Connecting to the server and creating necessary tables -->
-def TBackend():
-    # ! <-- Globals for easier life -->
-    global BetterInput, IsProperName, dataframe, series, IsProperStream, db, con, cur, IsProperFcore, IsProperLang2WOF, IsProperLang2WF, IsProperLang3, IsProperRollNum, sleep, plt, pwinput, open_new_tab, ClearScreen, IsProperAnswer, IsProperMarks
-
-    # !  <-- Imports -->
-    # ? Time --> For pausing the program
-    from time import sleep
-
-    # ? Web Browser --> For opening dataframe on browser
-    from webbrowser import open_new_tab
-
-    # ? Matplotlib --> for plotting a graph
-    import matplotlib.pyplot as plt
-
-    # ? Pandas --> for storing data
-    from pandas import DataFrame as dataframe
-    from pandas import Series as series
-
-    # ? PWInputs --> for inputting passwords
-    from pwinput import pwinput
-
-    # ? PyMySQL --> for connecting to MySQL
-    from pymysql import connect
-
-    # ? Functions --> for better defaults
-    from functions import (
-        BetterInput,
-        IsProperFcore,
-        IsProperLang2WF,
-        IsProperLang2WOF,
-        IsProperLang3,
-        IsProperName,
-        IsProperRollNum,
-        IsProperAnswer,
-        IsProperStream,
-        IsProperMarks,
-        ClearScreen,
-    )
-
+def Backend():
+    global db, con, cur
     # ! <-- Connecting to MySQL -->
     db = "studentdatabase"
-    con = connect(host="localhost", user="root", password="16computers", database="mysql")
+    con = connect(
+        host="localhost", user="root", password="16computers", database="mysql"
+    )
     cur = con.cursor()
 
     # ! <-- Creating basic Databases and Tables -->
@@ -100,15 +391,15 @@ def TBackend():
 
 ########! Related to Login !########
 ### ! <-- If Signup is called -->
-def RegisterUser(User=None, Pass=None): 
+def RegisterUser(User=None, Pass=None):
     # ? Clearing the screen
     ClearScreen()
     # ? Taking username incase not provided
     if User == None:
-        User = input("Please enter the username: ")
+        User = input("Enter the username: ")
     # ? Taking password incase not provided
     if Pass == None:
-        Pass = pwinput("Please enter the Password: ")
+        Pass = pwinput("Enter the password: ")
     # ? Running the signup system
     cur.execute(f'select * from {db}.teacherDB where user="{User}"')
     userFetch = cur.fetchall()
@@ -119,7 +410,7 @@ def RegisterUser(User=None, Pass=None):
     else:
         ClearScreen()
         print("This user already exists!")
-        LoginUser(User, pwinput("Please enter the password for the user: "))
+        LoginUser(User, pwinput("Enter the password for the user: "))
 
 
 ### ! <-- If Login is called -->
@@ -128,18 +419,20 @@ def LoginUser(User=None, Pass=None):
     ClearScreen()
     # ? Taking username incase not provided
     if User == None:
-        User = input("Please enter the username: ")
+        User = input("Enter your username: ")
     # ? Taking password incase not provided
     if Pass == None:
-        Pass = pwinput("Please enter the Password: ")
+        Pass = pwinput("Enter your password: ")
     # ? Running the login system
     cur.execute(f'select * from {db}.teacherDB where user="{User}"')
     userFetch = cur.fetchall()
     if len(userFetch) == 0:
         ClearScreen()
         print("Username doesn't exist!")
-        register = IsProperAnswer(input("Would you like to create a new user? ").lower())
-        if register == 'yes':
+        register = IsProperAnswer(
+            input("Would you like to create a new user? ").lower()
+        )
+        if register == "yes":
             RegisterUser()
         else:
             ClearScreen()
@@ -232,7 +525,9 @@ def AddStudent():
             # ! Categorizing by stream
             Stream = IsProperStream(
                 BetterInput(
-                    f"Enter {Name}'s stream (mpc, bipc, cec, humanities): ", "sentence", str
+                    f"Enter {Name}'s stream (mpc, bipc, cec, humanities): ",
+                    "sentence",
+                    str,
                 )
             )
             # ? Asking for 5th core name
@@ -245,7 +540,7 @@ def AddStudent():
             )
         else:
             ClearScreen()
-            print("Please enter a valid class.")
+            print("Enter a valid class.")
             continue
         break
     # ? Clearing Screen
@@ -356,9 +651,9 @@ def EditStudent():
     # ? New Class
     while True:
         NewClass = BetterInput(f"Enter {Name}'s new class: ", "+", int)
-        if 1 > NewClass or NewClass > 12: 
+        if 1 > NewClass or NewClass > 12:
             ClearScreen()
-            print('Please enter a valid class.')
+            print("Enter a valid class.")
             continue
         break
     # ? Section
@@ -639,7 +934,9 @@ def AddMarks():
         English = IsProperMarks("Enter marks for English: ", "+", int)
         Math = IsProperMarks("Enter marks for Mathematics: ")
         Science = IsProperMarks("Enter marks for Science: ")
-        SocialSciences = IsProperMarks("Enter marks for Social Science: ",)
+        SocialSciences = IsProperMarks(
+            "Enter marks for Social Science: ",
+        )
         Lang2 = IsProperMarks("Enter marks for 2nd language: ")
         Lang3 = IsProperMarks("Enter marks for 3nd language: ")
         Computers = IsProperMarks("Enter marks for Computers: ")
@@ -701,9 +998,7 @@ def AddMarks():
             FcoreName = CECFetch[0][0]
             English = IsProperMarks("Enter marks for English: ")
             Accounts = IsProperMarks("Enter marks for Accounts: ")
-            BusinessStudies = IsProperMarks(
-                "Enter marks for Business Studies: "
-            )
+            BusinessStudies = IsProperMarks("Enter marks for Business Studies: ")
             Econ = IsProperMarks("Enter marks for Economics: ")
             Fcore = IsProperMarks(f"Enter marks for {FcoreName}: ")
             Total = English + Accounts + BusinessStudies + Econ + Fcore
@@ -845,9 +1140,7 @@ def EditMarks():
             FcoreName = CECFetch[0][0]
             English = IsProperMarks("Enter new marks for English: ")
             Accounts = IsProperMarks("Enter new marks for Accounts: ")
-            BusinessStudies = IsProperMarks(
-                "Enter new marks for Business Studies: "
-            )
+            BusinessStudies = IsProperMarks("Enter new marks for Business Studies: ")
             Econ = IsProperMarks("Enter new marks for Economics: ")
             Fcore = IsProperMarks(f"Enter new marks for {FcoreName}: ")
             Total = English + Accounts + BusinessStudies + Econ + Fcore
@@ -936,8 +1229,9 @@ def RemoveMarks():
 
 ########! Related to viewing data !########
 # ! <-- Showing graph for Marks and Subjects -->
-# TODO Show Graph -> Add Clear Screens
 def ShowGraph():
+    # ? Clearing the screen
+    ClearScreen()
     # ? Admission Number
     AdmNum = BetterInput(f"Enter admission number to view mark statistics: ", "+", int)
     while True:
@@ -953,6 +1247,7 @@ def ShowGraph():
         except:
             print("This admission number does not exist.")
             AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
+    ClearScreen()
     Class = admNumFetch[0][0]
 
     # ? Class 1
@@ -1063,20 +1358,21 @@ def ShowGraph():
         sleep(0.4)
         print("Loading graph...")
         sleep(0.4)
-        plt.title(f"Name: {name} - Admission Number: {AdmNum}")
-        plt.bar(Subjects, SubMarks)
-        plt.xlabel("Subjects")
-        plt.ylabel("Marks")
-        plt.show()
+        title(f"Name: {name} - Admission Number: {AdmNum}")
+        bar(Subjects, SubMarks)
+        xlabel("Subjects")
+        ylabel("Marks")
+        show()
     except KeyboardInterrupt:
-            exit()
+        exit()
     except:
         print("Marks do not exist.")
 
 
 # ! <-- Displaying individual student records -->
-# TODO Student Records -> Add Clear Screens
 def StudentRecords():
+    # ? Clearing the screen
+    ClearScreen()
     # ? Admission Number
     AdmNum = BetterInput(
         f"Enter admission number to view student's records: ", "+", int
@@ -1090,10 +1386,11 @@ def StudentRecords():
             else:
                 break
         except KeyboardInterrupt:
-                exit()
+            exit()
         except:
             print("This admission number does not exist.")
             AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
+    ClearScreen()
     Class = admNumFetch[0][0]
     # ? Class 1
     if Class == 1:
@@ -1300,7 +1597,6 @@ def StudentRecords():
                 prompt = f"{res[1]}'s report card: "
 
     # ! Displaying Records/Report Card
-    ClearScreen()
     print(prompt)
     print()
     Result = series(result).to_string()
@@ -1308,8 +1604,9 @@ def StudentRecords():
 
 
 # ! <-- Displaying one categories records -->
-# TODO Class Records -> Add Clear Screens
 def ClassRecords(Class=None):
+    # ? Clearing the screen
+    ClearScreen()
     # ? Class for the records
     if Class == None:
         while True:
@@ -1321,9 +1618,9 @@ def ClassRecords(Class=None):
                     raise ValueError
                 break
             except KeyboardInterrupt:
-                    exit()
+                exit()
             except:
-                print("Please enter a valid class")
+                print("Enter a valid class")
     if Class == 1:
         Grade = 1
     if Class == 2:
@@ -1345,320 +1642,324 @@ def ClassRecords(Class=None):
     if Class == 10:
         Grade = 10
     # ? Grade 1
-    cur.execute(f"select * from {db}.catone where class={Class}")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            Lang2NameList,
-            EngList,
-            MathList,
-            ScienceList,
-            SocialList,
-            Lang2List,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
-        for i in range(len(res)):
-            # ? Adding values to list for dataframe
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            Lang2NameList.append(res[i][5])
-            EngList.append(res[i][6])
-            MathList.append(res[i][7])
-            ScienceList.append(res[i][8])
-            SocialList.append(res[i][9])
-            Lang2List.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        # ? Dataframe Values
-        result = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "2nd Language Name": Lang2NameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Science": ScienceList,
-            "Social Sciences": SocialList,
-            "2nd Language": Lang2List,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        result = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "2nd Language Name": [None],
-            "English": [None],
-            "Mathematics": [None],
-            "Science": [None],
-            "Social Sciences": [None],
-            "2nd Language": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+    if Grade == 1:
+        cur.execute(f"select * from {db}.catone where class={Class}")
+        res = cur.fetchall()
+        if len(res) != 0:
+            res = [x for x in res]
+            (
+                AdmNumList,
+                NameList,
+                ClassList,
+                SectionList,
+                RollNumList,
+                Lang2NameList,
+                EngList,
+                MathList,
+                ScienceList,
+                SocialList,
+                Lang2List,
+                TotList,
+                AvgList,
+            ) = (
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+            )
+            for i in range(len(res)):
+                # ? Adding values to list for dataframe
+                AdmNumList.append(res[i][0])
+                NameList.append(res[i][1])
+                ClassList.append(res[i][2])
+                SectionList.append(res[i][3])
+                RollNumList.append(res[i][4])
+                Lang2NameList.append(res[i][5])
+                EngList.append(res[i][6])
+                MathList.append(res[i][7])
+                ScienceList.append(res[i][8])
+                SocialList.append(res[i][9])
+                Lang2List.append(res[i][10])
+                TotList.append(res[i][11])
+                AvgList.append(res[i][12])
+            # ? Dataframe Values
+            result = {
+                "Admission Number": AdmNumList,
+                "Name": NameList,
+                "Class": ClassList,
+                "Section": SectionList,
+                "Roll Number": RollNumList,
+                "2nd Language Name": Lang2NameList,
+                "English": EngList,
+                "Mathematics": MathList,
+                "Science": ScienceList,
+                "Social Sciences": SocialList,
+                "2nd Language": Lang2List,
+                "Total": TotList,
+                "Average %": AvgList,
+            }
+        else:
+            result = {
+                "Admission Number": [None],
+                "Name": [None],
+                "Class": [None],
+                "Section": [None],
+                "Roll Number": [None],
+                "2nd Language Name": [None],
+                "English": [None],
+                "Mathematics": [None],
+                "Science": [None],
+                "Social Sciences": [None],
+                "2nd Language": [None],
+                "Total": [None],
+                "Average %": [None],
+            }
 
     # ? Grade 2 to Grade 4
-    cur.execute(f"select * from {db}.cattwo where class={Class}")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            Lang2NameList,
-            EngList,
-            MathList,
-            ScienceList,
-            SocialList,
-            Lang2List,
-            ComputersList,
-            TotList,
-            AvgList,
-        ) = ([], [], [], [], [], [], [], [], [], [], [], [], [], [])
-        # ? Adding values to list for dataframe
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            Lang2NameList.append(res[i][5])
-            EngList.append(res[i][6])
-            MathList.append(res[i][7])
-            ScienceList.append(res[i][8])
-            SocialList.append(res[i][9])
-            Lang2List.append(res[i][10])
-            ComputersList.append(res[i][11])
-            TotList.append(res[i][12])
-            AvgList.append(res[i][13])
-        # ? Dataframe Values
-        result = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "2nd Language Name": Lang2NameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Science": ScienceList,
-            "Social Sciences": SocialList,
-            "2nd Language": Lang2List,
-            "Computers": ComputersList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        result = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "2nd Language Name": [None],
-            "English": [None],
-            "Mathematics": [None],
-            "Science": [None],
-            "Social Sciences": [None],
-            "2nd Language": [None],
-            "Computers": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+    if 2 <= Grade <= 4:
+        cur.execute(f"select * from {db}.cattwo where class={Class}")
+        res = cur.fetchall()
+        if len(res) != 0:
+            res = [x for x in res]
+            (
+                AdmNumList,
+                NameList,
+                ClassList,
+                SectionList,
+                RollNumList,
+                Lang2NameList,
+                EngList,
+                MathList,
+                ScienceList,
+                SocialList,
+                Lang2List,
+                ComputersList,
+                TotList,
+                AvgList,
+            ) = ([], [], [], [], [], [], [], [], [], [], [], [], [], [])
+            # ? Adding values to list for dataframe
+            for i in range(len(res)):
+                AdmNumList.append(res[i][0])
+                NameList.append(res[i][1])
+                ClassList.append(res[i][2])
+                SectionList.append(res[i][3])
+                RollNumList.append(res[i][4])
+                Lang2NameList.append(res[i][5])
+                EngList.append(res[i][6])
+                MathList.append(res[i][7])
+                ScienceList.append(res[i][8])
+                SocialList.append(res[i][9])
+                Lang2List.append(res[i][10])
+                ComputersList.append(res[i][11])
+                TotList.append(res[i][12])
+                AvgList.append(res[i][13])
+            # ? Dataframe Values
+            result = {
+                "Admission Number": AdmNumList,
+                "Name": NameList,
+                "Class": ClassList,
+                "Section": SectionList,
+                "Roll Number": RollNumList,
+                "2nd Language Name": Lang2NameList,
+                "English": EngList,
+                "Mathematics": MathList,
+                "Science": ScienceList,
+                "Social Sciences": SocialList,
+                "2nd Language": Lang2List,
+                "Computers": ComputersList,
+                "Total": TotList,
+                "Average %": AvgList,
+            }
+        else:
+            result = {
+                "Admission Number": [None],
+                "Name": [None],
+                "Class": [None],
+                "Section": [None],
+                "Roll Number": [None],
+                "2nd Language Name": [None],
+                "English": [None],
+                "Mathematics": [None],
+                "Science": [None],
+                "Social Sciences": [None],
+                "2nd Language": [None],
+                "Computers": [None],
+                "Total": [None],
+                "Average %": [None],
+            }
 
     # ? Grade 5 - Grade 8
-    cur.execute(f"select * from {db}.catthree where class={Class}")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            Lang2NameList,
-            Lang3NameList,
-            EngList,
-            MathList,
-            ScienceList,
-            SocialList,
-            Lang2List,
-            Lang3List,
-            ComputersList,
-            TotList,
-            AvgList,
-        ) = ([], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [])
-        # ? Adding values to list for dataframe
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            Lang2NameList.append(res[i][5])
-            Lang3NameList.append(res[i][6])
-            EngList.append(res[i][7])
-            MathList.append(res[i][8])
-            ScienceList.append(res[i][9])
-            SocialList.append(res[i][10])
-            Lang2List.append(res[i][11])
-            Lang3List.append(res[i][12])
-            ComputersList.append(res[i][13])
-            TotList.append(res[i][14])
-            AvgList.append(res[i][15])
-            # ? Dataframe Values
-        result = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "2nd Language Name": Lang2NameList,
-            "3nd Language Name": Lang3NameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Science": ScienceList,
-            "Social Sciences": SocialList,
-            "2nd Language": Lang2List,
-            "3rd Language": Lang3List,
-            "Computers": ComputersList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        result = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "2nd Language Name": [None],
-            "3nd Language Name": [None],
-            "English": [None],
-            "Mathematics": [None],
-            "Science": [None],
-            "Social Sciences": [None],
-            "2nd Language": [None],
-            "3rd Language": [None],
-            "Computers": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+    if 5 <= Grade <= 8:
+        cur.execute(f"select * from {db}.catthree where class={Class}")
+        res = cur.fetchall()
+        if len(res) != 0:
+            res = [x for x in res]
+            (
+                AdmNumList,
+                NameList,
+                ClassList,
+                SectionList,
+                RollNumList,
+                Lang2NameList,
+                Lang3NameList,
+                EngList,
+                MathList,
+                ScienceList,
+                SocialList,
+                Lang2List,
+                Lang3List,
+                ComputersList,
+                TotList,
+                AvgList,
+            ) = ([], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [])
+            # ? Adding values to list for dataframe
+            for i in range(len(res)):
+                AdmNumList.append(res[i][0])
+                NameList.append(res[i][1])
+                ClassList.append(res[i][2])
+                SectionList.append(res[i][3])
+                RollNumList.append(res[i][4])
+                Lang2NameList.append(res[i][5])
+                Lang3NameList.append(res[i][6])
+                EngList.append(res[i][7])
+                MathList.append(res[i][8])
+                ScienceList.append(res[i][9])
+                SocialList.append(res[i][10])
+                Lang2List.append(res[i][11])
+                Lang3List.append(res[i][12])
+                ComputersList.append(res[i][13])
+                TotList.append(res[i][14])
+                AvgList.append(res[i][15])
+                # ? Dataframe Values
+            result = {
+                "Admission Number": AdmNumList,
+                "Name": NameList,
+                "Class": ClassList,
+                "Section": SectionList,
+                "Roll Number": RollNumList,
+                "2nd Language Name": Lang2NameList,
+                "3nd Language Name": Lang3NameList,
+                "English": EngList,
+                "Mathematics": MathList,
+                "Science": ScienceList,
+                "Social Sciences": SocialList,
+                "2nd Language": Lang2List,
+                "3rd Language": Lang3List,
+                "Computers": ComputersList,
+                "Total": TotList,
+                "Average %": AvgList,
+            }
+        else:
+            result = {
+                "Admission Number": [None],
+                "Name": [None],
+                "Class": [None],
+                "Section": [None],
+                "Roll Number": [None],
+                "2nd Language Name": [None],
+                "3nd Language Name": [None],
+                "English": [None],
+                "Mathematics": [None],
+                "Science": [None],
+                "Social Sciences": [None],
+                "2nd Language": [None],
+                "3rd Language": [None],
+                "Computers": [None],
+                "Total": [None],
+                "Average %": [None],
+            }
 
     # ? Grade 9 - Grade 10
-    cur.execute(f"select * from {db}.catfour where class={Class}")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            Lang2NameList,
-            EngList,
-            MathList,
-            ScienceList,
-            SocialList,
-            Lang2List,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
-        # ? Adding values to list for dataframe
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            Lang2NameList.append(res[i][5])
-            EngList.append(res[i][6])
-            MathList.append(res[i][7])
-            ScienceList.append(res[i][8])
-            SocialList.append(res[i][9])
-            Lang2List.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        # ? Dataframe Values
-        result = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "2nd Language Name": Lang2NameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Science": ScienceList,
-            "Social Sciences": SocialList,
-            "2nd Language": Lang2List,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        result = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "2nd Language Name": [None],
-            "English": [None],
-            "Mathematics": [None],
-            "Science": [None],
-            "Social Sciences": [None],
-            "2nd Language": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+    if 9 <= Grade <= 10:
+        cur.execute(f"select * from {db}.catfour where class={Class}")
+        res = cur.fetchall()
+        if len(res) != 0:
+            res = [x for x in res]
+            (
+                AdmNumList,
+                NameList,
+                ClassList,
+                SectionList,
+                RollNumList,
+                Lang2NameList,
+                EngList,
+                MathList,
+                ScienceList,
+                SocialList,
+                Lang2List,
+                TotList,
+                AvgList,
+            ) = (
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+            )
+            # ? Adding values to list for dataframe
+            for i in range(len(res)):
+                AdmNumList.append(res[i][0])
+                NameList.append(res[i][1])
+                ClassList.append(res[i][2])
+                SectionList.append(res[i][3])
+                RollNumList.append(res[i][4])
+                Lang2NameList.append(res[i][5])
+                EngList.append(res[i][6])
+                MathList.append(res[i][7])
+                ScienceList.append(res[i][8])
+                SocialList.append(res[i][9])
+                Lang2List.append(res[i][10])
+                TotList.append(res[i][11])
+                AvgList.append(res[i][12])
+            # ? Dataframe Values
+            result = {
+                "Admission Number": AdmNumList,
+                "Name": NameList,
+                "Class": ClassList,
+                "Section": SectionList,
+                "Roll Number": RollNumList,
+                "2nd Language Name": Lang2NameList,
+                "English": EngList,
+                "Mathematics": MathList,
+                "Science": ScienceList,
+                "Social Sciences": SocialList,
+                "2nd Language": Lang2List,
+                "Total": TotList,
+                "Average %": AvgList,
+            }
+        else:
+            result = {
+                "Admission Number": [None],
+                "Name": [None],
+                "Class": [None],
+                "Section": [None],
+                "Roll Number": [None],
+                "2nd Language Name": [None],
+                "English": [None],
+                "Mathematics": [None],
+                "Science": [None],
+                "Social Sciences": [None],
+                "2nd Language": [None],
+                "Total": [None],
+                "Average %": [None],
+            }
 
     # ? Mathematics, Physics, Chemistry
     cur.execute(f"select * from {db}.catfive where class={Class}")
@@ -1981,11 +2282,12 @@ def ClassRecords(Class=None):
         }
 
     # ? Uploading the dataframe to web browser
+    ClearScreen()
+    print("Opening class records in your default browser!")
     if Class in [11, 12]:
         # ? For class 11 and 12 creating 4 different dataframes
         # ? MPC
         df1 = dataframe(MPCResult)
-        print(df1)
         # ? BiPC
         df2 = dataframe(BiPCResult)
         # ? Commerce
@@ -2024,7 +2326,7 @@ def ClassRecords(Class=None):
         try:
             df = dataframe(result)
         except KeyboardInterrupt:
-                exit()
+            exit()
         except:
             print("Data for this class is not available.")
         with open(f"Class {Grade} Record.html", "w") as f:
@@ -2042,9 +2344,9 @@ def ClassRecords(Class=None):
 
 
 # ! <-- Displaying all students in the school -->
-# TODO School Records -> Add Clear Screens
 def SchoolRecords():
-    
+    # ? Clearing the screen
+    ClearScreen()
     # ? Grade 1
     cur.execute(f"select * from {db}.catone where class=1")
     res = cur.fetchall()
@@ -3487,6 +3789,8 @@ def SchoolRecords():
     dfcec2 = dataframe(CommerceResult2)
     dfhuman2 = dataframe(HumanitiesResult2)
 
+    print("Opening the entire school's records in your default browser! ")
+
     with open(f"All Student Records.html", "w") as f:
         f.write(f"<h5 class='text-center fw-bolder'>Grade 1: </h5>")
         f.write(
@@ -3593,3 +3897,102 @@ def SchoolRecords():
 
     filename = f"All Student Records.html"
     open_new_tab(filename)
+
+
+# endregion
+#! --------------------------------------------------
+#! --------------------------------------------------
+
+
+#! --------------------------------------------------
+#! ---------- Running the program
+#! --------------------------------------------------
+# region Running the program
+########! Imports !########
+########! Required for the script to work !########
+# ? This runs basic functions such as creating requried databases and tables as well as basic vairables.
+Backend()
+
+
+########! Printing Options on the Screen !########
+# ? Login, if username and password do not exist, it will ask if you want to create a user.
+# ? Add attributes if you want to provide username and password
+# ? For example: LoginUser('Username', 'Password')
+LoginUser()
+
+while True:
+    # ? Clearing the screen
+    ClearScreen()
+    # ? Printing the options
+    print("Press 1 for student information")
+    print("Press 2 for marks information")
+    print("Press 3 for records")
+    print("Press 0 to quit")
+    choice = BetterInput(
+        "Enter your choice: ", "+", int, "Enter a valid number between 0 and 3."
+    )
+    ClearScreen()
+    if choice == 1:
+        # ? If student information is called
+        print("Press 1 to add a student")
+        print("Press 2 to edit a student")
+        print("Press 3 to remove a student")
+        print("Press 0 to quit")
+        choice = BetterInput(
+            "Enter your choice: ", "+", int, "Enter a valid number between 0 and 3."
+        )
+        if choice == 1:
+            AddStudent()
+        elif choice == 2:
+            EditStudent()
+        elif choice == 3:
+            RemoveStudent()
+        else:
+            # ? If quit is called or a bad choice is given
+            exit()
+    elif choice == 2:
+        # ? If marks information is called
+        print("Press 1 to add marks for a student")
+        print("Press 2 to edit marks for a student")
+        print("Press 3 to remove marks for a student")
+        print("Press 4 to view a subject/marks graph for a student")
+        print("Press 0 to quit")
+        choice = BetterInput(
+            "Enter your choice: ", "+", int, "Enter a valid number between 0 and 4."
+        )
+        if choice == 1:
+            AddMarks()
+        elif choice == 2:
+            EditMarks()
+        elif choice == 3:
+            RemoveMarks()
+        elif choice == 4:
+            ShowGraph()
+        else:
+            # ? If quit is called or a bad choice is given
+            exit()
+    elif choice == 3:
+        # ? If records is called
+        print("Press 1 to view student records")
+        print("Press 2 to view class records")
+        print("Press 3 to view the school's records")
+        print("Press 0 to quit")
+        choice = BetterInput(
+            "Enter your choice: ", "+", int, "Enter a valid number between 0 and 3."
+        )
+        if choice == 1:
+            StudentRecords()
+        elif choice == 2:
+            ClassRecords()
+        elif choice == 3:
+            SchoolRecords()
+        else:
+            # ? If quit is called or a bad choice is given
+            exit()
+    else:
+        # ? If quit is called or a bad choice is given
+        exit()
+# endregion
+#! --------------------------------------------------
+#! --------------------------------------------------
+## Ending of the program

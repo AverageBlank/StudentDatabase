@@ -1,6 +1,6 @@
 ##
 # ! Function to edit the inputted content to our desired parameters
-def BetterInput(prompt, filter="None", type=str):
+def BetterInput(prompt, filter="None", type=str, error='Enter a proper value.'):
    # ? To check for input parameters and returning the desired input. 
     while True:
         try:
@@ -36,7 +36,7 @@ def BetterInput(prompt, filter="None", type=str):
         except KeyboardInterrupt:
             exit()
         except:
-            print("Enter a proper value.")
+            print(error)
 
 def IsProperMarks(prompt):
    # ? To check for input parameters and returning the desired input. 
