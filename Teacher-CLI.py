@@ -425,17 +425,34 @@ def Backend():
 def RegisterUser(User=None, Pass=None):
     # ? Clearing the screen
     ClearScreen()
-    # ? Taking username incase not provided
     if User == None:
-        User = input("Enter the username: ")
-    # ? Taking password incase not provided
+        while True:
+        # ? Taking username incase not provided
+            User = input("Enter the username: ")
+            for i in User:
+                if i in punctuation or i in digits:
+                    print('Cannot contain symbols or digits')
+                    continue
+            if len(User) < 3: 
+                print("Length of the username must be greater than 3")
+                continue
+            if " " in User:
+                print("Username cannot contain spaces")
+                continue
+            break
     if Pass == None:
-        Pass = pwinput("Enter the password: ")
+        while True:
+        # ? Taking password incase not provided
+            Pass = pwinput("Enter the password: ")
+            if len(Pass) < 8: 
+                print("Length of the password must be greater than 8")
+                continue
+            break
     # ? Running the signup system
     cur.execute(f'select * from {db}.teacherDB where user="{User}"')
     userFetch = cur.fetchall()
     if len(userFetch) == 0:
-        cur.execute(f'insert into {db}.teacherDB values("{User}", "{Pass}")')
+        cur.execute(fr'insert into {db}.teacherDB values("{User}", "{Pass}")')
         con.commit()
         print("Successfully created user.")
     else:
@@ -449,8 +466,14 @@ def LoginUser(User=None, Pass=None):
     # ? Clearing the screen
     ClearScreen()
     # ? Taking username incase not provided
-    if User == None:
-        User = input("Enter your username: ")
+    while True:
+        if User == None:
+            User = input("Enter your username: ")
+            for i in User:
+                if i in punctuation or i in digits:
+                    print('Cannot contain symbols or digits')
+                    continue
+            break
     # ? Taking password incase not provided
     if Pass == None:
         Pass = pwinput("Enter your password: ")
@@ -470,7 +493,7 @@ def LoginUser(User=None, Pass=None):
             print("Exiting Program")
             exit()
     else:
-        if userFetch[0][1] == Pass:
+        if userFetch[0][1] == fr'{Pass}':
             ClearScreen()
             print("Successful login!")
             sleep(1)
@@ -1632,7 +1655,9 @@ def StudentRecords():
     print()
     Result = series(result).to_string()
     print(Result)
-
+    a = input('')
+    if a:
+        pass
 
 # ! <-- Displaying one categories records -->
 def ClassRecords(Class=None):
