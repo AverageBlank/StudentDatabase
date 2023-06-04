@@ -309,7 +309,7 @@ def ClearScreen():
     elif name == "nt":
         system("cls")
     print("-" * 70)
-    print("-" * 10, "This is a Student Management system")
+    print(" " * 17, "This is a Student Management system")
     print("-" * 70)
     print()
 # endregion
