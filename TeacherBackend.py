@@ -4,7 +4,6 @@
 #! ---------- Imports
 #! --------------------------------------------------
 # region Imports
-
 # ? <-- Globals for easier life -->
 global dataframe, series, pwinput, open_new_tab
 
@@ -32,7 +31,6 @@ from pwinput import pwinput
 
 # ? PyMySQL --> for connecting to MySQL
 from pymysql import connect
-
 # endregion
 #! --------------------------------------------------
 #! --------------------------------------------------
@@ -314,8 +312,6 @@ def ClearScreen():
     print("-" * 10, "This is a Student Management system")
     print("-" * 70)
     print()
-
-
 # endregion
 #! --------------------------------------------------
 #! --------------------------------------------------
@@ -3897,8 +3893,6 @@ def SchoolRecords():
 
     filename = f"All Student Records.html"
     open_new_tab(filename)
-
-
 # endregion
 #! --------------------------------------------------
 #! --------------------------------------------------
