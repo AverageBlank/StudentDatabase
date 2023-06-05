@@ -11,7 +11,7 @@ global dataframe, series, pwinput, open_new_tab
 from os import name, system, popen
 
 # ? Importing string to have a valid name without symbols
-from string import digits, punctuation
+from string import digits, punctuation, ascii_letters
 
 # ? Time --> For pausing the program
 from time import sleep
@@ -31,6 +31,9 @@ from pwinput import pwinput
 
 # ? PyMySQL --> for connecting to MySQL
 from pymysql import connect
+
+# ? Maths --> For rounding
+from math import ceil
 # endregion
 #! --------------------------------------------------
 #! --------------------------------------------------
@@ -79,13 +82,33 @@ def BetterInput(prompt, filter="None", type=str, error="Enter a proper value."):
         except:
             print(error)
 
+def IsProperSection(prompt):
+    while True:
+        section = input(prompt)
+        try:
+            if len(section) > 2 or len(section) <= 0:
+                raise ValueError
+            elif section[0] not in ascii_letters:
+                raise KeyError
+            elif len(section) == 2:
+                if section[1] not in digits or section[1] == ' ':
+                    raise TabError
+            return section.upper()
+                
+        except ValueError:
+            print("Length of section cannot have more than 2 or less than 1 character")
+        except KeyError:
+            print('Section can only have alphabets as the first character')
+        except TabError:
+            print('Section cannot have symbols')
+
 
 def IsProperMarks(prompt):
     # ? To check for input parameters and returning the desired input.
     while True:
         try:
             # ? Rounds off the marks to the nearest integer value
-            marks = round(float(input(prompt)))
+            marks = ceil(float(input(prompt)))
             if 0 > marks or marks > 100:
                 # ? If marks aren't between 0 or 100, rejects the marks
                 raise AttributeError
@@ -466,14 +489,15 @@ def LoginUser(User=None, Pass=None):
     # ? Clearing the screen
     ClearScreen()
     # ? Taking username incase not provided
-    while True:
-        if User == None:
-            User = input("Enter your username: ")
-            for i in User:
-                if i in punctuation or i in digits:
-                    print('Cannot contain symbols or digits')
-                    continue
-            break
+    if User == None:
+        while True:
+                User = input("Enter your username: ")
+                for i in User:
+                    if i in punctuation or i in digits:
+                        print('Cannot contain symbols or digits')
+                        break
+                else:
+                    break
     # ? Taking password incase not provided
     if Pass == None:
         Pass = pwinput("Enter your password: ")
@@ -600,7 +624,7 @@ def AddStudent():
     # ? Clearing Screen
     ClearScreen()
     # ? Section
-    Section = BetterInput(f"Enter {Name}'s section: ", "upper", str)
+    Section = IsProperSection(f"Enter {Name}'s section: ")
     # ? Roll Number
     RollNum = IsProperRollNum(BetterInput(f"Enter {Name}'s roll number: ", "+", int))
     # ? Inserting data into a main table
@@ -711,7 +735,7 @@ def EditStudent():
             continue
         break
     # ? Section
-    Section = BetterInput("Enter student's new section: ", "upper", str)
+    Section = IsProperSection(BetterInput("Enter student's new section: ", "upper", str))
     # ? Roll Number
     RollNum = IsProperRollNum(
         BetterInput("Enter student's new roll number: ", "+", int)
@@ -1072,7 +1096,7 @@ def AddMarks():
             Econ = IsProperMarks("Enter marks for Economics: ")
             Fcore = IsProperMarks(f"Enter marks for {FcoreName}: ")
             Total = English + History + PolSci + Econ + Fcore
-            Average = round((Total / 500) * 100, 2)
+            Average = round((Total / 500) * 100)
             cur.execute(
                 f"update {db}.cateight set English={English}, History={History}, PoliticalSciences={PolSci}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
@@ -1111,7 +1135,7 @@ def EditMarks():
         SocialSciences = IsProperMarks("Enter new marks for Social Science: ")
         Lang2 = IsProperMarks("Enter new marks for 2nd language: ")
         Total = English + Math + Science + SocialSciences + Lang2
-        Average = (Total / 500) * 100
+        Average = round((Total / 500) * 100, 2)
         cur.execute(
             f"update {db}.catone set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
@@ -1123,7 +1147,7 @@ def EditMarks():
         Lang2 = IsProperMarks("Enter new marks for 2nd language: ")
         Computers = IsProperMarks("Enter new marks for Computers: ")
         Total = English + Math + Science + SocialSciences + Lang2 + Computers
-        Average = (Total / 600) * 100
+        Average = round((Total / 600) * 100, 2)
         cur.execute(
             f"update {db}.cattwo set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
@@ -1137,7 +1161,7 @@ def EditMarks():
         Lang3 = IsProperMarks("Enter new marks for 3nd language: ")
         Computers = IsProperMarks("Enter new marks for Computers: ")
         Total = English + Math + Science + SocialSciences + Lang2 + Lang3 + Computers
-        Average = (Total / 700) * 100
+        Average = round((Total / 700) * 100, 2)
         cur.execute(
             f"update {db}.catthree set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Lang3={Lang3}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
@@ -1149,7 +1173,7 @@ def EditMarks():
         SocialSciences = IsProperMarks("Enter new marks for Social Science: ")
         Lang2 = IsProperMarks("Enter new marks for 2nd language: ")
         Total = English + Math + Science + SocialSciences + Lang2
-        Average = (Total / 500) * 100
+        Average = round((Total / 500) * 100, 2)
         cur.execute(
             f"update {db}.catfour set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
@@ -1166,7 +1190,7 @@ def EditMarks():
             Chemistry = IsProperMarks("Enter new marks for Chemistry: ")
             Fcore = IsProperMarks(f"Enter new marks for {FcoreName}: ")
             Total = English + Math + Physics + Chemistry + Fcore
-            Average = (Total / 500) * 100
+            Average = round((Total / 500) * 100, 2)
             cur.execute(
                 f"update {db}.catfive set English={English}, Mathematics={Math}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
@@ -1182,7 +1206,7 @@ def EditMarks():
             Chemistry = IsProperMarks("Enter new marks for Chemistry: ")
             Fcore = IsProperMarks(f"Enter new marks for {FcoreName}: ")
             Total = English + Biology + Physics + Chemistry + Fcore
-            Average = (Total / 500) * 100
+            Average = round((Total / 500) * 100, 2)
             cur.execute(
                 f"update {db}.catsix set English={English}, Biology={Biology}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
@@ -1198,7 +1222,7 @@ def EditMarks():
             Econ = IsProperMarks("Enter new marks for Economics: ")
             Fcore = IsProperMarks(f"Enter new marks for {FcoreName}: ")
             Total = English + Accounts + BusinessStudies + Econ + Fcore
-            Average = (Total / 500) * 100
+            Average = round((Total / 500) * 100, 2)
             cur.execute(
                 f"update {db}.catseven set English={English}, Accounts={Accounts}, BusinessStudies={BusinessStudies}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
@@ -1214,7 +1238,7 @@ def EditMarks():
             Econ = IsProperMarks("Enter new marks for Economics: ")
             Fcore = IsProperMarks(f"Enter new marks for {FcoreName}: ")
             Total = English + History + PolSci + Econ + Fcore
-            Average = (Total / 500) * 100
+            Average = round((Total / 500) * 100, 2)
             cur.execute(
                 f"update {db}.cateight set English={English}, History={History}, PoliticalSciences={PolSci}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
@@ -1578,7 +1602,7 @@ def StudentRecords():
         cur.execute(f"select * from {db}.catsix where AdmNum={AdmNum}")
         res = cur.fetchall()
         if len(res) != 0:
-            res = res
+            res = res[0]
             result = {
                 "Admission Number": res[0],
                 "Name": res[1],
