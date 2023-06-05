@@ -34,6 +34,7 @@ from pymysql import connect
 
 # ? Maths --> For rounding
 from math import ceil
+
 # endregion
 #! --------------------------------------------------
 #! --------------------------------------------------
@@ -82,6 +83,12 @@ def BetterInput(prompt, filter="None", type=str, error="Enter a proper value."):
         except:
             print(error)
 
+
+# ! To open our source code when called
+def openCode():
+    open_new_tab("https://github.com/AverageBlank/StudentDatabase")
+
+
 def IsProperSection(prompt):
     while True:
         section = input(prompt)
@@ -91,16 +98,16 @@ def IsProperSection(prompt):
             elif section[0] not in ascii_letters:
                 raise KeyError
             elif len(section) == 2:
-                if section[1] not in digits or section[1] == ' ':
+                if section[1] not in digits or section[1] == " ":
                     raise TabError
             return section.upper()
-                
+
         except ValueError:
             print("Length of section cannot have more than 2 or less than 1 character")
         except KeyError:
-            print('Section can only have alphabets as the first character')
+            print("Section can only have alphabets as the first character")
         except TabError:
-            print('Section cannot have symbols')
+            print("Section cannot have symbols")
 
 
 def IsProperMarks(prompt):
@@ -335,6 +342,8 @@ def ClearScreen():
     print(" " * 17, "This is a Student Management system")
     print("-" * 70)
     print()
+
+
 # endregion
 #! --------------------------------------------------
 #! --------------------------------------------------
@@ -370,7 +379,7 @@ def Backend():
     except ValueError:
         # ? Clear the screen
         ClearScreen()
-        # * Running this if password is not saved 
+        # * Running this if password is not saved
         while True:
             p = input("Please type in your MySQL Password: ")
             try:
@@ -382,7 +391,7 @@ def Backend():
                 a.write(p)
                 a.close()
                 break
-            except: 
+            except:
                 print("Password was wrong, please try again.")
     # ? Connecting to the MySQL server
     con = connect(user="root", host="localhost", password=p)
@@ -450,13 +459,13 @@ def RegisterUser(User=None, Pass=None):
     ClearScreen()
     if User == None:
         while True:
-        # ? Taking username incase not provided
+            # ? Taking username incase not provided
             User = input("Enter the username: ")
             for i in User:
                 if i in punctuation or i in digits:
-                    print('Cannot contain symbols or digits')
+                    print("Cannot contain symbols or digits")
                     continue
-            if len(User) < 3: 
+            if len(User) < 3:
                 print("Length of the username must be greater than 3")
                 continue
             if " " in User:
@@ -465,9 +474,9 @@ def RegisterUser(User=None, Pass=None):
             break
     if Pass == None:
         while True:
-        # ? Taking password incase not provided
+            # ? Taking password incase not provided
             Pass = pwinput("Enter the password: ")
-            if len(Pass) < 8: 
+            if len(Pass) < 8:
                 print("Length of the password must be greater than 8")
                 continue
             break
@@ -475,7 +484,7 @@ def RegisterUser(User=None, Pass=None):
     cur.execute(f'select * from {db}.teacherDB where user="{User}"')
     userFetch = cur.fetchall()
     if len(userFetch) == 0:
-        cur.execute(fr'insert into {db}.teacherDB values("{User}", "{Pass}")')
+        cur.execute(rf'insert into {db}.teacherDB values("{User}", "{Pass}")')
         con.commit()
         print("Successfully created user.")
     else:
@@ -491,13 +500,13 @@ def LoginUser(User=None, Pass=None):
     # ? Taking username incase not provided
     if User == None:
         while True:
-                User = input("Enter your username: ")
-                for i in User:
-                    if i in punctuation or i in digits:
-                        print('Cannot contain symbols or digits')
-                        break
-                else:
+            User = input("Enter your username: ")
+            for i in User:
+                if i in punctuation or i in digits:
+                    print("Cannot contain symbols or digits")
                     break
+            else:
+                break
     # ? Taking password incase not provided
     if Pass == None:
         Pass = pwinput("Enter your password: ")
@@ -517,7 +526,7 @@ def LoginUser(User=None, Pass=None):
             print("Exiting Program")
             exit()
     else:
-        if userFetch[0][1] == fr'{Pass}':
+        if userFetch[0][1] == rf"{Pass}":
             ClearScreen()
             print("Successful login!")
             sleep(1)
@@ -735,7 +744,7 @@ def EditStudent():
             continue
         break
     # ? Section
-    Section = IsProperSection(BetterInput("Enter student's new section: ", "upper", str))
+    Section = IsProperSection(f"Enter {Name}'s section: ")
     # ? Roll Number
     RollNum = IsProperRollNum(
         BetterInput("Enter student's new roll number: ", "+", int)
@@ -1679,9 +1688,10 @@ def StudentRecords():
     print()
     Result = series(result).to_string()
     print(Result)
-    a = input('')
+    a = input("")
     if a:
         pass
+
 
 # ! <-- Displaying one categories records -->
 def ClassRecords(Class=None):
@@ -3977,6 +3987,8 @@ def SchoolRecords():
 
     filename = f"All Student Records.html"
     open_new_tab(filename)
+
+
 # endregion
 #! --------------------------------------------------
 #! --------------------------------------------------
