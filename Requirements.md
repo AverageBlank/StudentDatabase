@@ -32,3 +32,10 @@ python3 -m pip install pwinput
 python3 -m pip install Jinja2
 ```
 
+## Cryptography
+* Related to passwords
+* To install cryptography: 
+```
+python3 -m pip install crpytography
+```
+

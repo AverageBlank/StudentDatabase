@@ -453,7 +453,7 @@ def Backend():
 
 
 ########! Related to Login !########
-### ! <-- If Signup is called -->
+### ! <-- If register is called -->
 def RegisterUser(User=None, Pass=None):
     # ? Clearing the screen
     ClearScreen()
@@ -495,6 +495,8 @@ def RegisterUser(User=None, Pass=None):
 
 ### ! <-- If Login is called -->
 def LoginUser(User=None, Pass=None):
+    # ? Number of wrong passwords entered
+    NPass = 0
     # ? Clearing the screen
     ClearScreen()
     # ? Taking username incase not provided
@@ -526,14 +528,22 @@ def LoginUser(User=None, Pass=None):
             print("Exiting Program")
             exit()
     else:
-        if userFetch[0][1] == rf"{Pass}":
-            ClearScreen()
-            print("Successful login!")
-            sleep(1)
-        else:
-            ClearScreen()
-            print("Wrong Password")
-            exit()
+        while True:
+            if userFetch[0][1] == rf"{Pass}":
+                ClearScreen()
+                print("Successful login!")
+                sleep(1)
+                break
+            else:
+                NPass += 1
+                ClearScreen()
+                if NPass == 3:
+                    print("Wrong password entered too many times.")
+                    exit()
+                else:
+                    print("Wrong Password, please try again.")
+                    Pass = pwinput("Enter your password: ")
+                    continue
 
 
 ########! Related to student info !########
