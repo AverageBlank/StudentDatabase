@@ -1741,6 +1741,10 @@ def ClassRecords(Class=None):
         Grade = 9
     if Class == 10:
         Grade = 10
+    if Class == 11:
+        Grade = 11
+    if Class == 12:
+        Grade = 12
     # ? Grade 1
     if Grade == 1:
         cur.execute(f"select * from {db}.catone where class={Class}")
