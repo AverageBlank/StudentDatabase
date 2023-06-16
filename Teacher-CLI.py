@@ -67,6 +67,8 @@ minimalStyle = Style(
 #! --------------------------------------------------
 # region Functions
 # ! Function to edit the inputted content to our desired parameters
+
+
 def BetterInput(prompt, filter="None", type=str, error="Enter a proper value."):
     # ? To check for input parameters and returning the desired input.
     while True:
@@ -104,8 +106,11 @@ def BetterInput(prompt, filter="None", type=str, error="Enter a proper value."):
             print(error)
 
 # ! To open our source code when called
+
+
 def openCode():
     open_new_tab("https://github.com/AverageBlank/StudentDatabase")
+
 
 def IsProperSection(prompt):
     while True:
@@ -129,6 +134,7 @@ def IsProperSection(prompt):
         except TabError:
             print("Section cannot have symbols")
 
+
 def IsProperMarks(prompt):
     # ? To check for input parameters and returning the desired input.
     while True:
@@ -146,6 +152,8 @@ def IsProperMarks(prompt):
             print("Enter valid marks.")
 
 # ! Function to avoid getting an error on an improper name
+
+
 def IsProperName(name):
     # ? Checks for alphanumeric symbols in a name and rejects it if one exists
     NumericSymbols = [x for x in digits + punctuation]
@@ -158,9 +166,12 @@ def IsProperName(name):
                 # ? If no symbols or numbers in a name, return the name
                 return name
         except:
-            name = questionary.text("Enter a valid student's name: ").ask().title()
+            name = questionary.text(
+                "Enter a valid student's name: ").ask().title()
 
 # ! Function to avoid getting an error on an improper stream
+
+
 def IsProperStream(stream):
     while True:
         try:
@@ -189,6 +200,8 @@ def IsProperStream(stream):
             stream = BetterInput("Enter a valid stream: ", "sentence", str)
 
 # ! Function to avoid getting an error on fcore input depending on user's stream
+
+
 def IsProperFcore(Fcore, Stream):
     while True:
         try:
@@ -237,6 +250,8 @@ def IsProperFcore(Fcore, Stream):
             ).ask()
 
 # ! Function to avoid getting an error on choosing a 2nd language, without including French
+
+
 def IsProperLang2WOF(Lang2Name):
     while True:
         try:
@@ -251,9 +266,12 @@ def IsProperLang2WOF(Lang2Name):
                     Lang2Name = "Telugu"
                 return Lang2Name
         except:
-            Lang2Name = BetterInput("Enter a valid 2nd Language: ", "sentence", str)
+            Lang2Name = BetterInput(
+                "Enter a valid 2nd Language: ", "sentence", str)
 
 # ! Function to avoid getting an error on choosing a 2nd language, including French
+
+
 def IsProperLang2WF(Lang2Name):
     while True:
         try:
@@ -277,9 +295,12 @@ def IsProperLang2WF(Lang2Name):
                     Lang2Name = "French"
                 return Lang2Name
         except:
-            Lang2Name = BetterInput("Enter a valid 2nd Language: ", "sentence", str)
+            Lang2Name = BetterInput(
+                "Enter a valid 2nd Language: ", "sentence", str)
 
 # ! Function to avoid getting an error on choosing a 3rd language
+
+
 def IsProperLang3(Lang3Name, Lang2Name):
     while True:
         try:
@@ -319,6 +340,8 @@ def IsProperLang3(Lang3Name, Lang2Name):
             )
 
 # ! Function to avoid getting an error on a wrong roll number input
+
+
 def IsProperRollNum(RollNum):
     # ? Checks for an incorrect roll number between 0 and 60
     while True:
@@ -333,6 +356,8 @@ def IsProperRollNum(RollNum):
             )
 
 # ! Function to clear the terminal screen depending on OS type
+
+
 def ClearScreen():
     # ? Checks for OS type and then clears the terminal
     sleep(0.5)
@@ -341,7 +366,8 @@ def ClearScreen():
     # print("-" * 70)
     # print(" " * 22 + "[bold italic]Student Management System")
     # print("-" * 70)
-    console.print(Panel.fit("[bold italic yellow]Student Management System", padding=(0,20)))
+    console.print(
+        Panel.fit("[bold italic yellow]Student Management System", padding=(0, 20)))
     print()
 
 # endregion
@@ -354,6 +380,8 @@ def ClearScreen():
 # region Main Program
 ########! Connecting to the server !########
 # ! <-- Connecting to the server and creating necessary tables -->
+
+
 def Backend():
     global db, con, cur
     # ! <-- Connecting to MySQL -->
@@ -380,7 +408,8 @@ def Backend():
         ClearScreen()
         # * Running this if password is not saved
         while True:
-            p = questionary.password("Please type in your MySQL Password: ").ask()
+            p = questionary.password(
+                "Please type in your MySQL Password: ").ask()
             try:
                 # ? Connecting
                 con = connect(user="root", host="localhost", password=p)
@@ -452,6 +481,8 @@ def Backend():
 
 ########! Related to Login !########
 # ! <-- If register is called -->
+
+
 def RegisterUser(User=None, Pass=None):
     # ? Clearing the screen
     ClearScreen()
@@ -490,10 +521,13 @@ def RegisterUser(User=None, Pass=None):
         ClearScreen()
         print("This user already exists!")
         LoginUser(
-            User, questionary.password("Enter the password for the user: ").ask()
+            User, questionary.password(
+                "Enter the password for the user: ").ask()
         )
 
 # ! <-- If Login is called -->
+
+
 def LoginUser(User=None, Pass=None):
     # ? Number of wrong passwords entered
     NPass = 0
@@ -547,6 +581,8 @@ def LoginUser(User=None, Pass=None):
 
 ########! Related to student info !########
 # ! <-- Adding students -->
+
+
 def AddStudent():
     # ? Clearing Screen
     ClearScreen()
@@ -560,7 +596,8 @@ def AddStudent():
     while True:
         try:
             AdmNum = abs(
-                int(questionary.text(f"Enter {Name}'s admission number: ").ask())
+                int(questionary.text(
+                    f"Enter {Name}'s admission number: ").ask())
             )
             break
         except:
@@ -656,7 +693,8 @@ def AddStudent():
     while True:
         try:
             RollNum = IsProperRollNum(
-                abs(int(questionary.text(f"Enter {Name}'s roll number: ").ask()))
+                abs(int(questionary.text(
+                    f"Enter {Name}'s roll number: ").ask()))
             )
             break
         except:
@@ -713,6 +751,8 @@ def AddStudent():
     input()
 
 # ! <-- Editing student information -->
+
+
 def EditStudent():
     # ? Clearing Screen
     ClearScreen()
@@ -729,16 +769,17 @@ def EditStudent():
     while True:
         try:
             AdmNum = str(int(
-                    questionary.autocomplete(
-                        f"Enter admission number of the student: ", adm
-                    ).ask()
-                )
+                questionary.autocomplete(
+                    f"Enter admission number of the student: ", adm
+                ).ask()
+            )
             )
             break
         except:
             print("Please enter a valid admission number.")
     while True:
-        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        cur.execute(
+            f"select class from {db}.allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -750,10 +791,10 @@ def EditStudent():
             while True:
                 try:
                     AdmNum = str(int(
-                            questionary.autocomplete(
-                                f"Enter admission number of the student: ", adm
-                            ).ask()
-                        )
+                        questionary.autocomplete(
+                            f"Enter admission number of the student: ", adm
+                        ).ask()
+                    )
                     )
                     break
                 except:
@@ -790,8 +831,9 @@ def EditStudent():
             OldStream = "humanities"
     # ? New Class
     while True:
-        try: 
-            NewClass = abs(int(questionary.text(f"Enter {Name}'s new class: ").ask()))
+        try:
+            NewClass = abs(int(questionary.text(
+                f"Enter {Name}'s new class: ").ask()))
             if 1 > NewClass or NewClass > 12:
                 ClearScreen()
                 print("Enter a valid class.")
@@ -805,7 +847,8 @@ def EditStudent():
     while True:
         try:
             RollNum = IsProperRollNum(
-                abs(int(questionary.text(f"Enter {Name}'s new roll number: ").ask()))
+                abs(int(questionary.text(
+                    f"Enter {Name}'s new roll number: ").ask()))
             )
             break
         except:
@@ -983,6 +1026,8 @@ def EditStudent():
     input()
 
 # ! <-- Removing the student --> Add clearscreen
+
+
 def RemoveStudent():
     # ? Clearing Screen
     ClearScreen()
@@ -999,10 +1044,10 @@ def RemoveStudent():
     while True:
         try:
             AdmNum = str(int(
-                    questionary.autocomplete(
-                        f"Enter admission number of the student: ", adm
-                    ).ask()
-                )
+                questionary.autocomplete(
+                    f"Enter admission number of the student: ", adm
+                ).ask()
+            )
             )
             break
         except:
@@ -1021,10 +1066,10 @@ def RemoveStudent():
             while True:
                 try:
                     AdmNum = str(int(
-                            questionary.autocomplete(
-                                f"Enter admission number of the student: ", adm
-                            ).ask()
-                        )
+                        questionary.autocomplete(
+                            f"Enter admission number of the student: ", adm
+                        ).ask()
+                    )
                     )
                     break
                 except:
@@ -1054,6 +1099,8 @@ def RemoveStudent():
 
 ########! Related to marks !########
 # ! <-- Adding Marks -->
+
+
 def AddMarks():
     # ? Clearing Screen
     ClearScreen()
@@ -1071,16 +1118,17 @@ def AddMarks():
     while True:
         try:
             AdmNum = str(int(
-                    questionary.autocomplete(
-                        f"Enter admission number of the student: ", adm
-                    ).ask()
-                )
+                questionary.autocomplete(
+                    f"Enter admission number of the student: ", adm
+                ).ask()
+            )
             )
             break
         except:
             print("Please enter a valid admission number.")
     while True:
-        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        cur.execute(
+            f"select class from {db}.allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -1089,13 +1137,13 @@ def AddMarks():
                 break
         except ValueError:
             print("This admission number does not exist.")
-            while True: 
+            while True:
                 try:
                     AdmNum = str(int(
-                            questionary.autocomplete(
-                                f"Enter admission number of the student: ", adm
-                            ).ask()
-                        )
+                        questionary.autocomplete(
+                            f"Enter admission number of the student: ", adm
+                        ).ask()
+                    )
                     )
                     break
                 except:
@@ -1158,7 +1206,8 @@ def AddMarks():
 
     elif 11 <= Class <= 12:
         # ? Mathematics, Physics, Chemistry
-        cur.execute(f"select FcoreName from {db}.catfive where AdmNum={AdmNum}")
+        cur.execute(
+            f"select FcoreName from {db}.catfive where AdmNum={AdmNum}")
         MPCFetch = cur.fetchall()
         if len(MPCFetch) != 0:
             FcoreName = MPCFetch[0][0]
@@ -1190,13 +1239,15 @@ def AddMarks():
             )
 
         # ? Commerce
-        cur.execute(f"select FcoreName from {db}.catseven where AdmNum={AdmNum}")
+        cur.execute(
+            f"select FcoreName from {db}.catseven where AdmNum={AdmNum}")
         CECFetch = cur.fetchall()
         if len(CECFetch) != 0:
             FcoreName = CECFetch[0][0]
             English = IsProperMarks("Enter marks for English: ")
             Accounts = IsProperMarks("Enter marks for Accounts: ")
-            BusinessStudies = IsProperMarks("Enter marks for Business Studies: ")
+            BusinessStudies = IsProperMarks(
+                "Enter marks for Business Studies: ")
             Econ = IsProperMarks("Enter marks for Economics: ")
             Fcore = IsProperMarks(f"Enter marks for {FcoreName}: ")
             Total = English + Accounts + BusinessStudies + Econ + Fcore
@@ -1206,7 +1257,8 @@ def AddMarks():
             )
 
         # ? Humanities
-        cur.execute(f"select FcoreName from {db}.cateight where AdmNum={AdmNum}")
+        cur.execute(
+            f"select FcoreName from {db}.cateight where AdmNum={AdmNum}")
         HumanitiesFetch = cur.fetchall()
         if len(HumanitiesFetch) != 0:
             FcoreName = HumanitiesFetch[0][0]
@@ -1225,6 +1277,8 @@ def AddMarks():
     print(f"Marks have successfully been added.")
 
 # ! <-- Editing Marks -->
+
+
 def EditMarks():
     # ? Clearing the screen
     ClearScreen()
@@ -1233,7 +1287,8 @@ def EditMarks():
         f"Enter admission number of student to change marks: ", "+", int
     )
     while True:
-        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        cur.execute(
+            f"select class from {db}.allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -1299,7 +1354,8 @@ def EditMarks():
 
     elif 11 <= Class <= 12:
         # ? Mathematics, Physics, Chemistry
-        cur.execute(f"select FcoreName from {db}.catfive where AdmNum={AdmNum}")
+        cur.execute(
+            f"select FcoreName from {db}.catfive where AdmNum={AdmNum}")
         MPCFetch = cur.fetchall()
         if len(MPCFetch) != 0:
             FcoreName = MPCFetch[0][0]
@@ -1331,7 +1387,8 @@ def EditMarks():
             )
 
         # ? Commerce
-        cur.execute(f"select FcoreName from {db}.catseven where AdmNum={AdmNum}")
+        cur.execute(
+            f"select FcoreName from {db}.catseven where AdmNum={AdmNum}")
         CECFetch = cur.fetchall()
         if len(CECFetch) != 0:
             FcoreName = CECFetch[0][0]
@@ -1349,7 +1406,8 @@ def EditMarks():
             )
 
         # ? Humanities
-        cur.execute(f"select FcoreName from {db}.cateight where AdmNum={AdmNum}")
+        cur.execute(
+            f"select FcoreName from {db}.cateight where AdmNum={AdmNum}")
         HumanitiesFetch = cur.fetchall()
         if len(HumanitiesFetch) != 0:
             FcoreName = HumanitiesFetch[0][0]
@@ -1368,6 +1426,8 @@ def EditMarks():
     print("Marks have been successfully changed.")
 
 # ! <-- Removing Marks -->
+
+
 def RemoveMarks():
     # ? Clearing the screen
     ClearScreen()
@@ -1424,6 +1484,8 @@ def RemoveMarks():
 
 ########! Related to viewing data !########
 # ! <-- Showing graph for Marks and Subjects -->
+
+
 def ShowGraph():
     # ? Clearing the screen
     ClearScreen()
@@ -1432,7 +1494,8 @@ def ShowGraph():
         f"Enter admission number to view mark statistics: ", "+", int
     )
     while True:
-        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        cur.execute(
+            f"select class from {db}.allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -1531,7 +1594,8 @@ def ShowGraph():
             BiPCResult = BiPCResult[0]
             SubMarks = BiPCResult[6:11]
             name = BiPCResult[1]
-            Subjects = ["English", "Biology", "Physics", "Chemistry", "5th Core"]
+            Subjects = ["English", "Biology",
+                        "Physics", "Chemistry", "5th Core"]
 
         # ? Commerce
         cur.execute(f"select * from {db}.catseven where AdmNum = {AdmNum}")
@@ -1581,6 +1645,8 @@ def ShowGraph():
         input()
 
 # ! <-- Displaying individual student records -->
+
+
 def StudentRecords():
     # ? Clearing the screen
     ClearScreen()
@@ -1589,7 +1655,8 @@ def StudentRecords():
         f"Enter admission number to view student's records: ", "+", int
     )
     while True:
-        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        cur.execute(
+            f"select class from {db}.allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -1652,7 +1719,8 @@ def StudentRecords():
         )
 
         if result["English"] == None:
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True,
+                          header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -1724,7 +1792,8 @@ def StudentRecords():
         )
 
         if result["English"] == None:
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True,
+                          header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -1799,7 +1868,8 @@ def StudentRecords():
             str(res[14]),
         )
         if result["English"] == None:
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True,
+                          header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -1865,7 +1935,8 @@ def StudentRecords():
             str(res[11]),
         )
         if result["English"] == None:
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True,
+                          header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -1905,7 +1976,8 @@ def StudentRecords():
                 "Total": res[11],
                 "Average %": res[12],
             }
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True,
+                          header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -1935,7 +2007,8 @@ def StudentRecords():
                 str(res[12]),
             )
             if result["English"] == None:
-                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table = Table(show_header=True,
+                              header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="magenta")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -1973,7 +2046,8 @@ def StudentRecords():
                 "Total": res[11],
                 "Average %": res[12],
             }
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True,
+                          header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2003,7 +2077,8 @@ def StudentRecords():
                 str(res[12]),
             )
             if result["English"] == None:
-                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table = Table(show_header=True,
+                              header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="green")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -2041,7 +2116,8 @@ def StudentRecords():
                 "Total": res[11],
                 "Average %": res[12],
             }
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True,
+                          header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2071,7 +2147,8 @@ def StudentRecords():
                 str(res[12]),
             )
             if result["English"] == None:
-                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table = Table(show_header=True,
+                              header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="green")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -2109,7 +2186,8 @@ def StudentRecords():
                 "Total": res[11],
                 "Average %": res[12],
             }
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True,
+                          header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2139,7 +2217,8 @@ def StudentRecords():
                 str(res[12]),
             )
             if result["English"] == None:
-                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table = Table(show_header=True,
+                              header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="green")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -2166,6 +2245,8 @@ def StudentRecords():
     input()
 
 # ! <-- Displaying one categories records -->
+
+
 def ClassRecords(Class=None):
     # ? Clearing the screen
     ClearScreen()
@@ -2188,7 +2269,8 @@ def ClassRecords(Class=None):
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True,
+                          header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2223,14 +2305,14 @@ def ClassRecords(Class=None):
             print(f"There are no students in Grade {Grade}")
             input()
 
-
     # ? Grade 2 to Grade 4
     if 2 <= Grade <= 4:
         cur.execute(f"select * from {db}.cattwo where class={Class}")
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True,
+                          header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2268,14 +2350,14 @@ def ClassRecords(Class=None):
             print(f"There are no students in Grade {Grade}")
             input()
 
-
     # ? Grade 5 - Grade 8
     if 5 <= Grade <= 8:
         cur.execute(f"select * from {db}.catthree where class={Class}")
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True,
+                          header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2317,14 +2399,14 @@ def ClassRecords(Class=None):
             print(f"There are no students in Grade {Grade}")
             input()
 
-
     # ? Grade 9 - Grade 10
     if 9 <= Grade <= 10:
         cur.execute(f"select * from {db}.catfour where class={Class}")
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True,
+                          header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2366,7 +2448,8 @@ def ClassRecords(Class=None):
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True,
+                          header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2406,7 +2489,8 @@ def ClassRecords(Class=None):
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True,
+                          header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2441,13 +2525,13 @@ def ClassRecords(Class=None):
             print()
             print(f"There are no students in Grade {Grade} BiPC")
 
-
         # ? Commerce
         cur.execute(f"select * from {db}.catseven where class={Class}")
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True,
+                          header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2482,13 +2566,13 @@ def ClassRecords(Class=None):
             print()
             print(f"There are no students in Grade {Grade} CEC")
 
-
         # ? Humanities
         cur.execute(f"select * from {db}.cateight where class={Class}")
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True,
+                          header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2527,6 +2611,8 @@ def ClassRecords(Class=None):
         ClearScreen()
 
 # ! <-- Displaying all students in the school -->
+
+
 def SchoolRecords():
     # ? Clearing the screen
     global grade1, grade2, grade3, grade4, grade5, grade6, grade7, grade8, grade9, grade10, mpc11, mpc12, bipc11, bipc12, cec11, cec12, human11, human12
@@ -2540,19 +2626,19 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         grade1 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        grade1.add_column("Admission Number")
-        grade1.add_column("Name")
-        grade1.add_column("Class")
-        grade1.add_column("Section")
-        grade1.add_column("Roll Number")
-        grade1.add_column("2nd Language Name")
-        grade1.add_column("English")
-        grade1.add_column("Mathematics")
-        grade1.add_column("Science")
-        grade1.add_column("Social Sciences")
-        grade1.add_column("2nd Language")
-        grade1.add_column("Total")
-        grade1.add_column("Average %")
+        grade1.add_column("Admission Number", style="green")
+        grade1.add_column("Name", style="cyan")
+        grade1.add_column("Class", style="cyan")
+        grade1.add_column("Section", style="cyan")
+        grade1.add_column("Roll Number", style="cyan")
+        grade1.add_column("2nd Language Name", style="cyan")
+        grade1.add_column("English", style="magenta")
+        grade1.add_column("Mathematics", style="magenta")
+        grade1.add_column("Science", style="magenta")
+        grade1.add_column("Social Sciences", style="magenta")
+        grade1.add_column("2nd Language", style="magenta")
+        grade1.add_column("Total", style="red")
+        grade1.add_column("Average %", style="red")
         for i in range(len(res)):
             grade1.add_row(
                 str(res[i][0]),
@@ -2578,20 +2664,20 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         grade2 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        grade2.add_column("Admission Number")
-        grade2.add_column("Name")
-        grade2.add_column("Class")
-        grade2.add_column("Section")
-        grade2.add_column("Roll Number")
-        grade2.add_column("2nd Language Name")
-        grade2.add_column("English")
-        grade2.add_column("Mathematics")
-        grade2.add_column("Science")
-        grade2.add_column("Social Sciences")
-        grade2.add_column("2nd Language")
-        grade2.add_column("Computers")
-        grade2.add_column("Total")
-        grade2.add_column("Average %")
+        grade2.add_column("Admission Number", style="green")
+        grade2.add_column("Name", style="cyan")
+        grade2.add_column("Class", style="cyan")
+        grade2.add_column("Section", style="cyan")
+        grade2.add_column("Roll Number", style="cyan")
+        grade2.add_column("2nd Language Name", style="cyan")
+        grade2.add_column("English", style="magenta")
+        grade2.add_column("Mathematics", style="magenta")
+        grade2.add_column("Science", style="magenta")
+        grade2.add_column("Social Sciences", style="magenta")
+        grade2.add_column("2nd Language", style="magenta")
+        grade2.add_column("Computers", style="magenta")
+        grade2.add_column("Total", style="red")
+        grade2.add_column("Average %", style="red")
         for i in range(len(res)):
             grade2.add_row(
                 str(res[i][0]),
@@ -2618,20 +2704,20 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         grade3 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        grade3.add_column("Admission Number")
-        grade3.add_column("Name")
-        grade3.add_column("Class")
-        grade3.add_column("Section")
-        grade3.add_column("Roll Number")
-        grade3.add_column("2nd Language Name")
-        grade3.add_column("English")
-        grade3.add_column("Mathematics")
-        grade3.add_column("Science")
-        grade3.add_column("Social Sciences")
-        grade3.add_column("2nd Language")
-        grade3.add_column("Computers")
-        grade3.add_column("Total")
-        grade3.add_column("Average %")
+        grade3.add_column("Admission Number", style="green")
+        grade3.add_column("Name", style="cyan")
+        grade3.add_column("Class", style="cyan")
+        grade3.add_column("Section", style="cyan")
+        grade3.add_column("Roll Number", style="cyan")
+        grade3.add_column("2nd Language Name", style="cyan")
+        grade3.add_column("English", style="magenta")
+        grade3.add_column("Mathematics", style="magenta")
+        grade3.add_column("Science", style="magenta")
+        grade3.add_column("Social Sciences", style="magenta")
+        grade3.add_column("2nd Language", style="magenta")
+        grade3.add_column("Computers", style="magenta")
+        grade3.add_column("Total", style="red")
+        grade3.add_column("Average %", style="red")
         for i in range(len(res)):
             grade3.add_row(
                 str(res[i][0]),
@@ -2658,20 +2744,20 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         grade4 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        grade4.add_column("Admission Number")
-        grade4.add_column("Name")
-        grade4.add_column("Class")
-        grade4.add_column("Section")
-        grade4.add_column("Roll Number")
-        grade4.add_column("2nd Language Name")
-        grade4.add_column("English")
-        grade4.add_column("Mathematics")
-        grade4.add_column("Science")
-        grade4.add_column("Social Sciences")
-        grade4.add_column("2nd Language")
-        grade4.add_column("Computers")
-        grade4.add_column("Total")
-        grade4.add_column("Average %")
+        grade4.add_column("Admission Number", style="green")
+        grade4.add_column("Name", style="cyan")
+        grade4.add_column("Class", style="cyan")
+        grade4.add_column("Section", style="cyan")
+        grade4.add_column("Roll Number", style="cyan")
+        grade4.add_column("2nd Language Name", style="cyan")
+        grade4.add_column("English", style="magenta")
+        grade4.add_column("Mathematics", style="magenta")
+        grade4.add_column("Science", style="magenta")
+        grade4.add_column("Social Sciences", style="magenta")
+        grade4.add_column("2nd Language", style="magenta")
+        grade4.add_column("Computers", style="magenta")
+        grade4.add_column("Total", style="red")
+        grade4.add_column("Average %", style="red")
         for i in range(len(res)):
             grade4.add_row(
                 str(res[i][0]),
@@ -2698,22 +2784,22 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         grade5 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        grade5.add_column("Admission Number")
-        grade5.add_column("Name")
-        grade5.add_column("Class")
-        grade5.add_column("Section")
-        grade5.add_column("Roll Number")
-        grade5.add_column("2nd Language Name")
-        grade5.add_column("3rd Language Name")
-        grade5.add_column("English")
-        grade5.add_column("Mathematics")
-        grade5.add_column("Science")
-        grade5.add_column("Social Sciences")
-        grade5.add_column("2nd Language")
-        grade5.add_column("3rd Language")
-        grade5.add_column("Computers")
-        grade5.add_column("Total")
-        grade5.add_column("Average %")
+        grade5.add_column("Admission Number", style="green")
+        grade5.add_column("Name", style="cyan")
+        grade5.add_column("Class", style="cyan")
+        grade5.add_column("Section", style="cyan")
+        grade5.add_column("Roll Number", style="cyan")
+        grade5.add_column("2nd Language Name", style="cyan")
+        grade5.add_column("3rd Language Name", style="cyan")
+        grade5.add_column("English", style="magenta")
+        grade5.add_column("Mathematics", style="magenta")
+        grade5.add_column("Science", style="magenta")
+        grade5.add_column("Social Sciences", style="magenta")
+        grade5.add_column("2nd Language", style="magenta")
+        grade5.add_column("3rd Language", style="magenta")
+        grade5.add_column("Computers", style="magenta")
+        grade5.add_column("Total", style="red")
+        grade5.add_column("Average %", style="red")
         for i in range(len(res)):
             grade5.add_row(
                 str(res[i][0]),
@@ -2742,22 +2828,22 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         grade6 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        grade6.add_column("Admission Number")
-        grade6.add_column("Name")
-        grade6.add_column("Class")
-        grade6.add_column("Section")
-        grade6.add_column("Roll Number")
-        grade6.add_column("2nd Language Name")
-        grade6.add_column("3rd Language Name")
-        grade6.add_column("English")
-        grade6.add_column("Mathematics")
-        grade6.add_column("Science")
-        grade6.add_column("Social Sciences")
-        grade6.add_column("2nd Language")
-        grade6.add_column("3rd Language")
-        grade6.add_column("Computers")
-        grade6.add_column("Total")
-        grade6.add_column("Average %")
+        grade6.add_column("Admission Number", style="green")
+        grade6.add_column("Name", style="cyan")
+        grade6.add_column("Class", style="cyan")
+        grade6.add_column("Section", style="cyan")
+        grade6.add_column("Roll Number", style="cyan")
+        grade6.add_column("2nd Language Name", style="cyan")
+        grade6.add_column("3rd Language Name", style="cyan")
+        grade6.add_column("English", style="magenta")
+        grade6.add_column("Mathematics", style="magenta")
+        grade6.add_column("Science", style="magenta")
+        grade6.add_column("Social Sciences", style="magenta")
+        grade6.add_column("2nd Language", style="magenta")
+        grade6.add_column("3rd Language", style="magenta")
+        grade6.add_column("Computers", style="magenta")
+        grade6.add_column("Total", style="red")
+        grade6.add_column("Average %", style="red")
         for i in range(len(res)):
             grade6.add_row(
                 str(res[i][0]),
@@ -2786,22 +2872,22 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         grade7 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        grade7.add_column("Admission Number")
-        grade7.add_column("Name")
-        grade7.add_column("Class")
-        grade7.add_column("Section")
-        grade7.add_column("Roll Number")
-        grade7.add_column("2nd Language Name")
-        grade7.add_column("3rd Language Name")
-        grade7.add_column("English")
-        grade7.add_column("Mathematics")
-        grade7.add_column("Science")
-        grade7.add_column("Social Sciences")
-        grade7.add_column("2nd Language")
-        grade7.add_column("3rd Language")
-        grade7.add_column("Computers")
-        grade7.add_column("Total")
-        grade7.add_column("Average %")
+        grade7.add_column("Admission Number", style="green")
+        grade7.add_column("Name", style="cyan")
+        grade7.add_column("Class", style="cyan")
+        grade7.add_column("Section", style="cyan")
+        grade7.add_column("Roll Number", style="cyan")
+        grade7.add_column("2nd Language Name", style="cyan")
+        grade7.add_column("3rd Language Name", style="cyan")
+        grade7.add_column("English", style="magenta")
+        grade7.add_column("Mathematics", style="magenta")
+        grade7.add_column("Science", style="magenta")
+        grade7.add_column("Social Sciences", style="magenta")
+        grade7.add_column("2nd Language", style="magenta")
+        grade7.add_column("3rd Language", style="magenta")
+        grade7.add_column("Computers", style="magenta")
+        grade7.add_column("Total", style="red")
+        grade7.add_column("Average %", style="red")
         for i in range(len(res)):
             grade7.add_row(
                 str(res[i][0]),
@@ -2830,22 +2916,22 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         grade8 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        grade8.add_column("Admission Number")
-        grade8.add_column("Name")
-        grade8.add_column("Class")
-        grade8.add_column("Section")
-        grade8.add_column("Roll Number")
-        grade8.add_column("2nd Language Name")
-        grade8.add_column("3rd Language Name")
-        grade8.add_column("English")
-        grade8.add_column("Mathematics")
-        grade8.add_column("Science")
-        grade8.add_column("Social Sciences")
-        grade8.add_column("2nd Language")
-        grade8.add_column("3rd Language")
-        grade8.add_column("Computers")
-        grade8.add_column("Total")
-        grade8.add_column("Average %")
+        grade8.add_column("Admission Number", style="green")
+        grade8.add_column("Name", style="cyan")
+        grade8.add_column("Class", style="cyan")
+        grade8.add_column("Section", style="cyan")
+        grade8.add_column("Roll Number", style="cyan")
+        grade8.add_column("2nd Language Name", style="cyan")
+        grade8.add_column("3rd Language Name", style="cyan")
+        grade8.add_column("English", style="magenta")
+        grade8.add_column("Mathematics", style="magenta")
+        grade8.add_column("Science", style="magenta")
+        grade8.add_column("Social Sciences", style="magenta")
+        grade8.add_column("2nd Language", style="magenta")
+        grade8.add_column("3rd Language", style="magenta")
+        grade8.add_column("Computers", style="magenta")
+        grade8.add_column("Total", style="red")
+        grade8.add_column("Average %", style="red")
         for i in range(len(res)):
             grade8.add_row(
                 str(res[i][0]),
@@ -2874,19 +2960,19 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         grade9 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        grade9.add_column("Admission Number")
-        grade9.add_column("Name")
-        grade9.add_column("Class")
-        grade9.add_column("Section")
-        grade9.add_column("Roll Number")
-        grade9.add_column("2nd Language Name")
-        grade9.add_column("English")
-        grade9.add_column("Mathematics")
-        grade9.add_column("Science")
-        grade9.add_column("Social Sciences")
-        grade9.add_column("2nd Language")
-        grade9.add_column("Total")
-        grade9.add_column("Average %")
+        grade9.add_column("Admission Number", style="green")
+        grade9.add_column("Name", style="cyan")
+        grade9.add_column("Class", style="cyan")
+        grade9.add_column("Section", style="cyan")
+        grade9.add_column("Roll Number", style="cyan")
+        grade9.add_column("2nd Language Name", style="cyan")
+        grade9.add_column("English", style="magenta")
+        grade9.add_column("Mathematics", style="magenta")
+        grade9.add_column("Science", style="magenta")
+        grade9.add_column("Social Sciences", style="magenta")
+        grade9.add_column("2nd Language", style="magenta")
+        grade9.add_column("Total", style="red")
+        grade9.add_column("Average %", style="red")
         for i in range(len(res)):
             grade9.add_row(
                 str(res[i][0]),
@@ -2912,19 +2998,19 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         grade10 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        grade10.add_column("Admission Number")
-        grade10.add_column("Name")
-        grade10.add_column("Class")
-        grade10.add_column("Section")
-        grade10.add_column("Roll Number")
-        grade10.add_column("2nd Language Name")
-        grade10.add_column("English")
-        grade10.add_column("Mathematics")
-        grade10.add_column("Science")
-        grade10.add_column("Social Sciences")
-        grade10.add_column("2nd Language")
-        grade10.add_column("Total")
-        grade10.add_column("Average %")
+        grade10.add_column("Admission Number", style="green")
+        grade10.add_column("Name", style="cyan")
+        grade10.add_column("Class", style="cyan")
+        grade10.add_column("Section", style="cyan")
+        grade10.add_column("Roll Number", style="cyan")
+        grade10.add_column("2nd Language Name", style="cyan")
+        grade10.add_column("English", style="magenta")
+        grade10.add_column("Mathematics", style="magenta")
+        grade10.add_column("Science", style="magenta")
+        grade10.add_column("Social Sciences", style="magenta")
+        grade10.add_column("2nd Language", style="magenta")
+        grade10.add_column("Total", style="red")
+        grade10.add_column("Average %", style="red")
         for i in range(len(res)):
             grade10.add_row(
                 str(res[i][0]),
@@ -2950,19 +3036,19 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         mpc11 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        mpc11.add_column("Admission Number")
-        mpc11.add_column("Name")
-        mpc11.add_column("Class")
-        mpc11.add_column("Section")
-        mpc11.add_column("Roll Number")
-        mpc11.add_column("5th Core Name")
-        mpc11.add_column("English")
-        mpc11.add_column("Mathematics")
-        mpc11.add_column("Physics")
-        mpc11.add_column("Chemistry")
-        mpc11.add_column("5th Core")
-        mpc11.add_column("Total")
-        mpc11.add_column("Average %")
+        mpc11.add_column("Admission Number", style="green")
+        mpc11.add_column("Name", style="cyan")
+        mpc11.add_column("Class", style="cyan")
+        mpc11.add_column("Section", style="cyan")
+        mpc11.add_column("Roll Number", style="cyan")
+        mpc11.add_column("5th Core Name", style="cyan")
+        mpc11.add_column("English", style="magenta")
+        mpc11.add_column("Mathematics", style="magenta")
+        mpc11.add_column("Physics", style="magenta")
+        mpc11.add_column("Chemistry", style="magenta")
+        mpc11.add_column("5th Core", style="magenta")
+        mpc11.add_column("Total", style="red")
+        mpc11.add_column("Average %", style="red")
         for i in range(len(res)):
             mpc11.add_row(
                 str(res[i][0]),
@@ -2988,19 +3074,19 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         mpc12 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        mpc12.add_column("Admission Number")
-        mpc12.add_column("Name")
-        mpc12.add_column("Class")
-        mpc12.add_column("Section")
-        mpc12.add_column("Roll Number")
-        mpc12.add_column("5th Core Name")
-        mpc12.add_column("English")
-        mpc12.add_column("Mathematics")
-        mpc12.add_column("Physics")
-        mpc12.add_column("Chemistry")
-        mpc12.add_column("5th Core")
-        mpc12.add_column("Total")
-        mpc12.add_column("Average %")
+        mpc12.add_column("Admission Number", style="green")
+        mpc12.add_column("Name", style="cyan")
+        mpc12.add_column("Class", style="cyan")
+        mpc12.add_column("Section", style="cyan")
+        mpc12.add_column("Roll Number", style="cyan")
+        mpc12.add_column("5th Core Name", style="cyan")
+        mpc12.add_column("English", style="magenta")
+        mpc12.add_column("Mathematics", style="magenta")
+        mpc12.add_column("Physics", style="magenta")
+        mpc12.add_column("Chemistry", style="magenta")
+        mpc12.add_column("5th Core", style="magenta")
+        mpc12.add_column("Total", style="red")
+        mpc12.add_column("Average %", style="red")
         for i in range(len(res)):
             mpc12.add_row(
                 str(res[i][0]),
@@ -3026,19 +3112,19 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         bipc11 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        bipc11.add_column("Admission Number")
-        bipc11.add_column("Name")
-        bipc11.add_column("Class")
-        bipc11.add_column("Section")
-        bipc11.add_column("Roll Number")
-        bipc11.add_column("5th Core Name")
-        bipc11.add_column("English")
-        bipc11.add_column("Biology")
-        bipc11.add_column("Physics")
-        bipc11.add_column("Chemistry")
-        bipc11.add_column("5th Core")
-        bipc11.add_column("Total")
-        bipc11.add_column("Average %")
+        bipc11.add_column("Admission Number", style="green")
+        bipc11.add_column("Name", style="cyan")
+        bipc11.add_column("Class", style="cyan")
+        bipc11.add_column("Section", style="cyan")
+        bipc11.add_column("Roll Number", style="cyan")
+        bipc11.add_column("5th Core Name", style="cyan")
+        bipc11.add_column("English", style="magenta")
+        bipc11.add_column("Biology", style="magenta")
+        bipc11.add_column("Physics", style="magenta")
+        bipc11.add_column("Chemistry", style="magenta")
+        bipc11.add_column("5th Core", style="magenta")
+        bipc11.add_column("Total", style="red")
+        bipc11.add_column("Average %", style="red")
         for i in range(len(res)):
             bipc11.add_row(
                 str(res[i][0]),
@@ -3064,19 +3150,19 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         bipc12 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        bipc12.add_column("Admission Number")
-        bipc12.add_column("Name")
-        bipc12.add_column("Class")
-        bipc12.add_column("Section")
-        bipc12.add_column("Roll Number")
-        bipc12.add_column("5th Core Name")
-        bipc12.add_column("English")
-        bipc12.add_column("Biology")
-        bipc12.add_column("Physics")
-        bipc12.add_column("Chemistry")
-        bipc12.add_column("5th Core")
-        bipc12.add_column("Total")
-        bipc12.add_column("Average %")
+        bipc12.add_column("Admission Number", style="green")
+        bipc12.add_column("Name", style="cyan")
+        bipc12.add_column("Class", style="cyan")
+        bipc12.add_column("Section", style="cyan")
+        bipc12.add_column("Roll Number", style="cyan")
+        bipc12.add_column("5th Core Name", style="cyan")
+        bipc12.add_column("English", style="magenta")
+        bipc12.add_column("Biology", style="magenta")
+        bipc12.add_column("Physics", style="magenta")
+        bipc12.add_column("Chemistry", style="magenta")
+        bipc12.add_column("5th Core", style="magenta")
+        bipc12.add_column("Total", style="red")
+        bipc12.add_column("Average %", style="red")
         for i in range(len(res)):
             bipc12.add_row(
                 str(res[i][0]),
@@ -3102,19 +3188,19 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         cec11 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        cec11.add_column("Admission Number")
-        cec11.add_column("Name")
-        cec11.add_column("Class")
-        cec11.add_column("Section")
-        cec11.add_column("Roll Number")
-        cec11.add_column("5th Core Name")
-        cec11.add_column("English")
-        cec11.add_column("Accounts")
-        cec11.add_column("Business Studies")
-        cec11.add_column("Economics")
-        cec11.add_column("5th Core")
-        cec11.add_column("Total")
-        cec11.add_column("Average %")
+        cec11.add_column("Admission Number", style="green")
+        cec11.add_column("Name", style="cyan")
+        cec11.add_column("Class", style="cyan")
+        cec11.add_column("Section", style="cyan")
+        cec11.add_column("Roll Number", style="cyan")
+        cec11.add_column("5th Core Name", style="cyan")
+        cec11.add_column("English", style="magenta")
+        cec11.add_column("Accounts", style="magenta")
+        cec11.add_column("Business Studies", style="magenta")
+        cec11.add_column("Economics", style="magenta")
+        cec11.add_column("5th Core", style="magenta")
+        cec11.add_column("Total", style="red")
+        cec11.add_column("Average %", style="red")
         for i in range(len(res)):
             cec11.add_row(
                 str(res[i][0]),
@@ -3140,19 +3226,19 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         cec12 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        cec12.add_column("Admission Number")
-        cec12.add_column("Name")
-        cec12.add_column("Class")
-        cec12.add_column("Section")
-        cec12.add_column("Roll Number")
-        cec12.add_column("5th Core Name")
-        cec12.add_column("English")
-        cec12.add_column("Accounts")
-        cec12.add_column("Business Studies")
-        cec12.add_column("Economics")
-        cec12.add_column("5th Core")
-        cec12.add_column("Total")
-        cec12.add_column("Average %")
+        cec12.add_column("Admission Number", style="green")
+        cec12.add_column("Name", style="cyan")
+        cec12.add_column("Class", style="cyan")
+        cec12.add_column("Section", style="cyan")
+        cec12.add_column("Roll Number", style="cyan")
+        cec12.add_column("5th Core Name", style="cyan")
+        cec12.add_column("English", style="magenta")
+        cec12.add_column("Accounts", style="magenta")
+        cec12.add_column("Business Studies", style="magenta")
+        cec12.add_column("Economics", style="magenta")
+        cec12.add_column("5th Core", style="magenta")
+        cec12.add_column("Total", style="red")
+        cec12.add_column("Average %", style="red")
         for i in range(len(res)):
             cec12.add_row(
                 str(res[i][0]),
@@ -3178,19 +3264,19 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         human11 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        human11.add_column("Admission Number")
-        human11.add_column("Name")
-        human11.add_column("Class")
-        human11.add_column("Section")
-        human11.add_column("Roll Number")
-        human11.add_column("5th Core Name")
-        human11.add_column("English")
-        human11.add_column("History")
-        human11.add_column("Political Sciences")
-        human11.add_column("Economics")
-        human11.add_column("5th Core")
-        human11.add_column("Total")
-        human11.add_column("Average %")
+        human11.add_column("Admission Number", style="green")
+        human11.add_column("Name", style="cyan")
+        human11.add_column("Class", style="cyan")
+        human11.add_column("Section", style="cyan")
+        human11.add_column("Roll Number", style="cyan")
+        human11.add_column("5th Core Name", style="cyan")
+        human11.add_column("English", style="magenta")
+        human11.add_column("History", style="magenta")
+        human11.add_column("Political Sciences", style="magenta")
+        human11.add_column("Economics", style="magenta")
+        human11.add_column("5th Core", style="magenta")
+        human11.add_column("Total", style="red")
+        human11.add_column("Average %", style="red")
         for i in range(len(res)):
             human11.add_row(
                 str(res[i][0]),
@@ -3216,19 +3302,19 @@ def SchoolRecords():
     if len(res) != 0:
         res = [x for x in res]
         human12 = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        human12.add_column("Admission Number")
-        human12.add_column("Name")
-        human12.add_column("Class")
-        human12.add_column("Section")
-        human12.add_column("Roll Number")
-        human12.add_column("5th Core Name")
-        human12.add_column("English")
-        human12.add_column("History")
-        human12.add_column("Political Sciences")
-        human12.add_column("Economics")
-        human12.add_column("5th Core")
-        human12.add_column("Total")
-        human12.add_column("Average %")
+        human12.add_column("Admission Number", style="green")
+        human12.add_column("Name", style="cyan")
+        human12.add_column("Class", style="cyan")
+        human12.add_column("Section", style="cyan")
+        human12.add_column("Roll Number", style="cyan")
+        human12.add_column("5th Core Name", style="cyan")
+        human12.add_column("English", style="magenta")
+        human12.add_column("History", style="magenta")
+        human12.add_column("Political Sciences", style="magenta")
+        human12.add_column("Economics", style="magenta")
+        human12.add_column("5th Core", style="magenta")
+        human12.add_column("Total", style="red")
+        human12.add_column("Average %", style="red")
         for i in range(len(res)):
             human12.add_row(
                 str(res[i][0]),
@@ -3333,6 +3419,7 @@ def SchoolRecords():
 #! --------------------------------------------------
 #! --------------------------------------------------
 
+
 #! --------------------------------------------------
 #! ---------- Running the program
 #! --------------------------------------------------
@@ -3346,7 +3433,7 @@ Backend()
 # ? Login, if username and password do not exist, it will ask if you want to create a user.
 # ? Add attributes if you want to provide username and password
 # ? For example: LoginUser('Username', 'Password')
-LoginUser("hussain", "16computers")
+LoginUser("adithya", "12345678")
 
 while True:
     # ? Clearing the screen
