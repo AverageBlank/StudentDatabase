@@ -5,7 +5,7 @@
 #! --------------------------------------------------
 # region Imports
 # ? Maths --> For rounding
-from math import ceil, e
+from math import ceil
 
 # ? Importing os to get operating system and to run commands in terminal
 from os import name, popen, system
@@ -43,20 +43,7 @@ from rich import box
 from rich.panel import Panel
 
 console = Console()
-minimalStyle = Style(
-    [
-        ("qmark", "fg:#FFFFFF bold"),  # token in front of the question
-        ("question", "bold"),  # question text
-        ("answer", "fg:#FFFFFF bold"),
-        ("pointer", "fg:#FFFFFF bold"),
-        ("highlighted", "fg:#FFFFFF bold"),
-        ("selected", "fg:#FFFFFF"),  # style for a selected item of a checkbox
-        ("separator", "fg:#FFFFFF"),  # separator in lists
-        ("instruction", ""),
-        ("text", "fg:#FFFFFF"),  # plain text
-        ("disabled", "fg:#FFFFFF italic"),
-    ]
-)
+
 
 # endregion
 #! --------------------------------------------------
@@ -105,6 +92,7 @@ def BetterInput(prompt, filter="None", type=str, error="Enter a proper value."):
         except:
             print(error)
 
+
 # ! To open our source code when called
 
 
@@ -114,7 +102,7 @@ def openCode():
 
 def IsProperSection(prompt):
     while True:
-        section = questionary.text(prompt).ask()
+        section = questionary.text(prompt, style=minimalStyle).ask()
         try:
             if len(section) > 2 or len(section) <= 0:
                 raise ValueError
@@ -126,9 +114,7 @@ def IsProperSection(prompt):
             return section.upper()
 
         except ValueError:
-            print(
-                "Length of section cannot have more than 2 or less than 1 character"
-            )
+            print("Length of section cannot have more than 2 or less than 1 character")
         except KeyError:
             print("Section can only have alphabets as the first character")
         except TabError:
@@ -140,7 +126,7 @@ def IsProperMarks(prompt):
     while True:
         try:
             # ? Rounds off the marks to the nearest integer value
-            marks = ceil(float(questionary.text(prompt).ask()))
+            marks = ceil(float(questionary.text(prompt, style=minimalStyle).ask()))
             if 0 > marks or marks > 100:
                 # ? If marks aren't between 0 or 100, rejects the marks
                 raise AttributeError
@@ -150,6 +136,7 @@ def IsProperMarks(prompt):
             print(f"Marks need to be less than 100 and greater than 0.")
         except:
             print("Enter valid marks.")
+
 
 # ! Function to avoid getting an error on an improper name
 
@@ -166,8 +153,8 @@ def IsProperName(name):
                 # ? If no symbols or numbers in a name, return the name
                 return name
         except:
-            name = questionary.text(
-                "Enter a valid student's name: ").ask().title()
+            name = questionary.text("Enter a valid student's name: ", style=minimalStyle).ask().title()
+
 
 # ! Function to avoid getting an error on an improper stream
 
@@ -198,6 +185,7 @@ def IsProperStream(stream):
         except:
             # ? If all checks fail, ask for input again.
             stream = BetterInput("Enter a valid stream: ", "sentence", str)
+
 
 # ! Function to avoid getting an error on fcore input depending on user's stream
 
@@ -246,8 +234,9 @@ def IsProperFcore(Fcore, Stream):
                     "Psychology",
                     "Physical Education",
                     "Fine Arts",
-                ],
+                ], style=minimalStyle, instruction="\n"
             ).ask()
+
 
 # ! Function to avoid getting an error on choosing a 2nd language, without including French
 
@@ -266,8 +255,8 @@ def IsProperLang2WOF(Lang2Name):
                     Lang2Name = "Telugu"
                 return Lang2Name
         except:
-            Lang2Name = BetterInput(
-                "Enter a valid 2nd Language: ", "sentence", str)
+            Lang2Name = BetterInput("Enter a valid 2nd Language: ", "sentence", str)
+
 
 # ! Function to avoid getting an error on choosing a 2nd language, including French
 
@@ -295,8 +284,8 @@ def IsProperLang2WF(Lang2Name):
                     Lang2Name = "French"
                 return Lang2Name
         except:
-            Lang2Name = BetterInput(
-                "Enter a valid 2nd Language: ", "sentence", str)
+            Lang2Name = BetterInput("Enter a valid 2nd Language: ", "sentence", str)
+
 
 # ! Function to avoid getting an error on choosing a 3rd language
 
@@ -333,11 +322,12 @@ def IsProperLang3(Lang3Name, Lang2Name):
             Lang3Name = (
                 questionary.select(
                     "Choose a valid 3rd language: ",
-                    choices=["Hindi", "Telugu", "French", "Sanskrit"],
+                    choices=["Hindi", "Telugu", "French", "Sanskrit"], style=minimalStyle, instruction="\n"
                 )
                 .ask()
                 .title()
             )
+
 
 # ! Function to avoid getting an error on a wrong roll number input
 
@@ -351,9 +341,8 @@ def IsProperRollNum(RollNum):
             else:
                 return RollNum
         except:
-            RollNum = abs(
-                int(questionary.text("Enter a valid roll number: ").ask())
-            )
+            RollNum = abs(int(questionary.text("Enter a valid roll number: ", style=minimalStyle).ask()))
+
 
 # ! Function to clear the terminal screen depending on OS type
 
@@ -367,8 +356,10 @@ def ClearScreen():
     # print(" " * 22 + "[bold italic]Student Management System")
     # print("-" * 70)
     console.print(
-        Panel.fit("[bold italic yellow]Student Management System", padding=(0, 20)))
+        Panel.fit("[bold italic #77DDD4]Student Management System", padding=(0, 20))
+    )
     print()
+
 
 # endregion
 #! --------------------------------------------------
@@ -383,7 +374,17 @@ def ClearScreen():
 
 
 def Backend():
-    global db, con, cur
+    global db, con, cur, console, minimalStyle
+    # ! <-- Colors -->
+    minimalStyle = Style(
+        [
+            ('answer', 'fg:#FFFFFF italic'), # ? White
+            ('question', 'fg:#FFFFFF bold'), # ? White
+            ('pointer', 'fg:#000FFF bold'), # ? Cyan
+            ('highlighted', 'fg:#FFFFFF'), # ? White
+            ('qmark', 'fg:#77DD77'), # ? Green
+        ]
+    )
     # ! <-- Connecting to MySQL -->
     ### ! <-- MySQL Smart Password System --> ! ###
     try:
@@ -408,8 +409,7 @@ def Backend():
         ClearScreen()
         # * Running this if password is not saved
         while True:
-            p = questionary.password(
-                "Please type in your MySQL Password: ").ask()
+            p = questionary.password("Please type in your MySQL Password: ", style=minimalStyle).ask()
             try:
                 # ? Connecting
                 con = connect(user="root", host="localhost", password=p)
@@ -479,6 +479,7 @@ def Backend():
     )
     con.commit()
 
+
 ########! Related to Login !########
 # ! <-- If register is called -->
 
@@ -489,7 +490,7 @@ def RegisterUser(User=None, Pass=None):
     if User == None:
         while True:
             # ? Taking username incase not provided
-            User = questionary.text("Enter the username: ").ask()
+            User = questionary.text("Enter the username: ", style=minimalStyle).ask()
 
             for i in User:
                 if i in punctuation or i in digits:
@@ -505,7 +506,7 @@ def RegisterUser(User=None, Pass=None):
     if Pass == None:
         while True:
             # ? Taking password incase not provided
-            Pass = questionary.password("Enter your password: ").ask()
+            Pass = questionary.password("Enter your password: ", style=minimalStyle).ask()
             if len(Pass) < 8:
                 print("Length of the password must be greater than 8")
                 continue
@@ -520,14 +521,10 @@ def RegisterUser(User=None, Pass=None):
     else:
         ClearScreen()
         print("This user already exists!")
-        LoginUser(
-            User, questionary.password(
-                "Enter the password for the user: ").ask()
-        )
+        LoginUser(User, questionary.password("Enter the password for the user: ", style=minimalStyle).ask())
+
 
 # ! <-- If Login is called -->
-
-
 def LoginUser(User=None, Pass=None):
     # ? Number of wrong passwords entered
     NPass = 0
@@ -536,7 +533,7 @@ def LoginUser(User=None, Pass=None):
     # ? Taking username incase not provided
     if User == None:
         while True:
-            User = questionary.text("Enter the username: ").ask()
+            User = questionary.text("Enter the username: ", style=minimalStyle).ask()
             for i in User:
                 if i in punctuation or i in digits:
                     print("Cannot contain symbols or digits")
@@ -545,7 +542,7 @@ def LoginUser(User=None, Pass=None):
                 break
     # ? Taking password incase not provided
     if Pass == None:
-        Pass = questionary.password("Enter your password: ").ask()
+        Pass = questionary.password("Enter your password: ", style=minimalStyle).ask()
     # ? Running the login system
     cur.execute(f'select * from {db}.teacherDB where user="{User}"')
     userFetch = cur.fetchall()
@@ -553,7 +550,7 @@ def LoginUser(User=None, Pass=None):
         ClearScreen()
         print("Username doesn't exist!")
         register = questionary.confirm(
-            "Would you like to create a new user? ",
+            "Would you like to create a new user? ", style=minimalStyle
         ).ask()
         if register == True:
             RegisterUser()
@@ -576,8 +573,9 @@ def LoginUser(User=None, Pass=None):
                     exit()
                 else:
                     print("Wrong Password, please try again.")
-                    Pass = questionary.password("Enter your password: ").ask()
+                    Pass = questionary.password("Enter your password: ", style=minimalStyle).ask()
                     continue
+
 
 ########! Related to student info !########
 # ! <-- Adding students -->
@@ -589,16 +587,21 @@ def AddStudent():
     # ? Name
     Name = IsProperName(
         questionary.text(
-            "Enter student's name: ",
+            "Enter student's name: ", style=minimalStyle
         ).ask()
     ).title()
     # ? Admission Number
     while True:
         try:
             AdmNum = abs(
-                int(questionary.text(
-                    f"Enter {Name}'s admission number: ").ask())
+                int(
+                    questionary.text(
+                        f"Enter {Name}'s admission number: ", style=minimalStyle
+                    ).ask()
+                )
             )
+            if AdmNum == 0:
+                raise ValueError
             break
         except:
             print("Please enter a valid admission number.")
@@ -614,34 +617,34 @@ def AddStudent():
         except:
             print("This admission number already exists")
             AdmNum = abs(
-                int(questionary.text("Enter a valid admission number: "))
+                int(questionary.text("Enter a valid admission number: ", style=minimalStyle))
             ).ask()
     # ? Asking for class
     while True:
-        Class = abs(int(questionary.text(f"Enter {Name}'s class: ").ask()))
+        Class = abs(int(questionary.text(f"Enter {Name}'s class: ", style=minimalStyle).ask()))
         # ! Categorizing by classes
         if 1 <= Class <= 3:
             # ? Asking for 2nd language name without french
             Lang2Name = questionary.select(
-                f"Choose {Name}'s 2nd language: ", choices=["Hindi", "Telugu"]
+                f"Choose {Name}'s 2nd language: ", choices=["Hindi", "Telugu"] , style=minimalStyle, instruction='\n'
             ).ask()
         elif Class == 4:
             # ? Asking for 2nd language name with french
             Lang2Name = questionary.select(
                 f"Choose {Name}'s 2nd language: ",
-                choices=["Hindi", "Telugu", "French"],
+                choices=["Hindi", "Telugu", "French"], style=minimalStyle, instruction="\n"
             ).ask()
         elif 5 <= Class <= 8:
             # ? Asking for 2nd language name with french
             Lang2Name = questionary.select(
                 f"Choose {Name}'s 2nd language: ",
-                choices=["Hindi", "Telugu", "French"],
+                choices=["Hindi", "Telugu", "French"], style=minimalStyle, instruction="\n"
             ).ask()
             # ? Asking for 3rd language name
             Lang3Name = IsProperLang3(
                 questionary.select(
                     f"Choose {Name}'s 3rd language: ",
-                    choices=["Hindi", "Telugu", "French", "Sanskrit"],
+                    choices=["Hindi", "Telugu", "French", "Sanskrit"], style=minimalStyle, instruction="\n"
                 ).ask(),
                 Lang2Name,
             )
@@ -651,7 +654,7 @@ def AddStudent():
             Lang2Name = (
                 questionary.select(
                     f"Choose {Name}'s 2nd language: ",
-                    choices=["Hindi", "Telugu", "French"],
+                    choices=["Hindi", "Telugu", "French"], style=minimalStyle, instruction='\n'
                 )
                 .ask()
                 .lower()
@@ -661,7 +664,7 @@ def AddStudent():
             Stream = (
                 questionary.select(
                     f"Choose {Name}'s stream: ",
-                    choices=["MPC", "BiPC", "CEC", "Humanities"],
+                    choices=["MPC", "BiPC", "CEC", "Humanities"], style=minimalStyle, instruction='\n'
                 )
                 .ask()
                 .lower()
@@ -676,7 +679,7 @@ def AddStudent():
                         "Psychology",
                         "Physical Education",
                         "Fine Arts",
-                    ],
+                    ], style=minimalStyle, instruction='\n'
                 ).ask(),
                 Stream,
             )
@@ -693,8 +696,7 @@ def AddStudent():
     while True:
         try:
             RollNum = IsProperRollNum(
-                abs(int(questionary.text(
-                    f"Enter {Name}'s roll number: ").ask()))
+                abs(int(questionary.text(f"Enter {Name}'s roll number: ", style=minimalStyle).ask()))
             )
             break
         except:
@@ -750,6 +752,7 @@ def AddStudent():
     print(f"{Name} has been successfully added.")
     input()
 
+
 # ! <-- Editing student information -->
 
 
@@ -768,18 +771,18 @@ def EditStudent():
     # ? Getting the actual admission number
     while True:
         try:
-            AdmNum = str(int(
-                questionary.autocomplete(
-                    f"Enter admission number of the student: ", adm
-                ).ask()
-            )
+            AdmNum = str(
+                int(
+                    questionary.autocomplete(
+                        f"Enter admission number of the student: ", adm, style=minimalStyle
+                    ).ask()
+                )
             )
             break
         except:
             print("Please enter a valid admission number.")
     while True:
-        cur.execute(
-            f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -790,20 +793,19 @@ def EditStudent():
             print("This admission number does not exist.")
             while True:
                 try:
-                    AdmNum = str(int(
-                        questionary.autocomplete(
-                            f"Enter admission number of the student: ", adm
-                        ).ask()
-                    )
+                    AdmNum = str(
+                        int(
+                            questionary.autocomplete(
+                                f"Enter admission number of the student: ", adm, style=minimalStyle
+                            ).ask()
+                        )
                     )
                     break
                 except:
                     print("Please enter a valid admission number")
     ClearScreen()
     # ? Name
-    Name = IsProperName(
-        questionary.text("Enter new student's name: ").ask()
-    ).title()
+    Name = IsProperName(questionary.text("Enter new student's name: ", style=minimalStyle).ask()).title()
 
     # ? Old Class
     OldClass = admNumFetch[0][0]
@@ -832,8 +834,7 @@ def EditStudent():
     # ? New Class
     while True:
         try:
-            NewClass = abs(int(questionary.text(
-                f"Enter {Name}'s new class: ").ask()))
+            NewClass = abs(int(questionary.text(f"Enter {Name}'s new class: ", style=minimalStyle).ask()))
             if 1 > NewClass or NewClass > 12:
                 ClearScreen()
                 print("Enter a valid class.")
@@ -847,8 +848,7 @@ def EditStudent():
     while True:
         try:
             RollNum = IsProperRollNum(
-                abs(int(questionary.text(
-                    f"Enter {Name}'s new roll number: ").ask()))
+                abs(int(questionary.text(f"Enter {Name}'s new roll number: ").ask()))
             )
             break
         except:
@@ -863,37 +863,37 @@ def EditStudent():
     if 1 <= NewClass <= 3:
         # ? Asking for 2nd language name without french
         Lang2Name = questionary.select(
-            f"Choose {Name}'s new 2nd language: ", choices=["Hindi", "Telugu"]
+            f"Choose {Name}'s new 2nd language: ", choices=["Hindi", "Telugu"], style=minimalStyle, instruction='\n'
         ).ask()
     elif NewClass == 4:
         # ? Asking for 2nd language name with french
         Lang2Name = questionary.select(
-            f"Choose {Name}'s new 2nd language: ", choices=["Hindi", "Telugu", "French"]
+            f"Choose {Name}'s new 2nd language: ", choices=["Hindi", "Telugu", "French"], style=minimalStyle, instruction='\n'
         ).ask()
     elif 5 <= NewClass <= 8:
         # ? Asking for 2nd language name with french
         Lang2Name = questionary.select(
-            f"Choose {Name}'s new 2nd language: ", choices=["Hindi", "Telugu", "French"]
+            f"Choose {Name}'s new 2nd language: ", choices=["Hindi", "Telugu", "French"], style=minimalStyle, instruction='\n'
         ).ask()
         # ? Asking for 3rd language name
         Lang3Name = IsProperLang3(
             questionary.select(
                 f"Choose {Name}'s new 3rd language: ",
-                choices=["Hindi", "Telugu", "French", "Sanskrit"],
+                choices=["Hindi", "Telugu", "French", "Sanskrit"], style=minimalStyle, instruction='\n'
             ).ask(),
             Lang2Name,
         )
     elif 9 <= NewClass <= 10:
         # ? Asking for 2nd language name with french
         Lang2Name = questionary.select(
-            f"Choose {Name}'s new 2nd language: ", choices=["Hindi", "Telugu", "French"]
+            f"Choose {Name}'s new 2nd language: ", choices=["Hindi", "Telugu", "French"], style=minimalStyle, instruction='\n'
         ).ask()
     elif NewClass in [11, 12]:
         # ! Categorizing by stream
         NewStream = (
             questionary.select(
                 f"Choose {Name}'s stream: ",
-                choices=["MPC", "BiPC", "CEC", "Humanities"],
+                choices=["MPC", "BiPC", "CEC", "Humanities"], style=minimalStyle, instruction='\n'
             )
             .ask()
             .lower()
@@ -908,7 +908,7 @@ def EditStudent():
                     "Psychology",
                     "Physical Education",
                     "Fine Arts",
-                ],
+                ], style=minimalStyle, instruction='\n'
             ).ask(),
             NewStream,
         )
@@ -1025,7 +1025,8 @@ def EditStudent():
     print("Data has been successfully changed.")
     input()
 
-# ! <-- Removing the student --> Add clearscreen
+
+# ! <-- Removing the student -->
 
 
 def RemoveStudent():
@@ -1043,11 +1044,12 @@ def RemoveStudent():
     # ? Getting the actual admission number
     while True:
         try:
-            AdmNum = str(int(
-                questionary.autocomplete(
-                    f"Enter admission number of the student: ", adm
-                ).ask()
-            )
+            AdmNum = str(
+                int(
+                    questionary.autocomplete(
+                        f"Enter admission number of the student: ", adm, style=minimalStyle
+                    ).ask()
+                )
             )
             break
         except:
@@ -1065,18 +1067,19 @@ def RemoveStudent():
             print("This admission number does not exist.")
             while True:
                 try:
-                    AdmNum = str(int(
-                        questionary.autocomplete(
-                            f"Enter admission number of the student: ", adm
-                        ).ask()
-                    )
+                    AdmNum = str(
+                        int(
+                            questionary.autocomplete(
+                                f"Enter admission number of the student: ", adm, style=minimalStyle
+                            ).ask()
+                        )
                     )
                     break
                 except:
                     print("Please enter a valid admission number.")
     ClearScreen()
     AreYouSure = questionary.confirm(
-        f"Are you sure you want to delete {Name}'s information? "
+        f"Are you sure you want to delete {Name}'s information? ", style=minimalStyle
     ).ask()
     if AreYouSure:
         cur.execute(f"delete from {db}.allstudents where AdmNum={AdmNum}")
@@ -1097,6 +1100,7 @@ def RemoveStudent():
         print("Action cancelled")
         input()
 
+
 ########! Related to marks !########
 # ! <-- Adding Marks -->
 
@@ -1109,7 +1113,6 @@ def AddMarks():
     cur.execute(f"select AdmNum from {db}.allstudents")
     a = cur.fetchall()
     adm = [str(a[i][0]) for i in range(len(a))]
-    print(adm)
     if len(adm) == 0:
         print("You have yet to add a student.")
         input()
@@ -1117,18 +1120,18 @@ def AddMarks():
     # ? Getting the actual admission number
     while True:
         try:
-            AdmNum = str(int(
-                questionary.autocomplete(
-                    f"Enter admission number of the student: ", adm
-                ).ask()
-            )
+            AdmNum = str(
+                int(
+                    questionary.autocomplete(
+                        f"Enter admission number of the student: ", adm, style=minimalStyle
+                    ).ask()
+                )
             )
             break
         except:
             print("Please enter a valid admission number.")
     while True:
-        cur.execute(
-            f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -1139,11 +1142,12 @@ def AddMarks():
             print("This admission number does not exist.")
             while True:
                 try:
-                    AdmNum = str(int(
-                        questionary.autocomplete(
-                            f"Enter admission number of the student: ", adm
-                        ).ask()
-                    )
+                    AdmNum = str(
+                        int(
+                            questionary.autocomplete(
+                                f"Enter admission number of the student: ", adm, style=minimalStyle
+                            ).ask()
+                        )
                     )
                     break
                 except:
@@ -1184,9 +1188,7 @@ def AddMarks():
         Lang2 = IsProperMarks("Enter marks for 2nd language: ")
         Lang3 = IsProperMarks("Enter marks for 3nd language: ")
         Computers = IsProperMarks("Enter marks for Computers: ")
-        Total = (
-            English + Math + Science + SocialSciences + Lang2 + Lang3 + Computers
-        )
+        Total = English + Math + Science + SocialSciences + Lang2 + Lang3 + Computers
         Average = round((Total / 700) * 100, 2)
         cur.execute(
             f"update {db}.catthree set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Lang3={Lang3}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
@@ -1206,8 +1208,7 @@ def AddMarks():
 
     elif 11 <= Class <= 12:
         # ? Mathematics, Physics, Chemistry
-        cur.execute(
-            f"select FcoreName from {db}.catfive where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from {db}.catfive where AdmNum={AdmNum}")
         MPCFetch = cur.fetchall()
         if len(MPCFetch) != 0:
             FcoreName = MPCFetch[0][0]
@@ -1239,15 +1240,13 @@ def AddMarks():
             )
 
         # ? Commerce
-        cur.execute(
-            f"select FcoreName from {db}.catseven where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from {db}.catseven where AdmNum={AdmNum}")
         CECFetch = cur.fetchall()
         if len(CECFetch) != 0:
             FcoreName = CECFetch[0][0]
             English = IsProperMarks("Enter marks for English: ")
             Accounts = IsProperMarks("Enter marks for Accounts: ")
-            BusinessStudies = IsProperMarks(
-                "Enter marks for Business Studies: ")
+            BusinessStudies = IsProperMarks("Enter marks for Business Studies: ")
             Econ = IsProperMarks("Enter marks for Economics: ")
             Fcore = IsProperMarks(f"Enter marks for {FcoreName}: ")
             Total = English + Accounts + BusinessStudies + Econ + Fcore
@@ -1257,8 +1256,7 @@ def AddMarks():
             )
 
         # ? Humanities
-        cur.execute(
-            f"select FcoreName from {db}.cateight where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from {db}.cateight where AdmNum={AdmNum}")
         HumanitiesFetch = cur.fetchall()
         if len(HumanitiesFetch) != 0:
             FcoreName = HumanitiesFetch[0][0]
@@ -1276,29 +1274,57 @@ def AddMarks():
     ClearScreen()
     print(f"Marks have successfully been added.")
 
+
 # ! <-- Editing Marks -->
 
 
 def EditMarks():
-    # ? Clearing the screen
+    # ? Clearing Screen
     ClearScreen()
-    # ? Admission Number
-    AdmNum = BetterInput(
-        f"Enter admission number of student to change marks: ", "+", int
-    )
+    # * Admission Number
+    # ? Getting autocomplete for admission number
+    cur.execute(f"select AdmNum from {db}.allstudents")
+    a = cur.fetchall()
+    adm = [str(a[i][0]) for i in range(len(a))]
+    if len(adm) == 0:
+        print("You have yet to add a student.")
+        input()
+        return None
+    # ? Getting the actual admission number
     while True:
-        cur.execute(
-            f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        try:
+            AdmNum = str(
+                int(
+                    questionary.autocomplete(
+                        f"Enter admission number of the student: ", adm, style=minimalStyle
+                    ).ask()
+                )
+            )
+            break
+        except:
+            print("Please enter a valid admission number.")
+    while True:
+        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
                 raise ValueError
             else:
                 break
-        except:
+        except ValueError:
             print("This admission number does not exist.")
-            AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
-    ClearScreen()
+            while True:
+                try:
+                    AdmNum = str(
+                        int(
+                            questionary.autocomplete(
+                                f"Enter admission number of the student: ", adm, style=minimalStyle
+                            ).ask()
+                        )
+                    )
+                    break
+                except:
+                    print("Please enter a valid admission number.")
     Class = admNumFetch[0][0]
     if Class == 1:
         English = IsProperMarks("Enter new marks for English: ")
@@ -1332,9 +1358,7 @@ def EditMarks():
         Lang2 = IsProperMarks("Enter new marks for 2nd language: ")
         Lang3 = IsProperMarks("Enter new marks for 3nd language: ")
         Computers = IsProperMarks("Enter new marks for Computers: ")
-        Total = (
-            English + Math + Science + SocialSciences + Lang2 + Lang3 + Computers
-        )
+        Total = English + Math + Science + SocialSciences + Lang2 + Lang3 + Computers
         Average = round((Total / 700) * 100, 2)
         cur.execute(
             f"update {db}.catthree set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Lang3={Lang3}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
@@ -1354,8 +1378,7 @@ def EditMarks():
 
     elif 11 <= Class <= 12:
         # ? Mathematics, Physics, Chemistry
-        cur.execute(
-            f"select FcoreName from {db}.catfive where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from {db}.catfive where AdmNum={AdmNum}")
         MPCFetch = cur.fetchall()
         if len(MPCFetch) != 0:
             FcoreName = MPCFetch[0][0]
@@ -1387,16 +1410,13 @@ def EditMarks():
             )
 
         # ? Commerce
-        cur.execute(
-            f"select FcoreName from {db}.catseven where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from {db}.catseven where AdmNum={AdmNum}")
         CECFetch = cur.fetchall()
         if len(CECFetch) != 0:
             FcoreName = CECFetch[0][0]
             English = IsProperMarks("Enter new marks for English: ")
             Accounts = IsProperMarks("Enter new marks for Accounts: ")
-            BusinessStudies = IsProperMarks(
-                "Enter new marks for Business Studies: "
-            )
+            BusinessStudies = IsProperMarks("Enter new marks for Business Studies: ")
             Econ = IsProperMarks("Enter new marks for Economics: ")
             Fcore = IsProperMarks(f"Enter new marks for {FcoreName}: ")
             Total = English + Accounts + BusinessStudies + Econ + Fcore
@@ -1406,8 +1426,7 @@ def EditMarks():
             )
 
         # ? Humanities
-        cur.execute(
-            f"select FcoreName from {db}.cateight where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from {db}.cateight where AdmNum={AdmNum}")
         HumanitiesFetch = cur.fetchall()
         if len(HumanitiesFetch) != 0:
             FcoreName = HumanitiesFetch[0][0]
@@ -1425,16 +1444,36 @@ def EditMarks():
     ClearScreen()
     print("Marks have been successfully changed.")
 
+
 # ! <-- Removing Marks -->
 
 
 def RemoveMarks():
-    # ? Clearing the screen
+    # ? Clearing Screen
     ClearScreen()
+    # * Admission Number
+    # ? Getting autocomplete for admission number
+    cur.execute(f"select AdmNum from {db}.allstudents")
+    a = cur.fetchall()
+    adm = [str(a[i][0]) for i in range(len(a))]
+    if len(adm) == 0:
+        print("You have yet to add a student.")
+        input()
+        return None
+    # ? Getting the actual admission number
     while True:
-        AdmNum = BetterInput(
-            f"Enter admission number of student to remove marks: ", "+", int
-        )
+        try:
+            AdmNum = str(
+                int(
+                    questionary.autocomplete(
+                        f"Enter admission number of the student: ", adm, style=minimalStyle
+                    ).ask()
+                )
+            )
+            break
+        except:
+            print("Please enter a valid admission number.")
+    while True:
         cur.execute(f"select name from {db}.allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
@@ -1443,14 +1482,23 @@ def RemoveMarks():
             else:
                 Name = admNumFetch[0][0]
                 break
-        except:
+        except ValueError:
             print("This admission number does not exist.")
+            while True:
+                try:
+                    AdmNum = str(
+                        int(
+                            questionary.autocomplete(
+                                f"Enter admission number of the student: ", adm, style=minimalStyle
+                            ).ask()
+                        )
+                    )
+                    break
+                except:
+                    print("Please enter a valid admission number.")
     ClearScreen()
-    AreYouSure = BetterInput(
-        f"Are you sure you want to delete the marks of {Name}? (Yes/No): ",
-        type=str,
-    ).lower()
-    if AreYouSure in ["yes", "y"]:
+    AreYouSure = questionary.confirm(f"Are you sure you want to delete the marks of {Name}?", style=minimalStyle).ask()
+    if AreYouSure:
         cur.execute(
             f"update {db}.catone set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
@@ -1482,29 +1530,58 @@ def RemoveMarks():
         ClearScreen()
         print("Action cancelled")
 
+
 ########! Related to viewing data !########
 # ! <-- Showing graph for Marks and Subjects -->
 
 
 def ShowGraph():
-    # ? Clearing the screen
+    # ? Clearing Screen
     ClearScreen()
-    # ? Admission Number
-    AdmNum = BetterInput(
-        f"Enter admission number to view mark statistics: ", "+", int
-    )
+    # * Admission Number
+    # ? Getting autocomplete for admission number
+    cur.execute(f"select AdmNum from {db}.allstudents")
+    a = cur.fetchall()
+    adm = [str(a[i][0]) for i in range(len(a))]
+    if len(adm) == 0:
+        print("You have yet to add a student.")
+        input()
+        return None
+    # ? Getting the actual admission number
     while True:
-        cur.execute(
-            f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        try:
+            AdmNum = str(
+                int(
+                    questionary.autocomplete(
+                        f"Enter admission number of the student: ", adm, style=minimalStyle
+                    ).ask()
+                )
+            )
+            break
+        except:
+            print("Please enter a valid admission number.")
+    while True:
+        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
                 raise ValueError
             else:
                 break
-        except:
+        except ValueError:
             print("This admission number does not exist.")
-            AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
+            while True:
+                try:
+                    AdmNum = str(
+                        int(
+                            questionary.autocomplete(
+                                f"Enter admission number of the student: ", adm, style=minimalStyle
+                            ).ask()
+                        )
+                    )
+                    break
+                except:
+                    print("Please enter a valid admission number.")
     ClearScreen()
     Class = admNumFetch[0][0]
 
@@ -1513,7 +1590,7 @@ def ShowGraph():
     if Class == 1:
         cur.execute(f"select * from {db}.catone where AdmNum={AdmNum}")
         result = cur.fetchall()[0]
-        SubMarks = result[4:9]
+        SubMarks = result[6:11]
         name = result[1]
         Subjects = [
             "English",
@@ -1528,7 +1605,7 @@ def ShowGraph():
     elif 2 <= Class <= 4:
         cur.execute(f"select * from {db}.cattwo where AdmNum={AdmNum}")
         result = cur.fetchall()[0]
-        SubMarks = result[4:10]
+        SubMarks = result[6:12]
         name = result[1]
         Subjects = [
             "English",
@@ -1544,7 +1621,7 @@ def ShowGraph():
     elif 5 <= Class <= 8:
         cur.execute(f"select * from {db}.catthree where AdmNum={AdmNum}")
         result = cur.fetchall()[0]
-        SubMarks = result[4:11]
+        SubMarks = result[7:14]
         name = result[1]
         Subjects = [
             "English",
@@ -1561,7 +1638,7 @@ def ShowGraph():
     elif 9 <= Class <= 10:
         cur.execute(f"select * from {db}.catfour where AdmNum={AdmNum}")
         result = cur.fetchall()[0]
-        SubMarks = result[4:9]
+        SubMarks = result[6:11]
         name = result[1]
         Subjects = [
             "English",
@@ -1594,8 +1671,7 @@ def ShowGraph():
             BiPCResult = BiPCResult[0]
             SubMarks = BiPCResult[6:11]
             name = BiPCResult[1]
-            Subjects = ["English", "Biology",
-                        "Physics", "Chemistry", "5th Core"]
+            Subjects = ["English", "Biology", "Physics", "Chemistry", "5th Core"]
 
         # ? Commerce
         cur.execute(f"select * from {db}.catseven where AdmNum = {AdmNum}")
@@ -1644,28 +1720,56 @@ def ShowGraph():
         print("Marks do not exist.")
         input()
 
+
 # ! <-- Displaying individual student records -->
 
 
 def StudentRecords():
-    # ? Clearing the screen
     ClearScreen()
-    # ? Admission Number
-    AdmNum = BetterInput(
-        f"Enter admission number to view student's records: ", "+", int
-    )
+    # * Admission Number
+    # ? Getting autocomplete for admission number
+    cur.execute(f"select AdmNum from {db}.allstudents")
+    a = cur.fetchall()
+    adm = [str(a[i][0]) for i in range(len(a))]
+    if len(adm) == 0:
+        print("You have yet to add a student.")
+        input()
+        return None
+    # ? Getting the actual admission number
     while True:
-        cur.execute(
-            f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        try:
+            AdmNum = str(
+                int(
+                    questionary.autocomplete(
+                        f"Enter admission number of the student: ", adm, style=minimalStyle
+                    ).ask()
+                )
+            )
+            break
+        except:
+            print("Please enter a valid admission number.")
+    while True:
+        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
                 raise ValueError
             else:
                 break
-        except:
+        except ValueError:
             print("This admission number does not exist.")
-            AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
+            while True:
+                try:
+                    AdmNum = str(
+                        int(
+                            questionary.autocomplete(
+                                f"Enter admission number of the student: ", adm, style=minimalStyle
+                            ).ask()
+                        )
+                    )
+                    break
+                except:
+                    print("Please enter a valid admission number.")
     ClearScreen()
     Class = admNumFetch[0][0]
     # ? Class 1
@@ -1719,8 +1823,7 @@ def StudentRecords():
         )
 
         if result["English"] == None:
-            table = Table(show_header=True,
-                          header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -1766,14 +1869,14 @@ def StudentRecords():
         table.add_column("Section", style="cyan")
         table.add_column("Roll Number", style="cyan")
         table.add_column("2nd Language", style="cyan")
-        table.add_column("English", style='magenta')
-        table.add_column("Mathematics", style='magenta')
-        table.add_column("Science", style='magenta')
-        table.add_column("Social Sciences", style='magenta')
-        table.add_column(res[5], style='magenta')
-        table.add_column("Computers", style='magenta')
+        table.add_column("English", style="magenta")
+        table.add_column("Mathematics", style="magenta")
+        table.add_column("Science", style="magenta")
+        table.add_column("Social Sciences", style="magenta")
+        table.add_column(res[5], style="magenta")
+        table.add_column("Computers", style="magenta")
         table.add_column("Total", style="red")
-        table.add_column("Average %", style='red')
+        table.add_column("Average %", style="red")
         table.add_row(
             str(res[0]),
             str(res[1]),
@@ -1792,8 +1895,7 @@ def StudentRecords():
         )
 
         if result["English"] == None:
-            table = Table(show_header=True,
-                          header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -1868,8 +1970,7 @@ def StudentRecords():
             str(res[14]),
         )
         if result["English"] == None:
-            table = Table(show_header=True,
-                          header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -1935,8 +2036,7 @@ def StudentRecords():
             str(res[11]),
         )
         if result["English"] == None:
-            table = Table(show_header=True,
-                          header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -1976,8 +2076,7 @@ def StudentRecords():
                 "Total": res[11],
                 "Average %": res[12],
             }
-            table = Table(show_header=True,
-                          header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2007,8 +2106,7 @@ def StudentRecords():
                 str(res[12]),
             )
             if result["English"] == None:
-                table = Table(show_header=True,
-                              header_style="bold", box=box.ROUNDED)
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="magenta")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -2046,8 +2144,7 @@ def StudentRecords():
                 "Total": res[11],
                 "Average %": res[12],
             }
-            table = Table(show_header=True,
-                          header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2077,8 +2174,7 @@ def StudentRecords():
                 str(res[12]),
             )
             if result["English"] == None:
-                table = Table(show_header=True,
-                              header_style="bold", box=box.ROUNDED)
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="green")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -2116,8 +2212,7 @@ def StudentRecords():
                 "Total": res[11],
                 "Average %": res[12],
             }
-            table = Table(show_header=True,
-                          header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2147,8 +2242,7 @@ def StudentRecords():
                 str(res[12]),
             )
             if result["English"] == None:
-                table = Table(show_header=True,
-                              header_style="bold", box=box.ROUNDED)
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="green")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -2186,8 +2280,7 @@ def StudentRecords():
                 "Total": res[11],
                 "Average %": res[12],
             }
-            table = Table(show_header=True,
-                          header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2217,8 +2310,7 @@ def StudentRecords():
                 str(res[12]),
             )
             if result["English"] == None:
-                table = Table(show_header=True,
-                              header_style="bold", box=box.ROUNDED)
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="green")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -2243,6 +2335,7 @@ def StudentRecords():
 
     print()
     input()
+
 
 # ! <-- Displaying one categories records -->
 
@@ -2269,8 +2362,7 @@ def ClassRecords(Class=None):
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True,
-                          header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2311,8 +2403,7 @@ def ClassRecords(Class=None):
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True,
-                          header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2356,8 +2447,7 @@ def ClassRecords(Class=None):
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True,
-                          header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2405,8 +2495,7 @@ def ClassRecords(Class=None):
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True,
-                          header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2448,8 +2537,7 @@ def ClassRecords(Class=None):
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True,
-                          header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2489,8 +2577,7 @@ def ClassRecords(Class=None):
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True,
-                          header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2530,8 +2617,7 @@ def ClassRecords(Class=None):
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True,
-                          header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2571,8 +2657,7 @@ def ClassRecords(Class=None):
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True,
-                          header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2610,6 +2695,7 @@ def ClassRecords(Class=None):
             input()
         ClearScreen()
 
+
 # ! <-- Displaying all students in the school -->
 
 
@@ -2617,8 +2703,6 @@ def SchoolRecords():
     # ? Clearing the screen
     global grade1, grade2, grade3, grade4, grade5, grade6, grade7, grade8, grade9, grade10, mpc11, mpc12, bipc11, bipc12, cec11, cec12, human11, human12
     ClearScreen()
-    Grade = ""
-    Class = Grade
 
     # ? Grade 1
     cur.execute(f"select * from {db}.catone where class=1")
@@ -3378,42 +3462,43 @@ def SchoolRecords():
 
     grade11 = tree.add("Grade 11")
     if mpc11:
-        MPeeC11 = grade11.add("MPC").add(mpc11)
+        grade11.add("MPC").add(mpc11)
     else:
-        MPeeC11 = grade11.add("MPC").add("None")
+        grade11.add("MPC").add("None")
     if bipc11:
-        BiPeeC11 = grade11.add("BiPC").add(bipc11)
+        grade11.add("BiPC").add(bipc11)
     else:
-        MPeeC11 = grade11.add("BiPC").add("None")
+        grade11.add("BiPC").add("None")
     if cec11:
-        CEXC11 = grade11.add("CEC").add(cec11)
+        grade11.add("CEC").add(cec11)
     else:
-        CEXC11 = grade11.add("CEC").add("None")
+        grade11.add("CEC").add("None")
     if human11:
-        humani11 = grade11.add("Humanities").add(human11)
+        grade11.add("Humanities").add(human11)
     else:
-        humani11 = grade11.add("Humanities").add("None")
+        grade11.add("Humanities").add("None")
 
     grade12 = tree.add("Grade 12")
     if mpc12:
-        MPeeC12 = grade12.add("MPC").add(mpc12)
+        grade12.add("MPC").add(mpc12)
     else:
-        MPeeC12 = grade12.add("MPC").add("None")
+        grade12.add("MPC").add("None")
     if bipc12:
-        BiPeeC12 = grade12.add("BiPC").add(bipc12)
+        grade12.add("BiPC").add(bipc12)
     else:
-        MPeeC12 = grade12.add("BiPC").add("None")
+        grade12.add("BiPC").add("None")
     if cec12:
-        CEXC12 = grade12.add("CEC").add(cec12)
+        grade12.add("CEC").add(cec12)
     else:
-        CEXC12 = grade12.add("CEC").add("None")
+        grade12.add("CEC").add("None")
     if human12:
-        humani12 = grade12.add("Humanities").add(human12)
+        grade12.add("Humanities").add(human12)
     else:
-        humani12 = grade12.add("Humanities").add("None")
+        grade12.add("Humanities").add("None")
 
     console.print(tree)
     input()
+
 
 # endregion
 #! --------------------------------------------------
@@ -3433,7 +3518,7 @@ Backend()
 # ? Login, if username and password do not exist, it will ask if you want to create a user.
 # ? Add attributes if you want to provide username and password
 # ? For example: LoginUser('Username', 'Password')
-LoginUser("adithya", "12345678")
+LoginUser('hussain', '16computers')
 
 while True:
     # ? Clearing the screen
@@ -3448,7 +3533,7 @@ while True:
             "Records",
             "Back",
             "Quit",
-        ],
+        ],style=minimalStyle, instruction="\n"
     ).ask()
 
     ClearScreen()
@@ -3461,7 +3546,7 @@ while True:
                 "Remove a student",
                 "Back",
                 "Quit",
-            ],
+            ], style=minimalStyle, instruction="\n"
         ).ask()
 
         if studentInfoChoice == "Add a student":
@@ -3478,9 +3563,8 @@ while True:
     elif choice == "Marks information":
         marksInfoChoice = questionary.select(
             "What do you want to do?",
-            choices=["Add marks", "Edit marks", "Remove Marks", "Quit"],
+            choices=["Add marks", "Edit marks", "Remove marks", "Quit"], style=minimalStyle, instruction="\n"
         ).ask()
-
         if marksInfoChoice == "Add marks":
             AddMarks()
         elif marksInfoChoice == "Edit marks":
@@ -3502,7 +3586,7 @@ while True:
                 "Show Subject-Marks Graph",
                 "Back",
                 "Quit",
-            ],
+            ], style=minimalStyle, instruction="\n"
         ).ask()
 
         if recordsChoice == "Student Records":
