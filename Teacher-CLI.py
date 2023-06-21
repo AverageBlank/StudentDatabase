@@ -42,7 +42,6 @@ from pymysql import connect
 
 # ? Pandas --> for storing data
 import pandas as pd
-from pandas import DataFrame
 
 # ? Rich --> For great terminal user interface
 from rich import print
