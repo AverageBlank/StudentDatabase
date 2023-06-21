@@ -2337,32 +2337,29 @@ def StudentRecords():
     input()
 
 
-# ! <-- Displaying one categories records -->
+# ! <-- Displaying one or more categories records -->
 
 
 def ClassRecords(Class=None):
+    Class = 2
     # ? Clearing the screen
     ClearScreen()
     # ? Class for the records
     if Class == None:
-        while True:
-            try:
-                Class = BetterInput(
-                    "What class do you want the student records for? ", "+", int
-                )
-                if 0 > Class or Class > 12:
-                    raise ValueError
-                break
-            except:
-                print("Enter a valid class")
-    Grade = Class
+        Class = questionary.checkbox("What classes do you want records for?", choices=[str(x) for x in range(1,13)]).ask()
+    else: 
+        Class = str(Class)
     # ? Grade 1
-    if Grade == 1:
+    ClearScreen()
+    Grade = Class
+    print(Grade)
+    if '1' in Grade:
+        Class = 1
         cur.execute(f"select * from {db}.catone where class={Class}")
         res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED, title="Grade 1")
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2393,53 +2390,139 @@ def ClassRecords(Class=None):
                     str(res[i][12]),
                 )
             console.print(table)
+            print()
         else:
-            print(f"There are no students in Grade {Grade}")
-            input()
+            print(f"There are no students in Grade 1")
+            print()
 
     # ? Grade 2 to Grade 4
-    if 2 <= Grade <= 4:
-        cur.execute(f"select * from {db}.cattwo where class={Class}")
-        res = cur.fetchall()
-        if len(res) != 0:
-            res = [x for x in res]
-            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-            table.add_column("Admission Number", style="green")
-            table.add_column("Name", style="cyan")
-            table.add_column("Class", style="cyan")
-            table.add_column("Section", style="cyan")
-            table.add_column("Roll Number", style="cyan")
-            table.add_column("2nd Language Name", style="cyan")
-            table.add_column("English", style="magenta")
-            table.add_column("Mathematics", style="magenta")
-            table.add_column("Science", style="magenta")
-            table.add_column("Social Sciences", style="magenta")
-            table.add_column("2nd Language", style="magenta")
-            table.add_column("Computers", style="magenta")
-            table.add_column("Total", style="red")
-            table.add_column("Average %", style="red")
-            for i in range(len(res)):
-                table.add_row(
-                    str(res[i][0]),
-                    str(res[i][1]),
-                    str(res[i][2]),
-                    str(res[i][3]),
-                    str(res[i][4]),
-                    str(res[i][5]),
-                    str(res[i][6]),
-                    str(res[i][7]),
-                    str(res[i][8]),
-                    str(res[i][9]),
-                    str(res[i][10]),
-                    str(res[i][11]),
-                    str(res[i][12]),
-                    str(res[i][13]),
-                )
-            console.print(table)
-            input()
-        else:
-            print(f"There are no students in Grade {Grade}")
-            input()
+    if '2' in Grade or '3' in Grade or '4' in Grade:
+        if '2' in Grade:
+            cur.execute(f"select * from {db}.cattwo where class=2")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED, title="Grade 2")
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("2nd Language Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("Mathematics", style="magenta")
+                table.add_column("Science", style="magenta")
+                table.add_column("Social Sciences", style="magenta")
+                table.add_column("2nd Language", style="magenta")
+                table.add_column("Computers", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                        str(res[i][13]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print(f"There are no students in Grade 2")
+                print()
+        if '3' in Grade:
+            cur.execute(f"select * from {db}.cattwo where class=3")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED, title="Grade 3")
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("2nd Language Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("Mathematics", style="magenta")
+                table.add_column("Science", style="magenta")
+                table.add_column("Social Sciences", style="magenta")
+                table.add_column("2nd Language", style="magenta")
+                table.add_column("Computers", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                        str(res[i][13]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print(f"There are no students in Grade 3")
+                print()
+        if '4' in Grade:
+            cur.execute(f"select * from {db}.cattwo where class=4")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED, title="Grade 4")
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("2nd Language Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("Mathematics", style="magenta")
+                table.add_column("Science", style="magenta")
+                table.add_column("Social Sciences", style="magenta")
+                table.add_column("2nd Language", style="magenta")
+                table.add_column("Computers", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                        str(res[i][13]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print(f"There are no students in Grade 4")
+                print()
 
     # ? Grade 5 - Grade 8
     if 5 <= Grade <= 8:
@@ -2484,10 +2567,10 @@ def ClassRecords(Class=None):
                     str(res[i][15]),
                 )
             console.print(table)
-            input()
+            print()
         else:
+            print()
             print(f"There are no students in Grade {Grade}")
-            input()
 
     # ? Grade 9 - Grade 10
     if 9 <= Grade <= 10:
@@ -2526,10 +2609,10 @@ def ClassRecords(Class=None):
                     str(res[i][12]),
                 )
             console.print(table)
-            input()
+            print()
         else:
+            print()
             print(f"There are no students in Grade {Grade}")
-            input()
 
     # ? Mathematics, Physics, Chemistry
     if Grade in [11, 12]:
@@ -2568,6 +2651,7 @@ def ClassRecords(Class=None):
                     str(res[i][12]),
                 )
             console.print(table)
+            print()
         else:
             print()
             print(f"There are no students in Grade {Grade} MPC")
@@ -2608,6 +2692,7 @@ def ClassRecords(Class=None):
                     str(res[i][12]),
                 )
             console.print(table)
+            print()
         else:
             print()
             print(f"There are no students in Grade {Grade} BiPC")
@@ -2648,6 +2733,7 @@ def ClassRecords(Class=None):
                     str(res[i][12]),
                 )
             console.print(table)
+            print()
         else:
             print()
             print(f"There are no students in Grade {Grade} CEC")
@@ -2688,11 +2774,11 @@ def ClassRecords(Class=None):
                     str(res[i][12]),
                 )
             console.print(table)
-            input()
+            print()
         else:
             print()
             print(f"There are no students in Grade {Grade} Humanities")
-            input()
+        input()
         ClearScreen()
 
 
