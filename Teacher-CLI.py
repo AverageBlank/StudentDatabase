@@ -11,7 +11,7 @@
 # * ---- Source Code:
 # * ------- https://github.com/AverageBlank/StudentDatabase
 
-# endregion 
+# endregion
 
 
 #! --------------------------------------------------
@@ -21,17 +21,14 @@
 # ? Maths --> For rounding
 from math import ceil
 
-# ? Importing os to get operating system and to run commands in terminal
-from os import name, popen, system
+# ? Importing OS to get operating system, to run commands in terminal, to block print
+from os import name as OsName, popen, system, getcwd, path, makedirs, devnull
 
 # ? Importing string to have a valid name without symbols
 from string import ascii_letters, digits, punctuation
 
 # ? Time --> For pausing the program
 from time import sleep
-
-# ? Web Browser --> For opening dataframe on browser
-from webbrowser import open_new_tab
 
 # ? Questionary --> To provide choices and autocompletions
 import questionary
@@ -44,6 +41,7 @@ from matplotlib.pyplot import bar, show, title, xlabel, ylabel
 from pymysql import connect
 
 # ? Pandas --> for storing data
+import pandas as pd
 from pandas import DataFrame
 
 # ? Rich --> For great terminal user interface
@@ -59,6 +57,9 @@ from rich.progress import (
 )
 from rich.align import Align
 
+# ? Sys --> Prevents printing
+import sys
+
 console = Console()
 
 
@@ -71,6 +72,16 @@ console = Console()
 #! ---------- Functions
 #! --------------------------------------------------
 # region Functions
+# ! Function to prevent printing
+def DisablePrint():
+    sys.stdout = open(devnull, "w")
+
+
+# ! Function to enable printing
+def EnablePrint():
+    sys.stdout = sys.__stdout__
+
+
 # ! Function to avoid getting improper section
 def IsProperSection(prompt):
     while True:
@@ -248,14 +259,15 @@ def ClearScreen():
     # ? Checks for OS type and then clears the terminal
     sleep(0.2)
     # ? Posix here is Macintosh and Linux, nt is Windows.
-    system("clear" if name == "posix" else "cls")
+    system("clear" if OsName == "posix" else "cls")
     console.print(
-        Panel.fit("[bold italic #77DDD4]Student Management System", padding=(0, 22)))
+        Panel.fit("[bold italic #77DDD4]Student Management System", padding=(0, 22))
+    )
     print()
 
 
 # ! Function to display a status bar
-def StatBar(time:float, desc:str):
+def StatBar(time: float, desc: str):
     progress_bar = Progress(
         TextColumn(f"{desc} "),
         BarColumn(),
@@ -263,8 +275,9 @@ def StatBar(time:float, desc:str):
     )
     with progress_bar as p:
         for i in p.track(range(100), description=desc):
-            sleep(time/100)
+            sleep(time / 100)
     sleep(0.5)
+
 
 # endregion
 #! --------------------------------------------------
@@ -286,14 +299,14 @@ def Backend():
             ("question", "fg:#FFFFFF bold"),  # ? White
             ("pointer", "fg:#00FFFF bold"),  # ? Cyan
             ("highlighted", "fg:#FFFFFF"),  # ? White
-            ("selected", "fg:#A9A9A9"), # ? Grey
+            ("selected", "fg:#A9A9A9"),  # ? Grey
             ("qmark", "fg:#77DD77"),  # ? Green
         ]
     )
     # ! <-- Connecting to MySQL -->
     ### ! <-- MySQL Smart Password System --> ! ###
     try:
-        if name == "nt":
+        if OsName == "nt":
             chk = popen("cd %userprofile% && dir").read()
             CWD = popen("cd %userprofile% && chdir").read()
             CWD = CWD[:-1] + "\\"
@@ -302,7 +315,7 @@ def Backend():
                 p = p[:-1]
             else:
                 raise ValueError
-        elif name == "posix":
+        elif OsName == "posix":
             chk = popen("ls ~").read()
             CWD = popen("cd ~ && pwd").read()
             if "mysqlpassword" in chk:
@@ -475,7 +488,9 @@ def LoginUser(User=None, Pass=None):
             if userFetch[0][1] == rf"{Pass}":
                 ClearScreen()
                 print("Successful login!")
-                Align.center(StatBar(2, desc="[cyan]Loading Student Database"),vertical="middle")
+                Align.center(
+                    StatBar(2, desc="[cyan]Loading Student Database"), vertical="middle"
+                )
                 break
             else:
                 NPass += 1
@@ -2317,7 +2332,7 @@ def ClassRecords(Class=None):
         Class = questionary.checkbox(
             "What classes do you want records for?",
             choices=[str(x) for x in range(1, 13)],
-            style=minimalStyle
+            style=minimalStyle,
         ).ask()
     else:
         Class = str(Class)
@@ -2329,14 +2344,13 @@ def ClassRecords(Class=None):
         Class = 1
         cur.execute(f"select * from {db}.catone where class={Class}")
         res = cur.fetchall()
+
         if len(res) != 0:
             res = [x for x in res]
             console.print(
                 Panel.fit("[bold italic bright_yellow]Grade 1", padding=(0, 20))
             )
-            table = Table(
-                show_header=True, header_style="bold", box=box.ROUNDED
-            )
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
             table.add_column("Admission Number", style="green")
             table.add_column("Name", style="cyan")
             table.add_column("Class", style="cyan")
@@ -2480,11 +2494,7 @@ def ClassRecords(Class=None):
                 console.print(
                     Panel.fit("[bold italic bright_yellow]Grade 4", padding=(0, 20))
                 )
-                table = table(
-                    show_header=True,
-                    header_style="bold",
-                    box=box.rounded
-                )
+                table = table(show_header=True, header_style="bold", box=box.rounded)
                 table.add_column("admission number", style="green")
                 table.add_column("name", style="cyan")
                 table.add_column("class", style="cyan")
@@ -2532,11 +2542,7 @@ def ClassRecords(Class=None):
                 console.print(
                     Panel.fit("[bold italic bright_yellow]Grade 5", padding=(0, 20))
                 )
-                table = Table(
-                    show_header=True,
-                    header_style="bold",
-                    box=box.ROUNDED
-                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="green")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -2826,367 +2832,508 @@ def ClassRecords(Class=None):
                 print(f"There are no students in Grade 10")
                 print()
 
-        if "11" in Grade or "12"  in Grade:
-            if "11" in Grade:
-                # ? Mathematics, Physics, Chemistry
-                cur.execute(f"select * from {db}.catfive where class={11}")
-                res = cur.fetchall()
-                if len(res) != 0:
-                    res = [x for x in res]
-                    console.print(
-                        Panel.fit("[bold italic bright_yellow]Grade 11 MPC", padding=(0, 20))
+    if "11" in Grade or "12" in Grade:
+        if "11" in Grade:
+            # ? Mathematics, Physics, Chemistry
+            cur.execute(f"select * from {db}.catfive where class={11}")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit(
+                        "[bold italic bright_yellow]Grade 11 MPC", padding=(0, 20)
                     )
-                    table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-                    table.add_column("Admission Number", style="green")
-                    table.add_column("Name", style="cyan")
-                    table.add_column("Class", style="cyan")
-                    table.add_column("Section", style="cyan")
-                    table.add_column("Roll Number", style="cyan")
-                    table.add_column("5th Core Name", style="cyan")
-                    table.add_column("English", style="magenta")
-                    table.add_column("Mathematics", style="magenta")
-                    table.add_column("Physics", style="magenta")
-                    table.add_column("Chemistry", style="magenta")
-                    table.add_column("5th Core", style="magenta")
-                    table.add_column("Total", style="red")
-                    table.add_column("Average %", style="red")
-                    for i in range(len(res)):
-                        table.add_row(
-                            str(res[i][0]),
-                            str(res[i][1]),
-                            str(res[i][2]),
-                            str(res[i][3]),
-                            str(res[i][4]),
-                            str(res[i][5]),
-                            str(res[i][6]),
-                            str(res[i][7]),
-                            str(res[i][8]),
-                            str(res[i][9]),
-                            str(res[i][10]),
-                            str(res[i][11]),
-                            str(res[i][12]),
-                        )
-                    console.print(table)
-                    print()
-                else:
-                    print()
-                    print(f"There are no students in Grade 11 MPC")
+                )
+                table = Table(
+                    show_header=True, header_style="bold", box=box.ROUNDED
+                )
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("Mathematics", style="magenta")
+                table.add_column("Physics", style="magenta")
+                table.add_column("Chemistry", style="magenta")
+                table.add_column("5th Core", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print()
+                print(f"There are no students in Grade 11 MPC")
 
-                # ? Biology, Physics, Chemistry
-                cur.execute(f"select * from {db}.catsix where class=11")
-                res = cur.fetchall()
-                if len(res) != 0:
-                    res = [x for x in res]
-                    console.print(
-                        Panel.fit("[bold italic bright_yellow]Grade 11 BiPC", padding=(0, 20))
+            # ? Biology, Physics, Chemistry
+            cur.execute(f"select * from {db}.catsix where class=11")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit(
+                        "[bold italic bright_yellow]Grade 11 BiPC", padding=(0, 20)
                     )
-                    table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-                    table.add_column("Admission Number", style="green")
-                    table.add_column("Name", style="cyan")
-                    table.add_column("Class", style="cyan")
-                    table.add_column("Section", style="cyan")
-                    table.add_column("Roll Number", style="cyan")
-                    table.add_column("5th Core Name", style="cyan")
-                    table.add_column("English", style="magenta")
-                    table.add_column("Biology", style="magenta")
-                    table.add_column("Physics", style="magenta")
-                    table.add_column("Chemistry", style="magenta")
-                    table.add_column("5th Core", style="magenta")
-                    table.add_column("Total", style="red")
-                    table.add_column("Average %", style="red")
-                    for i in range(len(res)):
-                        table.add_row(
-                            str(res[i][0]),
-                            str(res[i][1]),
-                            str(res[i][2]),
-                            str(res[i][3]),
-                            str(res[i][4]),
-                            str(res[i][5]),
-                            str(res[i][6]),
-                            str(res[i][7]),
-                            str(res[i][8]),
-                            str(res[i][9]),
-                            str(res[i][10]),
-                            str(res[i][11]),
-                            str(res[i][12]),
-                        )
-                    console.print(table)
-                    print()
-                else:
-                    print()
-                    print(f"There are no students in Grade 11 BiPC")
+                )
+                table = Table(
+                    show_header=True, header_style="bold", box=box.ROUNDED
+                )
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("Biology", style="magenta")
+                table.add_column("Physics", style="magenta")
+                table.add_column("Chemistry", style="magenta")
+                table.add_column("5th Core", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print()
+                print(f"There are no students in Grade 11 BiPC")
 
-                # ? Commerce
-                cur.execute(f"select * from {db}.catseven where class=11")
-                res = cur.fetchall()
-                if len(res) != 0:
-                    res = [x for x in res]
-                    console.print(
-                        Panel.fit("[bold italic bright_yellow]Grade 11 Commerce", padding=(0, 20))
+            # ? Commerce
+            cur.execute(f"select * from {db}.catseven where class=11")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit(
+                        "[bold italic bright_yellow]Grade 11 Commerce",
+                        padding=(0, 20),
                     )
-                    table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-                    table.add_column("Admission Number", style="green")
-                    table.add_column("Name", style="cyan")
-                    table.add_column("Class", style="cyan")
-                    table.add_column("Section", style="cyan")
-                    table.add_column("Roll Number", style="cyan")
-                    table.add_column("5th Core Name", style="cyan")
-                    table.add_column("English", style="magenta")
-                    table.add_column("Accounts", style="magenta")
-                    table.add_column("Business Studies", style="magenta")
-                    table.add_column("Economics", style="magenta")
-                    table.add_column("5th Core", style="magenta")
-                    table.add_column("Total", style="red")
-                    table.add_column("Average %", style="red")
-                    for i in range(len(res)):
-                        table.add_row(
-                            str(res[i][0]),
-                            str(res[i][1]),
-                            str(res[i][2]),
-                            str(res[i][3]),
-                            str(res[i][4]),
-                            str(res[i][5]),
-                            str(res[i][6]),
-                            str(res[i][7]),
-                            str(res[i][8]),
-                            str(res[i][9]),
-                            str(res[i][10]),
-                            str(res[i][11]),
-                            str(res[i][12]),
-                        )
-                    console.print(table)
-                    print()
-                else:
-                    print()
-                    print(f"There are no students in Grade 11 CEC")
+                )
+                table = Table(
+                    show_header=True, header_style="bold", box=box.ROUNDED
+                )
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("Accounts", style="magenta")
+                table.add_column("Business Studies", style="magenta")
+                table.add_column("Economics", style="magenta")
+                table.add_column("5th Core", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print()
+                print(f"There are no students in Grade 11 CEC")
 
-                # ? Humanities
-                cur.execute(f"select * from {db}.cateight where class=11")
-                res = cur.fetchall()
-                if len(res) != 0:
-                    res = [x for x in res]
-                    console.print(
-                        Panel.fit("[bold italic bright_yellow]Grade 11 Humanities", padding=(0, 20))
+            # ? Humanities
+            cur.execute(f"select * from {db}.cateight where class=11")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit(
+                        "[bold italic bright_yellow]Grade 11 Humanities",
+                        padding=(0, 20),
                     )
-                    table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-                    table.add_column("Admission Number", style="green")
-                    table.add_column("Name", style="cyan")
-                    table.add_column("Class", style="cyan")
-                    table.add_column("Section", style="cyan")
-                    table.add_column("Roll Number", style="cyan")
-                    table.add_column("5th Core Name", style="cyan")
-                    table.add_column("English", style="magenta")
-                    table.add_column("History", style="magenta")
-                    table.add_column("Political Sciences", style="magenta")
-                    table.add_column("Economics", style="magenta")
-                    table.add_column("5th Core", style="magenta")
-                    table.add_column("Total", style="red")
-                    table.add_column("Average %", style="red")
-                    for i in range(len(res)):
-                        table.add_row(
-                            str(res[i][0]),
-                            str(res[i][1]),
-                            str(res[i][2]),
-                            str(res[i][3]),
-                            str(res[i][4]),
-                            str(res[i][5]),
-                            str(res[i][6]),
-                            str(res[i][7]),
-                            str(res[i][8]),
-                            str(res[i][9]),
-                            str(res[i][10]),
-                            str(res[i][11]),
-                            str(res[i][12]),
-                        )
-                    console.print(table)
-                    print()
-                else:
-                    print()
-                    print(f"There are no students in Grade 11 Humanities")
-            if "12" in Grade:
-                # ? Mathematics, Physics, Chemistry
-                cur.execute(f"select * from {db}.catfive where class={12}")
-                res = cur.fetchall()
-                if len(res) != 0:
-                    res = [x for x in res]
-                    console.print(
-                        Panel.fit("[bold italic bright_yellow]Grade 12 MPC", padding=(0, 20))
+                )
+                table = Table(
+                    show_header=True, header_style="bold", box=box.ROUNDED
+                )
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("History", style="magenta")
+                table.add_column("Political Sciences", style="magenta")
+                table.add_column("Economics", style="magenta")
+                table.add_column("5th Core", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
                     )
-                    table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-                    table.add_column("Admission Number", style="green")
-                    table.add_column("Name", style="cyan")
-                    table.add_column("Class", style="cyan")
-                    table.add_column("Section", style="cyan")
-                    table.add_column("Roll Number", style="cyan")
-                    table.add_column("5th Core Name", style="cyan")
-                    table.add_column("English", style="magenta")
-                    table.add_column("Mathematics", style="magenta")
-                    table.add_column("Physics", style="magenta")
-                    table.add_column("Chemistry", style="magenta")
-                    table.add_column("5th Core", style="magenta")
-                    table.add_column("Total", style="red")
-                    table.add_column("Average %", style="red")
-                    for i in range(len(res)):
-                        table.add_row(
-                            str(res[i][0]),
-                            str(res[i][1]),
-                            str(res[i][2]),
-                            str(res[i][3]),
-                            str(res[i][4]),
-                            str(res[i][5]),
-                            str(res[i][6]),
-                            str(res[i][7]),
-                            str(res[i][8]),
-                            str(res[i][9]),
-                            str(res[i][10]),
-                            str(res[i][11]),
-                            str(res[i][12]),
-                        )
-                    console.print(table)
-                    print()
-                else:
-                    print()
-                    print(f"There are no students in Grade 12 MPC")
+                console.print(table)
+                print()
+            else:
+                print()
+                print(f"There are no students in Grade 11 Humanities")
+        if "12" in Grade:
+            # ? Mathematics, Physics, Chemistry
+            cur.execute(f"select * from {db}.catfive where class={12}")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit(
+                        "[bold italic bright_yellow]Grade 12 MPC", padding=(0, 20)
+                    )
+                )
+                table = Table(
+                    show_header=True, header_style="bold", box=box.ROUNDED
+                )
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("Mathematics", style="magenta")
+                table.add_column("Physics", style="magenta")
+                table.add_column("Chemistry", style="magenta")
+                table.add_column("5th Core", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print()
+                print(f"There are no students in Grade 12 MPC")
 
-                # ? Biology, Physics, Chemistry
-                cur.execute(f"select * from {db}.catsix where class=12")
-                res = cur.fetchall()
-                if len(res) != 0:
-                    res = [x for x in res]
-                    console.print(
-                        Panel.fit("[bold italic bright_yellow]Grade 12 BiPC", padding=(0, 20))
+            # ? Biology, Physics, Chemistry
+            cur.execute(f"select * from {db}.catsix where class=12")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit(
+                        "[bold italic bright_yellow]Grade 12 BiPC", padding=(0, 20)
                     )
-                    table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-                    table.add_column("Admission Number", style="green")
-                    table.add_column("Name", style="cyan")
-                    table.add_column("Class", style="cyan")
-                    table.add_column("Section", style="cyan")
-                    table.add_column("Roll Number", style="cyan")
-                    table.add_column("5th Core Name", style="cyan")
-                    table.add_column("English", style="magenta")
-                    table.add_column("Biology", style="magenta")
-                    table.add_column("Physics", style="magenta")
-                    table.add_column("Chemistry", style="magenta")
-                    table.add_column("5th Core", style="magenta")
-                    table.add_column("Total", style="red")
-                    table.add_column("Average %", style="red")
-                    for i in range(len(res)):
-                        table.add_row(
-                            str(res[i][0]),
-                            str(res[i][1]),
-                            str(res[i][2]),
-                            str(res[i][3]),
-                            str(res[i][4]),
-                            str(res[i][5]),
-                            str(res[i][6]),
-                            str(res[i][7]),
-                            str(res[i][8]),
-                            str(res[i][9]),
-                            str(res[i][10]),
-                            str(res[i][11]),
-                            str(res[i][12]),
-                        )
-                    console.print(table)
-                    print()
-                else:
-                    print()
-                    print(f"There are no students in Grade 12 BiPC")
+                )
+                table = Table(
+                    show_header=True, header_style="bold", box=box.ROUNDED
+                )
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("Biology", style="magenta")
+                table.add_column("Physics", style="magenta")
+                table.add_column("Chemistry", style="magenta")
+                table.add_column("5th Core", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print()
+                print(f"There are no students in Grade 12 BiPC")
 
-                # ? Commerce
-                cur.execute(f"select * from {db}.catseven where class=11")
-                res = cur.fetchall()
-                if len(res) != 0:
-                    res = [x for x in res]
-                    console.print(
-                        Panel.fit("[bold italic bright_yellow]Grade 12 Commerce", padding=(0, 20))
+            # ? Commerce
+            cur.execute(f"select * from {db}.catseven where class=11")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit(
+                        "[bold italic bright_yellow]Grade 12 Commerce",
+                        padding=(0, 20),
                     )
-                    table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-                    table.add_column("Admission Number", style="green")
-                    table.add_column("Name", style="cyan")
-                    table.add_column("Class", style="cyan")
-                    table.add_column("Section", style="cyan")
-                    table.add_column("Roll Number", style="cyan")
-                    table.add_column("5th Core Name", style="cyan")
-                    table.add_column("English", style="magenta")
-                    table.add_column("Accounts", style="magenta")
-                    table.add_column("Business Studies", style="magenta")
-                    table.add_column("Economics", style="magenta")
-                    table.add_column("5th Core", style="magenta")
-                    table.add_column("Total", style="red")
-                    table.add_column("Average %", style="red")
-                    for i in range(len(res)):
-                        table.add_row(
-                            str(res[i][0]),
-                            str(res[i][1]),
-                            str(res[i][2]),
-                            str(res[i][3]),
-                            str(res[i][4]),
-                            str(res[i][5]),
-                            str(res[i][6]),
-                            str(res[i][7]),
-                            str(res[i][8]),
-                            str(res[i][9]),
-                            str(res[i][10]),
-                            str(res[i][11]),
-                            str(res[i][12]),
-                        )
-                    console.print(table)
-                    print()
-                else:
-                    print()
-                    print(f"There are no students in Grade 12 CEC")
+                )
+                table = Table(
+                    show_header=True, header_style="bold", box=box.ROUNDED
+                )
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("Accounts", style="magenta")
+                table.add_column("Business Studies", style="magenta")
+                table.add_column("Economics", style="magenta")
+                table.add_column("5th Core", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print()
+                print(f"There are no students in Grade 12 CEC")
 
-                # ? Humanities
-                cur.execute(f"select * from {db}.cateight where class=12")
-                res = cur.fetchall()
-                if len(res) != 0:
-                    res = [x for x in res]
-                    console.print(
-                        Panel.fit("[bold italic bright_yellow]Grade 12 Humanities", padding=(0, 20))
+            # ? Humanities
+            cur.execute(f"select * from {db}.cateight where class=12")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit(
+                        "[bold italic bright_yellow]Grade 12 Humanities",
+                        padding=(0, 20),
                     )
-                    table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-                    table.add_column("Admission Number", style="green")
-                    table.add_column("Name", style="cyan")
-                    table.add_column("Class", style="cyan")
-                    table.add_column("Section", style="cyan")
-                    table.add_column("Roll Number", style="cyan")
-                    table.add_column("5th Core Name", style="cyan")
-                    table.add_column("English", style="magenta")
-                    table.add_column("History", style="magenta")
-                    table.add_column("Political Sciences", style="magenta")
-                    table.add_column("Economics", style="magenta")
-                    table.add_column("5th Core", style="magenta")
-                    table.add_column("Total", style="red")
-                    table.add_column("Average %", style="red")
-                    for i in range(len(res)):
-                        table.add_row(
-                            str(res[i][0]),
-                            str(res[i][1]),
-                            str(res[i][2]),
-                            str(res[i][3]),
-                            str(res[i][4]),
-                            str(res[i][5]),
-                            str(res[i][6]),
-                            str(res[i][7]),
-                            str(res[i][8]),
-                            str(res[i][9]),
-                            str(res[i][10]),
-                            str(res[i][11]),
-                            str(res[i][12]),
-                        )
-                    console.print(table)
-                    print()
-                else:
-                    print()
-                    print(f"There are no students in Grade 12 Humanities")
-        input()
-        ClearScreen()
+                )
+                table = Table(
+                    show_header=True, header_style="bold", box=box.ROUNDED
+                )
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("History", style="magenta")
+                table.add_column("Political Sciences", style="magenta")
+                table.add_column("Economics", style="magenta")
+                table.add_column("5th Core", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print()
+                print(f"There are no students in Grade 12 Humanities")
+    input()
+    ClearScreen()
 
 
 # ! <-- Displaying all students in the school -->
 def SchoolRecords():
-    ClassRecords([str(x) for x in range(1,13)])
+    ClassRecords([str(x) for x in range(1, 13)])
 
+
+# ! <-- Exporting all students to multiple *.csv files -->
+def ExportCSV():
+    # ? Clearing the screen
+    ClearScreen()
+
+    # ? Creating Exports folder if it does not exist
+    CWD = getcwd()
+    if not path.exists("Exports"):
+        makedirs("Exports")
+    if OsName == "nt":
+        dir = CWD + "\Exports"
+    elif OsName == "posix":
+        dir = CWD + "/Exports"
+
+    # ? Displaying status bar
+    progress_bar = Progress(
+        TextColumn("Exporting Data "),
+        BarColumn(),
+        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+    )
+    with progress_bar as p:
+        # ? Displaying progress bar
+        for i in p.track(range(100), description="Exporting Data"):
+            sleep(1.2 / 100)
+
+        # ? Disabling print
+        DisablePrint()
+        # ? Exporting the records
+        class1Frame = pd.read_sql(f"select * from {db}.catone where class={1}", con)
+        class1Frame.to_csv(f"{dir}/Class1.csv", index=False)
+
+        class2Frame = pd.read_sql(f"select * from {db}.cattwo where class={2}", con)
+        class2Frame.to_csv(f"{dir}/Class2.csv", index=False)
+
+        class3Frame = pd.read_sql(f"select * from {db}.cattwo where class={3}", con)
+        class3Frame.to_csv(f"{dir}/Class3.csv", index=False)
+
+        class4Frame = pd.read_sql(f"select * from {db}.cattwo where class={4}", con)
+        class4Frame.to_csv(f"{dir}/Class4.csv", index=False)
+
+        class5Frame = pd.read_sql(f"select * from {db}.catthree where class={5}", con)
+        class5Frame.to_csv(f"{dir}/Class5.csv", index=False)
+
+        class6Frame = pd.read_sql(f"select * from {db}.catthree where class={6}", con)
+        class6Frame.to_csv(f"{dir}/Class6.csv", index=False)
+
+        class7Frame = pd.read_sql(f"select * from {db}.catthree where class={7}", con)
+        class7Frame.to_csv(f"{dir}/Class7.csv", index=False)
+
+        class8Frame = pd.read_sql(f"select * from {db}.catthree where class={8}", con)
+        class8Frame.to_csv(f"{dir}/Class8.csv", index=False)
+
+        class9Frame = pd.read_sql(f"select * from {db}.catfour where class={9}", con)
+        class9Frame.to_csv(f"{dir}/Class9.csv", index=False)
+        class10Frame = pd.read_sql(f"select * from {db}.catfour where class={10}", con)
+        class10Frame.to_csv(f"{dir}/Class10.csv", index=False)
+
+        class11MPCFrame = pd.read_sql(
+            f"select * from {db}.catfive where class={11}", con
+        )
+        class11MPCFrame.to_csv(f"{dir}/Class11-MPC.csv", index=False)
+
+        class11BiPCFrame = pd.read_sql(
+            f"select * from {db}.catsix where class={11}", con
+        )
+        class11BiPCFrame.to_csv(f"{dir}/Class11-BiPC.csv", index=False)
+
+        class11CommerceFrame = pd.read_sql(
+            f"select * from {db}.catseven where class={11}", con
+        )
+        class11CommerceFrame.to_csv(f"{dir}/Class11-Commerce.csv", index=False)
+
+        class11HumanitiesFrame = pd.read_sql(
+            f"select * from {db}.cateight where class={11}", con
+        )
+        class11HumanitiesFrame.to_csv(f"{dir}/Class11-Humanities.csv", index=False)
+
+        class12MPCFrame = pd.read_sql(
+            f"select * from {db}.catfive where class={12}", con
+        )
+        class12MPCFrame.to_csv(f"{dir}/Class12-MPC.csv", index=False)
+
+        class12BiPCFrame = pd.read_sql(
+            f"select * from {db}.catsix where class={12}", con
+        )
+        class12BiPCFrame.to_csv(f"{dir}/Class12-BiPC.csv", index=False)
+
+        class12CommerceFrame = pd.read_sql(
+            f"select * from {db}.catseven where class={12}", con
+        )
+        class12CommerceFrame.to_csv(f"{dir}/Class12-Commerce.csv", index=False)
+
+        class12HumanitiesFrame = pd.read_sql(
+            f"select * from {db}.cateight where class={12}", con
+        )
+        class12HumanitiesFrame.to_csv(f"{dir}/Class12-Humanities.csv", index=False)
+
+    sleep(0.5)
+    # ? Enabling print again
+    EnablePrint()
+    # ? Clearing the screen
+    ClearScreen()
+    print(f"All csv's have been exported to a folder: {dir}")
+    input()
 
 # endregion
 #! --------------------------------------------------
@@ -3205,7 +3352,7 @@ Backend()
 # ? Login, if username and password do not exist, it will ask if you want to create a user.
 # ? Add attributes if you want to provide username and password
 # ? For example: LoginUser("Username", "Password")
-LoginUser("Hussain", "16computers")
+LoginUser("hussain", "16computers")
 
 while True:
     # ? Clearing the screen
@@ -3218,6 +3365,7 @@ while True:
             "Student information",
             "Marks information",
             "Records",
+            "Export All Data",
             "Quit",
         ],
         style=minimalStyle,
@@ -3296,9 +3444,11 @@ while True:
         else:
             # ? If quit is called or a bad choice is given
             exit()
-    else:
-        # ? If quit is called or a bad choice is given
+    elif choice == "Export All Data":
+        ExportCSV()
+    elif choice == "Quit":
         exit()
+
 # endregion
 #! --------------------------------------------------
 #! --------------------------------------------------
