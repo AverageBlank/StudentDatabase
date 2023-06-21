@@ -141,6 +141,24 @@ def IsProperName(name):
             )
 
 
+# ! Function to avoid getting an error on an improper class number
+def IsProperClass(classno):
+    # ? Checks for alphanumeric symbols in a name and rejects it if one exists
+    AlphabeticalSymbols = [x for x in ascii_letters]
+    while True:
+        try:
+            for i in classno:
+                if i in AlphabeticalSymbols:
+                    raise ValueError
+            else:
+                # ? If no symbols or numbers in a name, return the name
+                return int(classno)
+        except:
+            classno = questionary.text(
+                f"Please enter a valid class number.", style=minimalStyle
+            ).ask()
+
+
 # ! Function to avoid getting an error on fcore input depending on user's stream
 def IsProperFcore(Fcore, Stream):
     while True:
@@ -549,9 +567,10 @@ def AddStudent():
             ).ask()
     # ? Asking for class
     while True:
-        Class = abs(
-            int(questionary.text(f"Enter {Name}'s class: ", style=minimalStyle).ask())
+        Class = IsProperClass(
+            questionary.text(f"Enter {Name}'s class: ", style=minimalStyle).ask()
         )
+
         # ! Categorizing by classes
         if 1 <= Class <= 3:
             # ? Asking for 2nd language name without french
@@ -809,7 +828,13 @@ def EditStudent():
     while True:
         try:
             RollNum = IsProperRollNum(
-                abs(int(questionary.text(f"Enter {Name}'s new roll number: ").ask()))
+                abs(
+                    int(
+                        questionary.text(
+                            f"Enter {Name}'s new roll number: ", style=minimalStyle
+                        ).ask()
+                    )
+                )
             )
             break
         except:
@@ -1074,7 +1099,7 @@ def RemoveStudent():
         cur.execute(f"delete from {db}.cateight where AdmNum={AdmNum}")
         con.commit()
         ClearScreen()
-        print("Successfully Deleted {Name}!")
+        print(f"Successfully Deleted {Name}!")
         input()
     else:
         ClearScreen()
@@ -1693,11 +1718,11 @@ def ShowGraph():
                 "5th Core",
             ]
     try:
-        StatBar(1.2, "[cyan] Loading Graph")
         title(f"Name: {name}    Admission Number: {AdmNum}")
         bar(Subjects, SubMarks)
         xlabel("Subjects")
         ylabel("Marks")
+        StatBar(1.2, "[cyan] Loading Graph")
         show()
     except:
         print("Marks do not exist.")
@@ -2843,9 +2868,7 @@ def ClassRecords(Class=None):
                         "[bold italic bright_yellow]Grade 11 MPC", padding=(0, 20)
                     )
                 )
-                table = Table(
-                    show_header=True, header_style="bold", box=box.ROUNDED
-                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="green")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -2891,9 +2914,7 @@ def ClassRecords(Class=None):
                         "[bold italic bright_yellow]Grade 11 BiPC", padding=(0, 20)
                     )
                 )
-                table = Table(
-                    show_header=True, header_style="bold", box=box.ROUNDED
-                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="green")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -2940,9 +2961,7 @@ def ClassRecords(Class=None):
                         padding=(0, 20),
                     )
                 )
-                table = Table(
-                    show_header=True, header_style="bold", box=box.ROUNDED
-                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="green")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -2989,9 +3008,7 @@ def ClassRecords(Class=None):
                         padding=(0, 20),
                     )
                 )
-                table = Table(
-                    show_header=True, header_style="bold", box=box.ROUNDED
-                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="green")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -3037,9 +3054,7 @@ def ClassRecords(Class=None):
                         "[bold italic bright_yellow]Grade 12 MPC", padding=(0, 20)
                     )
                 )
-                table = Table(
-                    show_header=True, header_style="bold", box=box.ROUNDED
-                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="green")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -3085,9 +3100,7 @@ def ClassRecords(Class=None):
                         "[bold italic bright_yellow]Grade 12 BiPC", padding=(0, 20)
                     )
                 )
-                table = Table(
-                    show_header=True, header_style="bold", box=box.ROUNDED
-                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="green")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -3134,9 +3147,7 @@ def ClassRecords(Class=None):
                         padding=(0, 20),
                     )
                 )
-                table = Table(
-                    show_header=True, header_style="bold", box=box.ROUNDED
-                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="green")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -3183,9 +3194,7 @@ def ClassRecords(Class=None):
                         padding=(0, 20),
                     )
                 )
-                table = Table(
-                    show_header=True, header_style="bold", box=box.ROUNDED
-                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
                 table.add_column("Admission Number", style="green")
                 table.add_column("Name", style="cyan")
                 table.add_column("Class", style="cyan")
@@ -3331,8 +3340,9 @@ def ExportCSV():
     EnablePrint()
     # ? Clearing the screen
     ClearScreen()
-    print(f"All csv's have been exported to a folder: {dir}")
+    print(f"All CSVs have been exported to a folder: [cyan bold]{dir}[/cyan bold]")
     input()
+
 
 # endregion
 #! --------------------------------------------------
@@ -3351,7 +3361,7 @@ Backend()
 # ? Login, if username and password do not exist, it will ask if you want to create a user.
 # ? Add attributes if you want to provide username and password
 # ? For example: LoginUser("Username", "Password")
-LoginUser("hussain", "16computers")
+LoginUser("adithya", "12345678")
 
 while True:
     # ? Clearing the screen
