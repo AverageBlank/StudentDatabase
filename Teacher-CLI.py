@@ -22,7 +22,7 @@
 from math import ceil
 
 # ? Importing OS to get operating system, to run commands in terminal, to block print
-from os import name as OsName, popen, system, getcwd, path, makedirs, devnull
+from os import name as OsName, system, getcwd, path, makedirs, devnull, popen
 
 # ? Importing string to have a valid name without symbols
 from string import ascii_letters, digits, punctuation
@@ -37,15 +37,14 @@ from questionary import Style
 # ? Matplotlib --> for plotting a graph
 from matplotlib.pyplot import bar, show, title, xlabel, ylabel
 
-# ? PyMySQL --> for connecting to MySQL
-from pymysql import connect
-
 # ? Pandas --> for storing data
 import pandas as pd
 
 # ? Rich --> For great terminal user interface
 from rich import print
 from rich.console import Console
+
+console = Console()
 from rich.table import Table
 from rich import box
 from rich.panel import Panel
@@ -59,7 +58,11 @@ from rich.align import Align
 # ? Sys --> Prevents printing
 import sys
 
-console = Console()
+# ? SQLite3 --> For connecting to SQL database
+from sqlite3 import connect
+
+# ? Fernet --> For encrypting passwords
+from cryptography.fernet import Fernet
 
 
 # endregion
@@ -71,6 +74,8 @@ console = Console()
 #! ---------- Functions
 #! --------------------------------------------------
 # region Functions
+
+
 # ! Function to prevent printing
 def DisablePrint():
     sys.stdout = open(devnull, "w")
@@ -308,7 +313,34 @@ def StatBar(time: float, desc: str):
 ########! Connecting to the server !########
 # ! <-- Connecting to the server and creating necessary tables -->
 def Backend():
-    global db, con, cur, console, minimalStyle
+    # ! <-- Globals for making life easier -->
+    global db, con, cur, console, minimalStyle, fernet
+
+    # ! <-- Encrypting password so people who think they're smart can't access it -->
+    try:
+        if OsName == "nt":
+            chk = popen("cd %userprofile% && dir").read()
+            CWD = popen("cd %userprofile% && chdir").read()
+            CWD = CWD[:-1] + "\\"
+            if "forpsd" in chk:
+                with open(CWD + "forpsd", "rb") as keyFile:
+                    key = keyFile.read()
+            else:
+                raise ValueError
+        elif OsName == "posix":
+            chk = popen("ls ~").read()
+            CWD = popen("cd ~ && pwd").read()
+            if "forpsd" in chk:
+                with open(CWD + "forpsd", "rb") as keyFile:
+                    key = keyFile.read()
+            else:
+                raise ValueError
+    except:
+        key = Fernet.generate_key()
+        with open(CWD + "forpsd", "wb") as keyFile:
+            keyFile.write(key)
+    fernet = Fernet(key.decode("utf-8"))
+
     # ! <-- Colors -->
     minimalStyle = Style(
         [
@@ -320,99 +352,61 @@ def Backend():
             ("qmark", "fg:#77DD77"),  # ? Green
         ]
     )
-    # ! <-- Connecting to MySQL -->
-    ### ! <-- MySQL Smart Password System --> ! ###
-    try:
-        if OsName == "nt":
-            chk = popen("cd %userprofile% && dir").read()
-            CWD = popen("cd %userprofile% && chdir").read()
-            CWD = CWD[:-1] + "\\"
-            if "mysqlpassword" in chk:
-                p = popen("cd %userprofile% && more mysqlpassword").read()
-                p = p[:-1]
-            else:
-                raise ValueError
-        elif OsName == "posix":
-            chk = popen("ls ~").read()
-            CWD = popen("cd ~ && pwd").read()
-            if "mysqlpassword" in chk:
-                p = popen("cat ~/mysqlpassword").read()
-            else:
-                raise ValueError
-    except ValueError:
-        # ? Clear the screen
-        ClearScreen()
-        # * Running this if password is not saved
-        while True:
-            p = questionary.password(
-                "Please type in your MySQL Password: ", style=minimalStyle
-            ).ask()
-            try:
-                # ? Connecting
-                con = connect(user="root", host="localhost", password=p)
-                cur = con.cursor()
-                # ? Saving the password
-                a = open(CWD[:-1] + "/mysqlpassword", "w")
-                a.write(p)
-                a.close()
-                break
-            except:
-                print("Password was wrong, please try again.")
-    # ? Connecting to the MySQL server
-    con = connect(user="root", host="localhost", password=p)
+
+    # ? Connecting to the MySQL database
+    con = connect("StudentDatabase.db")
     cur = con.cursor()
 
     db = "studentdatabase"
 
     # ! <-- Creating basic Databases and Tables -->
-    cur.execute(f"create database if not exists {db}")
     cur.execute(
-        f"create table if not exists {db}.teacherDB(user varchar(64) primary key, pass varchar(100))"
+        f"create table if not exists teacherDB(user varchar(64) primary key, pass varchar(100))"
     )
     cur.execute(
-        f"create table if not exists {db}.allstudents(AdmNum int primary key, name varchar(100), class int, section varchar(10))"
+        f"create table if not exists allstudents(AdmNum int primary key, name varchar(100), class int, section varchar(10))"
     )
 
     # ! <-- Creating class tables for MySQL -->
     # ** <-- CAT IS CATEGORY -->
     # ? Grade 1
     cur.execute(
-        f"""CREATE TABLE if not exists {db}.catone(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Total INT, Average FLOAT)"""
+        f"""CREATE TABLE if not exists catone(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Total INT, Average FLOAT)"""
     )
 
     # ? Grade 2 - Grade 4
     cur.execute(
-        f"""CREATE TABLE if not exists {db}.cattwo(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Computers INT, Total INT, Average FLOAT)"""
+        f"""CREATE TABLE if not exists cattwo(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Computers INT, Total INT, Average FLOAT)"""
     )
 
     # ? Grade 5 - Grade 8
     cur.execute(
-        f"""CREATE TABLE if not exists {db}.catthree(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), Lang3Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Lang3 INT, Computers INT, Total INT, Average FLOAT)"""
+        f"""CREATE TABLE if not exists catthree(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), Lang3Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Lang3 INT, Computers INT, Total INT, Average FLOAT)"""
     )
 
     # ? Grade 9-10
     cur.execute(
-        f"""CREATE TABLE if not exists {db}.catfour(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Total INT, Average FLOAT)"""
+        f"""CREATE TABLE if not exists catfour(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Total INT, Average FLOAT)"""
     )
 
     # ? MPC
     cur.execute(
-        f"""CREATE TABLE if not exists {db}.catfive(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, Mathematics INT, Physics INT, Chemistry INT, Fcore INT, Total INT, Average FLOAT)"""
+        f"""CREATE TABLE if not exists catfive(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, Mathematics INT, Physics INT, Chemistry INT, Fcore INT, Total INT, Average FLOAT)"""
     )
 
     # ? BiPC
     cur.execute(
-        f"""CREATE TABLE if not exists {db}.catsix(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, Biology INT, Physics INT, Chemistry INT, Fcore INT, Total INT, Average FLOAT)"""
+        f"""CREATE TABLE if not exists catsix(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, Biology INT, Physics INT, Chemistry INT, Fcore INT, Total INT, Average FLOAT)"""
     )
 
     # ? Commerce
     cur.execute(
-        f"""CREATE TABLE if not exists {db}.catseven(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, Accounts INT, BusinessStudies INT, Economics INT, Fcore INT, Total INT, Average FLOAT)"""
+        f"""CREATE TABLE if not exists catseven(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, Accounts INT, BusinessStudies INT, Economics INT, Fcore INT, Total INT, Average FLOAT)"""
     )
 
     # ? Humanities
     cur.execute(
-        f"""CREATE TABLE if not exists {db}.cateight(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, History INT, PoliticalSciences INT, Economics INT, Fcore INT, Total INT, Average FLOAT)"""
+        f"""CREATE TABLE if not exists cateight(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, History INT, PoliticalSciences INT, Economics INT, Fcore INT, Total INT, Average FLOAT)"""
     )
     con.commit()
 
@@ -447,14 +441,16 @@ def RegisterUser(User=None, Pass=None):
             if len(Pass) < 8:
                 print("Length of the password must be greater than 8")
                 continue
+            Pass = fernet.encrypt(f"{Pass}".encode())
             break
     # ? Running the signup system
-    cur.execute(f'select * from {db}.teacherDB where user="{User}"')
+    cur.execute(f'select * from teacherDB where user="{User}"')
     userFetch = cur.fetchall()
     if len(userFetch) == 0:
-        cur.execute(rf'insert into {db}.teacherDB values("{User}", "{Pass}")')
+        cur.execute(rf'insert into teacherDB values("{User}", "{Pass}")')
         con.commit()
         print("Successfully created user.")
+        input()
     else:
         ClearScreen()
         print("This user already exists!")
@@ -486,7 +482,7 @@ def LoginUser(User=None, Pass=None):
     if Pass == None:
         Pass = questionary.password("Enter your password: ", style=minimalStyle).ask()
     # ? Running the login system
-    cur.execute(f'select * from {db}.teacherDB where user="{User}"')
+    cur.execute(f'select * from teacherDB where user="{User}"')
     userFetch = cur.fetchall()
     if len(userFetch) == 0:
         ClearScreen()
@@ -502,7 +498,9 @@ def LoginUser(User=None, Pass=None):
             exit()
     else:
         while True:
-            if userFetch[0][1] == rf"{Pass}":
+            userFetchPass = userFetch[0][1][2:-1]
+            decPass = fernet.decrypt(userFetchPass).decode("utf-8")
+            if decPass == rf"{Pass}":
                 ClearScreen()
                 print("Successful login!")
                 Align.center(
@@ -548,7 +546,7 @@ def AddStudent():
         except:
             print("Please enter a valid admission number.")
     while True:
-        cur.execute(f"select name from {db}.allstudents where AdmNum={AdmNum}")
+        cur.execute(f"select name from allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -674,48 +672,48 @@ def AddStudent():
 
     # ? Inserting data into a main table
     cur.execute(
-        f"insert into {db}.allstudents values({AdmNum}, '{Name}', {Class}, '{Section}')"
+        f"insert into allstudents values({AdmNum}, '{Name}', {Class}, '{Section}')"
     )
     # ? Grade one
     if Class == 1:
         cur.execute(
-            f"insert into {db}.catone(AdmNum, Name, Class, Section, RollNumber, Lang2Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}')"
+            f"insert into catone(AdmNum, Name, Class, Section, RollNumber, Lang2Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}')"
         )
     # ? Grade 2 - 4
     elif 2 <= Class <= 4:
         cur.execute(
-            f"insert into {db}.cattwo(AdmNum, Name, Class, Section, RollNumber, Lang2Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}')"
+            f"insert into cattwo(AdmNum, Name, Class, Section, RollNumber, Lang2Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}')"
         )
     # ? Grade 5 - 8
     elif 5 <= Class <= 8:
         cur.execute(
-            f"insert into {db}.catthree(AdmNum, Name, Class, Section, RollNumber, Lang2Name, Lang3Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}', '{Lang3Name}')"
+            f"insert into catthree(AdmNum, Name, Class, Section, RollNumber, Lang2Name, Lang3Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}', '{Lang3Name}')"
         )
     # ? Grade 9 - 10
     elif 9 <= Class <= 10:
         cur.execute(
-            f"insert into {db}.catfour(AdmNum, Name, Class, Section, RollNumber, Lang2Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}')"
+            f"insert into catfour(AdmNum, Name, Class, Section, RollNumber, Lang2Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}')"
         )
     elif 11 <= Class <= 12:
         # ? Math, Physics, Chemistry
         if Stream.lower() == "mpc":
             cur.execute(
-                f"insert into {db}.catfive(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
+                f"insert into catfive(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
             )
         # ? Biology, Physics, Chemistry
         elif Stream.lower() == "bipc":
             cur.execute(
-                f"insert into {db}.catsix(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
+                f"insert into catsix(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
             )
         # ? Commerce
         elif Stream.lower() == "cec":
             cur.execute(
-                f"insert into {db}.catseven(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
+                f"insert into catseven(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
             )
         # ? Humanities
         elif Stream.lower() == "humanities":
             cur.execute(
-                f"insert into {db}.cateight(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
+                f"insert into cateight(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
             )
     con.commit()
     ClearScreen()
@@ -729,7 +727,7 @@ def EditStudent():
     ClearScreen()
     # * Admission Number
     # ? Getting autocomplete for admission number
-    cur.execute(f"select AdmNum from {db}.allstudents")
+    cur.execute(f"select AdmNum from allstudents")
     a = cur.fetchall()
     adm = [str(a[i][0]) for i in range(len(a))]
     if len(adm) == 0:
@@ -752,7 +750,7 @@ def EditStudent():
         except:
             print("Please enter a valid admission number.")
     while True:
-        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        cur.execute(f"select class from allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -786,22 +784,22 @@ def EditStudent():
     OldStream = None
     if OldClass in [11, 12]:
         # ? Mathematics, Physics, Chemistry
-        cur.execute(f"select * from {db}.catfive where AdmNum={AdmNum}")
+        cur.execute(f"select * from catfive where AdmNum={AdmNum}")
         streamFetch = cur.fetchall()
         if len(streamFetch) != 0:
             OldStream = "mpc"
         # ? Biology, Physics, Chemistry
-        cur.execute(f"select * from {db}.catsix where AdmNum={AdmNum}")
+        cur.execute(f"select * from catsix where AdmNum={AdmNum}")
         streamFetch = cur.fetchall()
         if len(streamFetch) != 0:
             OldStream = "bipc"
         # ? Commerce
-        cur.execute(f"select * from {db}.catseven where AdmNum={AdmNum}")
+        cur.execute(f"select * from catseven where AdmNum={AdmNum}")
         streamFetch = cur.fetchall()
         if len(streamFetch) != 0:
             OldStream = "cec"
         # ? Humanities
-        cur.execute(f"select * from {db}.cateight where AdmNum={AdmNum}")
+        cur.execute(f"select * from cateight where AdmNum={AdmNum}")
         streamFetch = cur.fetchall()
         if len(streamFetch) != 0:
             OldStream = "humanities"
@@ -841,7 +839,7 @@ def EditStudent():
             print("Enter a valid roll number.")
     # ? Updating data in the main table
     cur.execute(
-        f"update {db}.allstudents set Name='{Name}', Class={NewClass}, Section='{Section}' where AdmNum={AdmNum}"
+        f"update allstudents set Name='{Name}', Class={NewClass}, Section='{Section}' where AdmNum={AdmNum}"
     )
     # ? Clearing Screen
     ClearScreen()
@@ -921,108 +919,108 @@ def EditStudent():
         # ? Grade one
         if OldClass == 1:
             cur.execute(
-                f"update {db}.catone set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, Lang2Name='{Lang2Name}' where AdmNum={AdmNum};"
+                f"update catone set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, Lang2Name='{Lang2Name}' where AdmNum={AdmNum};"
             )
         # ? Grade 2 - 4
         elif 2 <= OldClass <= 4:
             cur.execute(
-                f"update {db}.cattwo set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, Lang2Name='{Lang2Name}' where AdmNum={AdmNum};"
+                f"update cattwo set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, Lang2Name='{Lang2Name}' where AdmNum={AdmNum};"
             )
         # ? Grade 5 - 8
         elif 5 <= OldClass <= 8:
             cur.execute(
-                f"update {db}.catthree set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, Lang2Name='{Lang2Name}', Lang3Name='{Lang3Name}' where AdmNum={AdmNum};"
+                f"update catthree set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, Lang2Name='{Lang2Name}', Lang3Name='{Lang3Name}' where AdmNum={AdmNum};"
             )
         # ? Grade 9 - 10
         elif 9 <= OldClass <= 10:
             cur.execute(
-                f"update {db}.catfour set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, Lang2Name='{Lang2Name}' where AdmNum={AdmNum};"
+                f"update catfour set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, Lang2Name='{Lang2Name}' where AdmNum={AdmNum};"
             )
         elif 11 <= OldClass <= 12:
             if NewStream.lower() == OldStream.lower():
                 # ? Math, Physics, Chemistry
                 if NewStream.lower() == "mpc":
                     cur.execute(
-                        f"update {db}.catfive set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, FcoreName='{FcoreName}' where AdmNum={AdmNum};"
+                        f"update catfive set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, FcoreName='{FcoreName}' where AdmNum={AdmNum};"
                     )
                 # ? Biology, Physics, Chemistry
                 elif NewStream.lower() == "bipc":
                     cur.execute(
-                        f"update {db}.catsix set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, FcoreName='{FcoreName}' where AdmNum={AdmNum};"
+                        f"update catsix set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, FcoreName='{FcoreName}' where AdmNum={AdmNum};"
                     )
                 # ? Commerce
                 elif NewStream.lower() == "cec":
                     cur.execute(
-                        f"update {db}.catseven set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, FcoreName='{FcoreName}' where AdmNum={AdmNum};"
+                        f"update catseven set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, FcoreName='{FcoreName}' where AdmNum={AdmNum};"
                     )
                 # ? Humanities
                 elif NewStream.lower() == "humanities":
                     cur.execute(
-                        f"update {db}.cateight set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, FcoreName='{FcoreName}' where AdmNum={AdmNum};"
+                        f"update cateight set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, FcoreName='{FcoreName}' where AdmNum={AdmNum};"
                     )
             else:
-                cur.execute(f"delete from {db}.catfive where AdmNum={AdmNum}")
-                cur.execute(f"delete from {db}.catsix where AdmNum={AdmNum}")
-                cur.execute(f"delete from {db}.catseven where AdmNum={AdmNum}")
-                cur.execute(f"delete from {db}.cateight where AdmNum={AdmNum}")
+                cur.execute(f"delete from catfive where AdmNum={AdmNum}")
+                cur.execute(f"delete from catsix where AdmNum={AdmNum}")
+                cur.execute(f"delete from catseven where AdmNum={AdmNum}")
+                cur.execute(f"delete from cateight where AdmNum={AdmNum}")
                 if NewStream.lower() == "mpc":
                     cur.execute(
-                        f"insert into {db}.catfive(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
+                        f"insert into catfive(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                     )
                 elif NewStream.lower() == "bipc":
                     cur.execute(
-                        f"insert into {db}.catsix(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
+                        f"insert into catsix(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                     )
                 elif NewStream.lower() == "cec":
                     cur.execute(
-                        f"insert into {db}.catseven(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
+                        f"insert into catseven(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                     )
                 elif NewStream.lower() == "humanities":
                     cur.execute(
-                        f"insert into {db}.cateight(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
+                        f"insert into cateight(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                     )
         # ! If classes are different, deleting entry and creating new entry in respective category.
     else:
-        cur.execute(f"delete from {db}.catone where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.cattwo where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catthree where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catfour where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catfive where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catsix where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catseven where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.cateight where AdmNum={AdmNum}")
+        cur.execute(f"delete from catone where AdmNum={AdmNum}")
+        cur.execute(f"delete from cattwo where AdmNum={AdmNum}")
+        cur.execute(f"delete from catthree where AdmNum={AdmNum}")
+        cur.execute(f"delete from catfour where AdmNum={AdmNum}")
+        cur.execute(f"delete from catfive where AdmNum={AdmNum}")
+        cur.execute(f"delete from catsix where AdmNum={AdmNum}")
+        cur.execute(f"delete from catseven where AdmNum={AdmNum}")
+        cur.execute(f"delete from cateight where AdmNum={AdmNum}")
         if NewClass == 1:
             cur.execute(
-                f"insert into {db}.catone(AdmNum, Name, Class, Section, Rollnumber, Lang2Name) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum} '{Lang2Name}')"
+                f"insert into catone(AdmNum, Name, Class, Section, Rollnumber, Lang2Name) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum} '{Lang2Name}')"
             )
         elif 2 <= NewClass <= 4:
             cur.execute(
-                f"insert into {db}.cattwo(AdmNum, Name, Class, Section, Rollnumber, Lang2Name) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{Lang2Name}')"
+                f"insert into cattwo(AdmNum, Name, Class, Section, Rollnumber, Lang2Name) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{Lang2Name}')"
             )
         elif 5 <= NewClass <= 8:
             cur.execute(
-                f"insert into {db}.catthree(AdmNum, Name, Class, Section, Rollnumber, Lang2Name, Lang3Name) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{Lang2Name}', '{Lang3Name}')"
+                f"insert into catthree(AdmNum, Name, Class, Section, Rollnumber, Lang2Name, Lang3Name) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{Lang2Name}', '{Lang3Name}')"
             )
         elif 9 <= NewClass <= 10:
             cur.execute(
-                f"insert into {db}.catfour(AdmNum, Name, Class, Section, Rollnumber, Lang2Name) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{Lang2Name}')"
+                f"insert into catfour(AdmNum, Name, Class, Section, Rollnumber, Lang2Name) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{Lang2Name}')"
             )
         elif 11 <= NewClass <= 12:
             if NewStream.lower() == "mpc":
                 cur.execute(
-                    f"insert into {db}.catfive(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
+                    f"insert into catfive(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                 )
             elif NewStream.lower() == "bipc":
                 cur.execute(
-                    f"insert into {db}.catsix(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
+                    f"insert into catsix(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                 )
             elif NewStream.lower() == "cec":
                 cur.execute(
-                    f"insert into {db}.catseven(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
+                    f"insert into catseven(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                 )
             elif NewStream.lower() == "humanities":
                 cur.execute(
-                    f"insert into {db}.cateight(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
+                    f"insert into cateight(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                 )
     con.commit()
     ClearScreen()
@@ -1036,7 +1034,7 @@ def RemoveStudent():
     ClearScreen()
     # * Admission Number
     # ? Getting autocomplete for admission number
-    cur.execute(f"select AdmNum from {db}.allstudents")
+    cur.execute(f"select AdmNum from allstudents")
     a = cur.fetchall()
     adm = [str(a[i][0]) for i in range(len(a))]
     if len(adm) == 0:
@@ -1059,7 +1057,7 @@ def RemoveStudent():
         except:
             print("Please enter a valid admission number.")
     while True:
-        cur.execute(f"select name from {db}.allstudents where AdmNum={AdmNum}")
+        cur.execute(f"select name from allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -1088,15 +1086,15 @@ def RemoveStudent():
         f"Are you sure you want to delete {Name}'s information? ", style=minimalStyle
     ).ask()
     if AreYouSure:
-        cur.execute(f"delete from {db}.allstudents where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catone where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.cattwo where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catthree where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catfour where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catfive where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catsix where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catseven where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.cateight where AdmNum={AdmNum}")
+        cur.execute(f"delete from allstudents where AdmNum={AdmNum}")
+        cur.execute(f"delete from catone where AdmNum={AdmNum}")
+        cur.execute(f"delete from cattwo where AdmNum={AdmNum}")
+        cur.execute(f"delete from catthree where AdmNum={AdmNum}")
+        cur.execute(f"delete from catfour where AdmNum={AdmNum}")
+        cur.execute(f"delete from catfive where AdmNum={AdmNum}")
+        cur.execute(f"delete from catsix where AdmNum={AdmNum}")
+        cur.execute(f"delete from catseven where AdmNum={AdmNum}")
+        cur.execute(f"delete from cateight where AdmNum={AdmNum}")
         con.commit()
         ClearScreen()
         print(f"Successfully Deleted {Name}!")
@@ -1114,7 +1112,7 @@ def AddMarks():
     ClearScreen()
     # * Admission Number
     # ? Getting autocomplete for admission number
-    cur.execute(f"select AdmNum from {db}.allstudents")
+    cur.execute(f"select AdmNum from allstudents")
     a = cur.fetchall()
     adm = [str(a[i][0]) for i in range(len(a))]
     if len(adm) == 0:
@@ -1137,7 +1135,7 @@ def AddMarks():
         except:
             print("Please enter a valid admission number.")
     while True:
-        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        cur.execute(f"select class from allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -1171,7 +1169,7 @@ def AddMarks():
         Total = English + Math + Science + SocialSciences + Lang2
         Average = round((Total / 500) * 100, 2)
         cur.execute(
-            f"update {db}.catone set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+            f"update catone set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
     elif 2 <= Class <= 4:
         English = IsProperMarks("Enter marks for English: ")
@@ -1183,7 +1181,7 @@ def AddMarks():
         Total = English + Math + Science + SocialSciences + Lang2 + Computers
         Average = round((Total / 600) * 100, 2)
         cur.execute(
-            f"update {db}.cattwo set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+            f"update cattwo set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
 
     elif 5 <= Class <= 8:
@@ -1199,7 +1197,7 @@ def AddMarks():
         Total = English + Math + Science + SocialSciences + Lang2 + Lang3 + Computers
         Average = round((Total / 700) * 100, 2)
         cur.execute(
-            f"update {db}.catthree set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Lang3={Lang3}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+            f"update catthree set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Lang3={Lang3}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
 
     elif 9 <= Class <= 10:
@@ -1211,12 +1209,12 @@ def AddMarks():
         Total = English + Math + Science + SocialSciences + Lang2
         Average = round((Total / 500) * 100, 2)
         cur.execute(
-            f"update {db}.catfour set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+            f"update catfour set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
 
     elif 11 <= Class <= 12:
         # ? Mathematics, Physics, Chemistry
-        cur.execute(f"select FcoreName from {db}.catfive where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from catfive where AdmNum={AdmNum}")
         MPCFetch = cur.fetchall()
         if len(MPCFetch) != 0:
             FcoreName = MPCFetch[0][0]
@@ -1228,11 +1226,11 @@ def AddMarks():
             Total = English + Math + Physics + Chemistry + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
-                f"update {db}.catfive set English={English}, Mathematics={Math}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+                f"update catfive set English={English}, Mathematics={Math}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
 
         # ? Biology, Physics, Chemistry
-        cur.execute(f"select FcoreName from {db}.catsix where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from catsix where AdmNum={AdmNum}")
         BiPCFetch = cur.fetchall()
         if len(BiPCFetch) != 0:
             FcoreName = BiPCFetch[0][0]
@@ -1244,11 +1242,11 @@ def AddMarks():
             Total = English + Biology + Physics + Chemistry + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
-                f"update {db}.catsix set English={English}, Biology={Biology}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+                f"update catsix set English={English}, Biology={Biology}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
 
         # ? Commerce
-        cur.execute(f"select FcoreName from {db}.catseven where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from catseven where AdmNum={AdmNum}")
         CECFetch = cur.fetchall()
         if len(CECFetch) != 0:
             FcoreName = CECFetch[0][0]
@@ -1260,11 +1258,11 @@ def AddMarks():
             Total = English + Accounts + BusinessStudies + Econ + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
-                f"update {db}.catseven set English={English}, Accounts={Accounts}, BusinessStudies={BusinessStudies}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+                f"update catseven set English={English}, Accounts={Accounts}, BusinessStudies={BusinessStudies}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
 
         # ? Humanities
-        cur.execute(f"select FcoreName from {db}.cateight where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from cateight where AdmNum={AdmNum}")
         HumanitiesFetch = cur.fetchall()
         if len(HumanitiesFetch) != 0:
             FcoreName = HumanitiesFetch[0][0]
@@ -1276,11 +1274,12 @@ def AddMarks():
             Total = English + History + PolSci + Econ + Fcore
             Average = round((Total / 500) * 100)
             cur.execute(
-                f"update {db}.cateight set English={English}, History={History}, PoliticalSciences={PolSci}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+                f"update cateight set English={English}, History={History}, PoliticalSciences={PolSci}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
     con.commit()
     ClearScreen()
     print(f"Marks have successfully been added.")
+    input()
 
 
 # ! <-- Editing Marks -->
@@ -1289,7 +1288,7 @@ def EditMarks():
     ClearScreen()
     # * Admission Number
     # ? Getting autocomplete for admission number
-    cur.execute(f"select AdmNum from {db}.allstudents")
+    cur.execute(f"select AdmNum from allstudents")
     a = cur.fetchall()
     adm = [str(a[i][0]) for i in range(len(a))]
     if len(adm) == 0:
@@ -1312,7 +1311,7 @@ def EditMarks():
         except:
             print("Please enter a valid admission number.")
     while True:
-        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        cur.execute(f"select class from allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -1345,7 +1344,7 @@ def EditMarks():
         Total = English + Math + Science + SocialSciences + Lang2
         Average = round((Total / 500) * 100, 2)
         cur.execute(
-            f"update {db}.catone set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+            f"update catone set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
     elif 2 <= Class <= 4:
         English = IsProperMarks("Enter new marks for English: ")
@@ -1357,7 +1356,7 @@ def EditMarks():
         Total = English + Math + Science + SocialSciences + Lang2 + Computers
         Average = round((Total / 600) * 100, 2)
         cur.execute(
-            f"update {db}.cattwo set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+            f"update cattwo set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
 
     elif 5 <= Class <= 8:
@@ -1371,7 +1370,7 @@ def EditMarks():
         Total = English + Math + Science + SocialSciences + Lang2 + Lang3 + Computers
         Average = round((Total / 700) * 100, 2)
         cur.execute(
-            f"update {db}.catthree set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Lang3={Lang3}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+            f"update catthree set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Lang3={Lang3}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
 
     elif 9 <= Class <= 10:
@@ -1383,12 +1382,12 @@ def EditMarks():
         Total = English + Math + Science + SocialSciences + Lang2
         Average = round((Total / 500) * 100, 2)
         cur.execute(
-            f"update {db}.catfour set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+            f"update catfour set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
 
     elif 11 <= Class <= 12:
         # ? Mathematics, Physics, Chemistry
-        cur.execute(f"select FcoreName from {db}.catfive where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from catfive where AdmNum={AdmNum}")
         MPCFetch = cur.fetchall()
         if len(MPCFetch) != 0:
             FcoreName = MPCFetch[0][0]
@@ -1400,11 +1399,11 @@ def EditMarks():
             Total = English + Math + Physics + Chemistry + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
-                f"update {db}.catfive set English={English}, Mathematics={Math}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+                f"update catfive set English={English}, Mathematics={Math}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
 
         # ? Biology, Physics, Chemistry
-        cur.execute(f"select FcoreName from {db}.catsix where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from catsix where AdmNum={AdmNum}")
         BiPCFetch = cur.fetchall()
         if len(BiPCFetch) != 0:
             FcoreName = BiPCFetch[0][0]
@@ -1416,11 +1415,11 @@ def EditMarks():
             Total = English + Biology + Physics + Chemistry + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
-                f"update {db}.catsix set English={English}, Biology={Biology}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+                f"update catsix set English={English}, Biology={Biology}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
 
         # ? Commerce
-        cur.execute(f"select FcoreName from {db}.catseven where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from catseven where AdmNum={AdmNum}")
         CECFetch = cur.fetchall()
         if len(CECFetch) != 0:
             FcoreName = CECFetch[0][0]
@@ -1432,11 +1431,11 @@ def EditMarks():
             Total = English + Accounts + BusinessStudies + Econ + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
-                f"update {db}.catseven set English={English}, Accounts={Accounts}, BusinessStudies={BusinessStudies}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+                f"update catseven set English={English}, Accounts={Accounts}, BusinessStudies={BusinessStudies}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
 
         # ? Humanities
-        cur.execute(f"select FcoreName from {db}.cateight where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from cateight where AdmNum={AdmNum}")
         HumanitiesFetch = cur.fetchall()
         if len(HumanitiesFetch) != 0:
             FcoreName = HumanitiesFetch[0][0]
@@ -1448,7 +1447,7 @@ def EditMarks():
             Total = English + History + PolSci + Econ + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
-                f"update {db}.cateight set English={English}, History={History}, PoliticalSciences={PolSci}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+                f"update cateight set English={English}, History={History}, PoliticalSciences={PolSci}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
     con.commit()
     ClearScreen()
@@ -1461,7 +1460,7 @@ def RemoveMarks():
     ClearScreen()
     # * Admission Number
     # ? Getting autocomplete for admission number
-    cur.execute(f"select AdmNum from {db}.allstudents")
+    cur.execute(f"select AdmNum from allstudents")
     a = cur.fetchall()
     adm = [str(a[i][0]) for i in range(len(a))]
     if len(adm) == 0:
@@ -1484,7 +1483,7 @@ def RemoveMarks():
         except:
             print("Please enter a valid admission number.")
     while True:
-        cur.execute(f"select name from {db}.allstudents where AdmNum={AdmNum}")
+        cur.execute(f"select name from allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -1514,28 +1513,28 @@ def RemoveMarks():
     ).ask()
     if AreYouSure:
         cur.execute(
-            f"update {db}.catone set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
+            f"update catone set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         cur.execute(
-            f"update {db}.cattwo set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Computers=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
+            f"update cattwo set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Computers=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         cur.execute(
-            f"update {db}.catthree set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Lang3=Null, Computers=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
+            f"update catthree set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Lang3=Null, Computers=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         cur.execute(
-            f"update {db}.catfour set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
+            f"update catfour set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         cur.execute(
-            f"update {db}.catfive set English=Null, Mathematics=Null, Physics=Null, Chemistry=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
+            f"update catfive set English=Null, Mathematics=Null, Physics=Null, Chemistry=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         cur.execute(
-            f"update {db}.catsix set English=Null, Biology=Null, Physics=Null, Chemistry=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
+            f"update catsix set English=Null, Biology=Null, Physics=Null, Chemistry=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         cur.execute(
-            f"update {db}.catseven set English=Null, Accounts=Null, BusinessStudies=Null, Economics=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
+            f"update catseven set English=Null, Accounts=Null, BusinessStudies=Null, Economics=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         cur.execute(
-            f"update {db}.cateight set English=Null, History=Null, PoliticalSciences=Null, Economics=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
+            f"update cateight set English=Null, History=Null, PoliticalSciences=Null, Economics=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         con.commit()
         ClearScreen()
@@ -1552,7 +1551,7 @@ def ShowGraph():
     ClearScreen()
     # * Admission Number
     # ? Getting autocomplete for admission number
-    cur.execute(f"select AdmNum from {db}.allstudents")
+    cur.execute(f"select AdmNum from allstudents")
     a = cur.fetchall()
     adm = [str(a[i][0]) for i in range(len(a))]
     if len(adm) == 0:
@@ -1575,7 +1574,7 @@ def ShowGraph():
         except:
             print("Please enter a valid admission number.")
     while True:
-        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        cur.execute(f"select class from allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -1603,7 +1602,7 @@ def ShowGraph():
     # ? Class 1
 
     if Class == 1:
-        cur.execute(f"select * from {db}.catone where AdmNum={AdmNum}")
+        cur.execute(f"select * from catone where AdmNum={AdmNum}")
         result = cur.fetchall()[0]
         SubMarks = result[6:11]
         name = result[1]
@@ -1618,7 +1617,7 @@ def ShowGraph():
     # ? Class 2 - Class 4
 
     elif 2 <= Class <= 4:
-        cur.execute(f"select * from {db}.cattwo where AdmNum={AdmNum}")
+        cur.execute(f"select * from cattwo where AdmNum={AdmNum}")
         result = cur.fetchall()[0]
         SubMarks = result[6:12]
         name = result[1]
@@ -1634,7 +1633,7 @@ def ShowGraph():
     # ? Class 5 - Class 8
 
     elif 5 <= Class <= 8:
-        cur.execute(f"select * from {db}.catthree where AdmNum={AdmNum}")
+        cur.execute(f"select * from catthree where AdmNum={AdmNum}")
         result = cur.fetchall()[0]
         SubMarks = result[7:14]
         name = result[1]
@@ -1651,7 +1650,7 @@ def ShowGraph():
     # ? Class 9 to Class 10
 
     elif 9 <= Class <= 10:
-        cur.execute(f"select * from {db}.catfour where AdmNum={AdmNum}")
+        cur.execute(f"select * from catfour where AdmNum={AdmNum}")
         result = cur.fetchall()[0]
         SubMarks = result[6:11]
         name = result[1]
@@ -1665,7 +1664,7 @@ def ShowGraph():
 
     elif 11 <= Class <= 12:
         # ? Mathematics, Physics, Chemistry
-        cur.execute(f"select * from {db}.catfive where AdmNum = {AdmNum}")
+        cur.execute(f"select * from catfive where AdmNum = {AdmNum}")
         MPCResult = cur.fetchall()
         if len(MPCResult) != 0:
             MPCResult = MPCResult[0]
@@ -1680,7 +1679,7 @@ def ShowGraph():
             ]
 
         # ? Biology, Physics, Chemistry
-        cur.execute(f"select * from {db}.catsix where AdmNum = {AdmNum}")
+        cur.execute(f"select * from catsix where AdmNum = {AdmNum}")
         BiPCResult = cur.fetchall()
         if len(BiPCResult) != 0:
             BiPCResult = BiPCResult[0]
@@ -1689,7 +1688,7 @@ def ShowGraph():
             Subjects = ["English", "Biology", "Physics", "Chemistry", "5th Core"]
 
         # ? Commerce
-        cur.execute(f"select * from {db}.catseven where AdmNum = {AdmNum}")
+        cur.execute(f"select * from catseven where AdmNum = {AdmNum}")
         CECResult = cur.fetchall()
         if len(CECResult) != 0:
             CECResult = CECResult[0]
@@ -1704,7 +1703,7 @@ def ShowGraph():
             ]
 
         # ? Humanities
-        cur.execute(f"select * from {db}.cateight where AdmNum = {AdmNum}")
+        cur.execute(f"select * from cateight where AdmNum = {AdmNum}")
         HumanitiesResult = cur.fetchall()
         if len(HumanitiesResult) != 0:
             HumanitiesResult = HumanitiesResult[0]
@@ -1734,7 +1733,7 @@ def StudentRecords():
     ClearScreen()
     # * Admission Number
     # ? Getting autocomplete for admission number
-    cur.execute(f"select AdmNum from {db}.allstudents")
+    cur.execute(f"select AdmNum from allstudents")
     a = cur.fetchall()
     adm = [str(a[i][0]) for i in range(len(a))]
     if len(adm) == 0:
@@ -1757,7 +1756,7 @@ def StudentRecords():
         except:
             print("Please enter a valid admission number.")
     while True:
-        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        cur.execute(f"select class from allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -1785,7 +1784,7 @@ def StudentRecords():
     Class = admNumFetch[0][0]
     # ? Class 1
     if Class == 1:
-        cur.execute(f"select * from {db}.catone where AdmNum={AdmNum}")
+        cur.execute(f"select * from catone where AdmNum={AdmNum}")
         res = cur.fetchall()[0]
         result = {
             "Admission Number": res[0],
@@ -1855,7 +1854,7 @@ def StudentRecords():
 
     # ? Class 2 - Class 4
     elif 2 <= Class <= 4:
-        cur.execute(f"select * from {db}.cattwo where AdmNum={AdmNum}")
+        cur.execute(f"select * from cattwo where AdmNum={AdmNum}")
         res = cur.fetchall()[0]
         result = {
             "Admission Number": res[0],
@@ -1926,7 +1925,7 @@ def StudentRecords():
             prompt = f"{res[1]}'s report card: "
     # ? Class 5 - Class 8
     elif 5 <= Class <= 8:
-        cur.execute(f"select * from {db}.catthree where AdmNum={AdmNum}")
+        cur.execute(f"select * from catthree where AdmNum={AdmNum}")
         res = cur.fetchall()[0]
         result = {
             "Admission Number": res[0],
@@ -2002,7 +2001,7 @@ def StudentRecords():
             prompt = f"{res[1]}'s report card: "
     # ? Class 9 & 10
     elif 9 <= Class <= 10:
-        cur.execute(f"select * from {db}.catfour where AdmNum={AdmNum}")
+        cur.execute(f"select * from catfour where AdmNum={AdmNum}")
         res = cur.fetchall()[0]
         result = {
             "Admission Number": res[0],
@@ -2068,7 +2067,7 @@ def StudentRecords():
     # ? Class 11 & 12
     elif 11 <= Class <= 12:
         # ? Mathematics, Physics, Chemistry
-        cur.execute(f"select * from {db}.catfive where AdmNum={AdmNum}")
+        cur.execute(f"select * from catfive where AdmNum={AdmNum}")
         res = cur.fetchall()
         if len(res) != 0:
             res = res[0]
@@ -2136,7 +2135,7 @@ def StudentRecords():
             else:
                 prompt = f"{res[1]}'s report card: "
         # ? Biology, Physics, Chemistry
-        cur.execute(f"select * from {db}.catsix where AdmNum={AdmNum}")
+        cur.execute(f"select * from catsix where AdmNum={AdmNum}")
         res = cur.fetchall()
         if len(res) != 0:
             res = res[0]
@@ -2204,7 +2203,7 @@ def StudentRecords():
             else:
                 prompt = f"{res[1]}'s report card: "
         # ? Commerce
-        cur.execute(f"select * from {db}.catseven where AdmNum={AdmNum}")
+        cur.execute(f"select * from catseven where AdmNum={AdmNum}")
         res = cur.fetchall()
         if len(res) != 0:
             res = res[0]
@@ -2272,7 +2271,7 @@ def StudentRecords():
             else:
                 prompt = f"{res[1]}'s report card: "
         # ? Humanities
-        cur.execute(f"select * from {db}.cateight where AdmNum={AdmNum}")
+        cur.execute(f"select * from cateight where AdmNum={AdmNum}")
         res = cur.fetchall()
         if len(res) != 0:
             res = res[0]
@@ -2366,7 +2365,7 @@ def ClassRecords(Class=None):
     Grade = Class
     if "1" in Grade:
         Class = 1
-        cur.execute(f"select * from {db}.catone where class={Class}")
+        cur.execute(f"select * from catone where class={Class}")
         res = cur.fetchall()
 
         if len(res) != 0:
@@ -2413,7 +2412,7 @@ def ClassRecords(Class=None):
     # ? Grade 2 - Grade 4
     if "2" in Grade or "3" in Grade or "4" in Grade:
         if "2" in Grade:
-            cur.execute(f"select * from {db}.cattwo where class=2")
+            cur.execute(f"select * from cattwo where class=2")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -2462,7 +2461,7 @@ def ClassRecords(Class=None):
                 print(f"There are no students in Grade 2")
                 print()
         if "3" in Grade:
-            cur.execute(f"select * from {db}.cattwo where class=3")
+            cur.execute(f"select * from cattwo where class=3")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -2511,7 +2510,7 @@ def ClassRecords(Class=None):
                 print(f"There are no students in grade 3")
                 print()
         if "4" in Grade:
-            cur.execute(f"select * from {db}.cattwo where class=4")
+            cur.execute(f"select * from cattwo where class=4")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -2559,7 +2558,7 @@ def ClassRecords(Class=None):
     # ? Grade 5 - Grade 8
     if "5" in Grade or "6" in Grade or "7" in Grade or "8" in Grade:
         if "5" in Grade:
-            cur.execute(f"select * from {db}.catthree where class=5")
+            cur.execute(f"select * from catthree where class=5")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -2608,7 +2607,7 @@ def ClassRecords(Class=None):
                 print(f"There are no students in Grade 5")
                 print()
         if "6" in Grade:
-            cur.execute(f"select * from {db}.catthree where class=6")
+            cur.execute(f"select * from catthree where class=6")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -2661,7 +2660,7 @@ def ClassRecords(Class=None):
                 print(f"There are no students in Grade 6")
                 print()
         if "7" in Grade:
-            cur.execute(f"select * from {db}.catthree where class=7")
+            cur.execute(f"select * from catthree where class=7")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -2714,7 +2713,7 @@ def ClassRecords(Class=None):
                 print(f"There are no students in Grade 7")
                 print()
         if "8" in Grade:
-            cur.execute(f"select * from {db}.catthree where class=8")
+            cur.execute(f"select * from catthree where class=8")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -2770,7 +2769,7 @@ def ClassRecords(Class=None):
     # ? Grade 9 - Grade 10
     if "9" in Grade or "10" in Grade:
         if "9" in Grade:
-            cur.execute(f"select * from {db}.catfour where class=9")
+            cur.execute(f"select * from catfour where class=9")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -2813,7 +2812,7 @@ def ClassRecords(Class=None):
                 print(f"There are no students in Grade 9")
                 print()
         if "10" in Grade:
-            cur.execute(f"select * from {db}.catfour where class=10")
+            cur.execute(f"select * from catfour where class=10")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -2859,7 +2858,7 @@ def ClassRecords(Class=None):
     if "11" in Grade or "12" in Grade:
         if "11" in Grade:
             # ? Mathematics, Physics, Chemistry
-            cur.execute(f"select * from {db}.catfive where class={11}")
+            cur.execute(f"select * from catfive where class={11}")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -2905,7 +2904,7 @@ def ClassRecords(Class=None):
                 print(f"There are no students in Grade 11 MPC")
 
             # ? Biology, Physics, Chemistry
-            cur.execute(f"select * from {db}.catsix where class=11")
+            cur.execute(f"select * from catsix where class=11")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -2951,7 +2950,7 @@ def ClassRecords(Class=None):
                 print(f"There are no students in Grade 11 BiPC")
 
             # ? Commerce
-            cur.execute(f"select * from {db}.catseven where class=11")
+            cur.execute(f"select * from catseven where class=11")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -2998,7 +2997,7 @@ def ClassRecords(Class=None):
                 print(f"There are no students in Grade 11 CEC")
 
             # ? Humanities
-            cur.execute(f"select * from {db}.cateight where class=11")
+            cur.execute(f"select * from cateight where class=11")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -3045,7 +3044,7 @@ def ClassRecords(Class=None):
                 print(f"There are no students in Grade 11 Humanities")
         if "12" in Grade:
             # ? Mathematics, Physics, Chemistry
-            cur.execute(f"select * from {db}.catfive where class={12}")
+            cur.execute(f"select * from catfive where class={12}")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -3091,7 +3090,7 @@ def ClassRecords(Class=None):
                 print(f"There are no students in Grade 12 MPC")
 
             # ? Biology, Physics, Chemistry
-            cur.execute(f"select * from {db}.catsix where class=12")
+            cur.execute(f"select * from catsix where class=12")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -3137,7 +3136,7 @@ def ClassRecords(Class=None):
                 print(f"There are no students in Grade 12 BiPC")
 
             # ? Commerce
-            cur.execute(f"select * from {db}.catseven where class=11")
+            cur.execute(f"select * from catseven where class=11")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -3184,7 +3183,7 @@ def ClassRecords(Class=None):
                 print(f"There are no students in Grade 12 CEC")
 
             # ? Humanities
-            cur.execute(f"select * from {db}.cateight where class=12")
+            cur.execute(f"select * from cateight where class=12")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -3266,72 +3265,64 @@ def ExportCSV():
         # ? Disabling print
         DisablePrint()
         # ? Exporting the records
-        class1Frame = pd.read_sql(f"select * from {db}.catone where class={1}", con)
+        class1Frame = pd.read_sql(f"select * from catone where class={1}", con)
         class1Frame.to_csv(f"{dir}/Class1.csv", index=False)
 
-        class2Frame = pd.read_sql(f"select * from {db}.cattwo where class={2}", con)
+        class2Frame = pd.read_sql(f"select * from cattwo where class={2}", con)
         class2Frame.to_csv(f"{dir}/Class2.csv", index=False)
 
-        class3Frame = pd.read_sql(f"select * from {db}.cattwo where class={3}", con)
+        class3Frame = pd.read_sql(f"select * from cattwo where class={3}", con)
         class3Frame.to_csv(f"{dir}/Class3.csv", index=False)
 
-        class4Frame = pd.read_sql(f"select * from {db}.cattwo where class={4}", con)
+        class4Frame = pd.read_sql(f"select * from cattwo where class={4}", con)
         class4Frame.to_csv(f"{dir}/Class4.csv", index=False)
 
-        class5Frame = pd.read_sql(f"select * from {db}.catthree where class={5}", con)
+        class5Frame = pd.read_sql(f"select * from catthree where class={5}", con)
         class5Frame.to_csv(f"{dir}/Class5.csv", index=False)
 
-        class6Frame = pd.read_sql(f"select * from {db}.catthree where class={6}", con)
+        class6Frame = pd.read_sql(f"select * from catthree where class={6}", con)
         class6Frame.to_csv(f"{dir}/Class6.csv", index=False)
 
-        class7Frame = pd.read_sql(f"select * from {db}.catthree where class={7}", con)
+        class7Frame = pd.read_sql(f"select * from catthree where class={7}", con)
         class7Frame.to_csv(f"{dir}/Class7.csv", index=False)
 
-        class8Frame = pd.read_sql(f"select * from {db}.catthree where class={8}", con)
+        class8Frame = pd.read_sql(f"select * from catthree where class={8}", con)
         class8Frame.to_csv(f"{dir}/Class8.csv", index=False)
 
-        class9Frame = pd.read_sql(f"select * from {db}.catfour where class={9}", con)
+        class9Frame = pd.read_sql(f"select * from catfour where class={9}", con)
         class9Frame.to_csv(f"{dir}/Class9.csv", index=False)
-        class10Frame = pd.read_sql(f"select * from {db}.catfour where class={10}", con)
+        class10Frame = pd.read_sql(f"select * from catfour where class={10}", con)
         class10Frame.to_csv(f"{dir}/Class10.csv", index=False)
 
-        class11MPCFrame = pd.read_sql(
-            f"select * from {db}.catfive where class={11}", con
-        )
+        class11MPCFrame = pd.read_sql(f"select * from catfive where class={11}", con)
         class11MPCFrame.to_csv(f"{dir}/Class11-MPC.csv", index=False)
 
-        class11BiPCFrame = pd.read_sql(
-            f"select * from {db}.catsix where class={11}", con
-        )
+        class11BiPCFrame = pd.read_sql(f"select * from catsix where class={11}", con)
         class11BiPCFrame.to_csv(f"{dir}/Class11-BiPC.csv", index=False)
 
         class11CommerceFrame = pd.read_sql(
-            f"select * from {db}.catseven where class={11}", con
+            f"select * from catseven where class={11}", con
         )
         class11CommerceFrame.to_csv(f"{dir}/Class11-Commerce.csv", index=False)
 
         class11HumanitiesFrame = pd.read_sql(
-            f"select * from {db}.cateight where class={11}", con
+            f"select * from cateight where class={11}", con
         )
         class11HumanitiesFrame.to_csv(f"{dir}/Class11-Humanities.csv", index=False)
 
-        class12MPCFrame = pd.read_sql(
-            f"select * from {db}.catfive where class={12}", con
-        )
+        class12MPCFrame = pd.read_sql(f"select * from catfive where class={12}", con)
         class12MPCFrame.to_csv(f"{dir}/Class12-MPC.csv", index=False)
 
-        class12BiPCFrame = pd.read_sql(
-            f"select * from {db}.catsix where class={12}", con
-        )
+        class12BiPCFrame = pd.read_sql(f"select * from catsix where class={12}", con)
         class12BiPCFrame.to_csv(f"{dir}/Class12-BiPC.csv", index=False)
 
         class12CommerceFrame = pd.read_sql(
-            f"select * from {db}.catseven where class={12}", con
+            f"select * from catseven where class={12}", con
         )
         class12CommerceFrame.to_csv(f"{dir}/Class12-Commerce.csv", index=False)
 
         class12HumanitiesFrame = pd.read_sql(
-            f"select * from {db}.cateight where class={12}", con
+            f"select * from cateight where class={12}", con
         )
         class12HumanitiesFrame.to_csv(f"{dir}/Class12-Humanities.csv", index=False)
 
@@ -3361,7 +3352,7 @@ Backend()
 # ? Login, if username and password do not exist, it will ask if you want to create a user.
 # ? Add attributes if you want to provide username and password
 # ? For example: LoginUser("Username", "Password")
-LoginUser("adithya", "12345678")
+LoginUser()
 
 while True:
     # ? Clearing the screen
@@ -3405,7 +3396,7 @@ while True:
         elif studentInfoChoice == "Back":
             ClearScreen()
         else:
-            # ? If quit is called or a bad choice is given
+            # ? If quit is called
             exit()
     elif choice == "Marks information":
         marksInfoChoice = questionary.select(
@@ -3423,7 +3414,7 @@ while True:
         elif marksInfoChoice == "Back":
             ClearScreen()
         else:
-            # ? If quit is called or a bad choice is given
+            # ? If quit is called
             exit()
     elif choice == "Records":
         recordsChoice = questionary.select(
@@ -3451,7 +3442,7 @@ while True:
         elif recordsChoice == "Back":
             ClearScreen()
         else:
-            # ? If quit is called or a bad choice is given
+            # ? If quit is called
             exit()
     elif choice == "Export All Data":
         ExportCSV()
