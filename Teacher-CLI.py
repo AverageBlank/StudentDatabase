@@ -144,7 +144,7 @@ def IsProperName(name):
 # ! Function to avoid getting an error on an improper class number
 def IsProperClass(classno):
     # ? Checks for alphanumeric symbols in a name and rejects it if one exists
-    AlphabeticalSymbols = [x for x in ascii_letters]
+    AlphabeticalSymbols = [x for x in ascii_letters + punctuation]
     while True:
         try:
             for i in classno:
