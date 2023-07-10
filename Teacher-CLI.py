@@ -1,8 +1,8 @@
 # Starting of the program
-# region credits
 #! --------------------------------------------------
 #! ---------- Credits
 #! --------------------------------------------------
+# region credits
 # * ---- Made by:
 # * ------- Aaloke Eppalapalli
 # * ------- Hemanth Tenneti
@@ -331,13 +331,13 @@ def Backend():
             chk = popen("ls ~").read()
             CWD = popen("cd ~ && pwd").read()
             if "forpsd" in chk:
-                with open(CWD + "forpsd", "rb") as keyFile:
+                with open(CWD[:-1] + "/forpsd", "rb") as keyFile:
                     key = keyFile.read()
             else:
                 raise ValueError
     except:
         key = Fernet.generate_key()
-        with open(CWD + "forpsd", "wb") as keyFile:
+        with open(CWD[:-1] + "/forpsd", "wb") as keyFile:
             keyFile.write(key)
     fernet = Fernet(key.decode("utf-8"))
 
@@ -2852,13 +2852,13 @@ def ClassRecords(Class=None):
                 console.print(table)
                 print()
             else:
-                print(f"There are no students in Grade 10")
+                print("There are no students in Grade 10")
                 print()
 
     if "11" in Grade or "12" in Grade:
         if "11" in Grade:
             # ? Mathematics, Physics, Chemistry
-            cur.execute(f"select * from catfive where class={11}")
+            cur.execute("select * from catfive where class=11")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -2901,10 +2901,10 @@ def ClassRecords(Class=None):
                 print()
             else:
                 print()
-                print(f"There are no students in Grade 11 MPC")
+                print("There are no students in Grade 11 MPC")
 
             # ? Biology, Physics, Chemistry
-            cur.execute(f"select * from catsix where class=11")
+            cur.execute("select * from catsix where class=11")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -2947,10 +2947,10 @@ def ClassRecords(Class=None):
                 print()
             else:
                 print()
-                print(f"There are no students in Grade 11 BiPC")
+                print("There are no students in Grade 11 BiPC")
 
             # ? Commerce
-            cur.execute(f"select * from catseven where class=11")
+            cur.execute("select * from catseven where class=11")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -2994,10 +2994,10 @@ def ClassRecords(Class=None):
                 print()
             else:
                 print()
-                print(f"There are no students in Grade 11 CEC")
+                print("There are no students in Grade 11 CEC")
 
             # ? Humanities
-            cur.execute(f"select * from cateight where class=11")
+            cur.execute("select * from cateight where class=11")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -3041,10 +3041,10 @@ def ClassRecords(Class=None):
                 print()
             else:
                 print()
-                print(f"There are no students in Grade 11 Humanities")
+                print("There are no students in Grade 11 Humanities")
         if "12" in Grade:
             # ? Mathematics, Physics, Chemistry
-            cur.execute(f"select * from catfive where class={12}")
+            cur.execute("select * from catfive where class=12")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -3087,10 +3087,10 @@ def ClassRecords(Class=None):
                 print()
             else:
                 print()
-                print(f"There are no students in Grade 12 MPC")
+                print("There are no students in Grade 12 MPC")
 
             # ? Biology, Physics, Chemistry
-            cur.execute(f"select * from catsix where class=12")
+            cur.execute("select * from catsix where class=12")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -3133,10 +3133,10 @@ def ClassRecords(Class=None):
                 print()
             else:
                 print()
-                print(f"There are no students in Grade 12 BiPC")
+                print("There are no students in Grade 12 BiPC")
 
             # ? Commerce
-            cur.execute(f"select * from catseven where class=11")
+            cur.execute("select * from catseven where class=12")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -3180,10 +3180,10 @@ def ClassRecords(Class=None):
                 print()
             else:
                 print()
-                print(f"There are no students in Grade 12 CEC")
+                print("There are no students in Grade 12 CEC")
 
             # ? Humanities
-            cur.execute(f"select * from cateight where class=12")
+            cur.execute("select * from cateight where class=12")
             res = cur.fetchall()
             if len(res) != 0:
                 res = [x for x in res]
@@ -3227,7 +3227,7 @@ def ClassRecords(Class=None):
                 print()
             else:
                 print()
-                print(f"There are no students in Grade 12 Humanities")
+                print("There are no students in Grade 12 Humanities")
     input()
     ClearScreen()
 
@@ -3345,7 +3345,7 @@ def ExportCSV():
 #! --------------------------------------------------
 # region Running the program
 ########! Required for the script to work !########
-# ? This runs basic functions such as creating requried databases and tables as well as basic vairables.
+# ? This runs basic functions such as creating required databases and tables as well as basic variables.
 Backend()
 
 ########! Printing Options on the Screen !########

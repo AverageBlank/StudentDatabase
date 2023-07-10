@@ -1,0 +1,6 @@
+pandas              # * For exporting data into csv.
+matplotlib          # * For plotting a graph.
+jinja2              # * Required dependancy.
+cryptography        # * Used for encrypting passwords.
+rich                # * Used for command line interface.
+questionary         # * Used for command line interface.
