@@ -3873,7 +3873,7 @@ def SchoolRecords():
             "Average %": [None],
         }
 
-    # ? Dataframing the results
+    # ? Adding the results to a dataframe
     df1 = dataframe(result1)
     df2 = dataframe(result2)
     df3 = dataframe(result3)
@@ -4014,7 +4014,7 @@ def SchoolRecords():
 # region Running the program
 ########! Imports !########
 ########! Required for the script to work !########
-# ? This runs basic functions such as creating requried databases and tables as well as basic vairables.
+# ? This runs basic functions such as creating required databases and tables as well as basic variables.
 Backend()
 
 
