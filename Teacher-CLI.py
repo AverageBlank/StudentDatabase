@@ -61,9 +61,8 @@ import sys
 # ? SQLite3 --> For connecting to SQL database
 from sqlite3 import connect
 
-# ? Fernet --> For encrypting passwords
-from cryptography.fernet import Fernet
-
+# ? Keyring --> For securely storing user password in Credential Manager
+from keyring import set_password, get_password
 
 # endregion
 #! --------------------------------------------------
@@ -314,32 +313,7 @@ def StatBar(time: float, desc: str):
 # ! <-- Connecting to the server and creating necessary tables -->
 def Backend():
     # ! <-- Globals for making life easier -->
-    global db, con, cur, console, minimalStyle, fernet
-
-    # ! <-- Encrypting password so people who think they're smart can't access it -->
-    try:
-        if OsName == "nt":
-            chk = popen("cd %userprofile% && dir").read()
-            CWD = popen("cd %userprofile% && chdir").read()
-            CWD = CWD[:-1] + "\\"
-            if "forpsd" in chk:
-                with open(CWD + "forpsd", "rb") as keyFile:
-                    key = keyFile.read()
-            else:
-                raise ValueError
-        elif OsName == "posix":
-            chk = popen("ls ~").read()
-            CWD = popen("cd ~ && pwd").read()
-            if "forpsd" in chk:
-                with open(CWD[:-1] + "/forpsd", "rb") as keyFile:
-                    key = keyFile.read()
-            else:
-                raise ValueError
-    except:
-        key = Fernet.generate_key()
-        with open(CWD[:-1] + "/forpsd", "wb") as keyFile:
-            keyFile.write(key)
-    fernet = Fernet(key.decode("utf-8"))
+    global db, con, cur, console, minimalStyle
 
     # ! <-- Colors -->
     minimalStyle = Style(
@@ -358,57 +332,6 @@ def Backend():
     cur = con.cursor()
 
     db = "studentdatabase"
-
-    # ! <-- Creating basic Databases and Tables -->
-    cur.execute(
-        f"create table if not exists teacherDB(user varchar(64) primary key, pass varchar(100))"
-    )
-    cur.execute(
-        f"create table if not exists allstudents(AdmNum int primary key, name varchar(100), class int, section varchar(10))"
-    )
-
-    # ! <-- Creating class tables for MySQL -->
-    # ** <-- CAT IS CATEGORY -->
-    # ? Grade 1
-    cur.execute(
-        f"""CREATE TABLE if not exists catone(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Total INT, Average FLOAT)"""
-    )
-
-    # ? Grade 2 - Grade 4
-    cur.execute(
-        f"""CREATE TABLE if not exists cattwo(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Computers INT, Total INT, Average FLOAT)"""
-    )
-
-    # ? Grade 5 - Grade 8
-    cur.execute(
-        f"""CREATE TABLE if not exists catthree(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), Lang3Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Lang3 INT, Computers INT, Total INT, Average FLOAT)"""
-    )
-
-    # ? Grade 9-10
-    cur.execute(
-        f"""CREATE TABLE if not exists catfour(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Total INT, Average FLOAT)"""
-    )
-
-    # ? MPC
-    cur.execute(
-        f"""CREATE TABLE if not exists catfive(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, Mathematics INT, Physics INT, Chemistry INT, Fcore INT, Total INT, Average FLOAT)"""
-    )
-
-    # ? BiPC
-    cur.execute(
-        f"""CREATE TABLE if not exists catsix(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, Biology INT, Physics INT, Chemistry INT, Fcore INT, Total INT, Average FLOAT)"""
-    )
-
-    # ? Commerce
-    cur.execute(
-        f"""CREATE TABLE if not exists catseven(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, Accounts INT, BusinessStudies INT, Economics INT, Fcore INT, Total INT, Average FLOAT)"""
-    )
-
-    # ? Humanities
-    cur.execute(
-        f"""CREATE TABLE if not exists cateight(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, History INT, PoliticalSciences INT, Economics INT, Fcore INT, Total INT, Average FLOAT)"""
-    )
-    con.commit()
 
 
 ########! Related to Login !########
@@ -441,25 +364,20 @@ def RegisterUser(User=None, Pass=None):
             if len(Pass) < 8:
                 print("Length of the password must be greater than 8")
                 continue
-            Pass = fernet.encrypt(f"{Pass}".encode())
+
+            c = get_password("studentmgmtsystem", User)
+            if c != None:
+                ClearScreen()
+                print("This user already exists!")
+                LoginUser(
+                    User,
+                    questionary.password(
+                        "Enter the password for the user: ", style=minimalStyle
+                    ).ask(),
+                )
+            else:
+                set_password("studentmgmtsystem", User, Pass)
             break
-    # ? Running the signup system
-    cur.execute(f'select * from teacherDB where user="{User}"')
-    userFetch = cur.fetchall()
-    if len(userFetch) == 0:
-        cur.execute(rf'insert into teacherDB values("{User}", "{Pass}")')
-        con.commit()
-        print("Successfully created user.")
-        input()
-    else:
-        ClearScreen()
-        print("This user already exists!")
-        LoginUser(
-            User,
-            questionary.password(
-                "Enter the password for the user: ", style=minimalStyle
-            ).ask(),
-        )
 
 
 # ! <-- If Login is called -->
@@ -482,9 +400,10 @@ def LoginUser(User=None, Pass=None):
     if Pass == None:
         Pass = questionary.password("Enter your password: ", style=minimalStyle).ask()
     # ? Running the login system
-    cur.execute(f'select * from teacherDB where user="{User}"')
-    userFetch = cur.fetchall()
-    if len(userFetch) == 0:
+    # try:
+    c = get_password("studentmgmtsystem", User)
+
+    if c == None:
         ClearScreen()
         print("Username doesn't exist!")
         register = questionary.confirm(
@@ -498,8 +417,7 @@ def LoginUser(User=None, Pass=None):
             exit()
     else:
         while True:
-            userFetchPass = userFetch[0][1][2:-1]
-            decPass = fernet.decrypt(userFetchPass).decode("utf-8")
+            decPass = get_password("studentmgmtsystem", User)
             if decPass == rf"{Pass}":
                 ClearScreen()
                 print("Successful login!")
