@@ -1,39 +1,69 @@
-## Starting of the program
-# * ------ Made by Aaloke, Hemanth and Hussain
+# Starting of the program
+#! --------------------------------------------------
+#! ---------- Credits
+#! --------------------------------------------------
+# region credits
+# * ---- Made by:
+# * ------- Aaloke Eppalapalli
+# * ------- Hemanth Tenneti
+# * ------- Husain Khorakiwala
+
+# * ---- Source Code:
+# * ------- https://github.com/AverageBlank/StudentDatabase
+
+# endregion
+
+
 #! --------------------------------------------------
 #! ---------- Imports
 #! --------------------------------------------------
 # region Imports
-# ? <-- Globals for easier life -->
-global dataframe, series, pwinput, open_new_tab
+# ? Maths --> For rounding
+from math import ceil
 
-# ? Importing os to get operating system and to run commands in terminal
-from os import name, system, popen
+# ? Importing OS to get operating system, to run commands in terminal, to block print
+from os import name as OsName, system, getcwd, path, makedirs, devnull, popen
 
 # ? Importing string to have a valid name without symbols
-from string import digits, punctuation, ascii_letters
+from string import ascii_letters, digits, punctuation
 
 # ? Time --> For pausing the program
 from time import sleep
 
-# ? Web Browser --> For opening dataframe on browser
-from webbrowser import open_new_tab
+# ? Questionary --> To provide choices and autocompletions
+import questionary
+from questionary import Style
 
 # ? Matplotlib --> for plotting a graph
 from matplotlib.pyplot import bar, show, title, xlabel, ylabel
 
 # ? Pandas --> for storing data
-from pandas import DataFrame as dataframe
-from pandas import Series as series
+import pandas as pd
 
-# ? PWInputs --> for inputting passwords
-from pwinput import pwinput
+# ? Rich --> For great terminal user interface
+from rich import print
+from rich.console import Console
 
-# ? PyMySQL --> for connecting to MySQL
-from pymysql import connect
+console = Console()
+from rich.table import Table
+from rich import box
+from rich.panel import Panel
+from rich.progress import (
+    BarColumn,
+    Progress,
+    TextColumn,
+)
+from rich.align import Align
 
-# ? Maths --> For rounding
-from math import ceil
+# ? Sys --> Prevents printing
+import sys
+
+# ? SQLite3 --> For connecting to SQL database
+from sqlite3 import connect
+
+# ? Fernet --> For encrypting passwords
+from cryptography.fernet import Fernet
+
 
 # endregion
 #! --------------------------------------------------
@@ -44,54 +74,22 @@ from math import ceil
 #! ---------- Functions
 #! --------------------------------------------------
 # region Functions
-# ! Function to edit the inputted content to our desired parameters
-def BetterInput(prompt, filter="None", type=str, error="Enter a proper value."):
-    # ? To check for input parameters and returning the desired input.
-    while True:
-        try:
-            # ? If type is string, check for filters
-            if type == str:
-                inp = input(prompt)
-                if filter.lower() == "lower":
-                    return inp.lower()
-                elif filter.lower() == "upper":
-                    return inp.upper()
-                elif filter.lower() == "sentence":
-                    return inp.title()
-                else:
-                    return inp
-            # ? If type is int, check for filters
-            elif type == int:
-                inp = int(input(prompt))
-                if filter.lower() in ["positive", "+"]:
-                    return abs(inp)
-                elif filter.lower() in ["negative", "-"]:
-                    return -abs(inp)
-                else:
-                    return inp
-            # ? If type is float, check for filters
-            elif type == float:
-                inp = float(input(prompt))
-                if filter.lower() in ["positive", "+"]:
-                    return abs(inp)
-                elif filter.lower() in ["negative", "-"]:
-                    return -abs(inp)
-                else:
-                    return inp
-        except KeyboardInterrupt:
-            exit()
-        except:
-            print(error)
 
 
-# ! To open our source code when called
-def openCode():
-    open_new_tab("https://github.com/AverageBlank/StudentDatabase")
+# ! Function to prevent printing
+def DisablePrint():
+    sys.stdout = open(devnull, "w")
 
 
+# ! Function to enable printing
+def EnablePrint():
+    sys.stdout = sys.__stdout__
+
+
+# ! Function to avoid getting improper section
 def IsProperSection(prompt):
     while True:
-        section = input(prompt)
+        section = questionary.text(prompt, style=minimalStyle).ask()
         try:
             if len(section) > 2 or len(section) <= 0:
                 raise ValueError
@@ -110,34 +108,22 @@ def IsProperSection(prompt):
             print("Section cannot have symbols")
 
 
+# ! Function to avoid getting improper marks
 def IsProperMarks(prompt):
     # ? To check for input parameters and returning the desired input.
     while True:
         try:
             # ? Rounds off the marks to the nearest integer value
-            marks = ceil(float(input(prompt)))
+            marks = ceil(float(questionary.text(prompt, style=minimalStyle).ask()))
             if 0 > marks or marks > 100:
                 # ? If marks aren't between 0 or 100, rejects the marks
                 raise AttributeError
             else:
                 return marks
-        except KeyboardInterrupt:
-            # ? Checks for keyboard interruption to exit program early
-            exit()
         except AttributeError:
             print(f"Marks need to be less than 100 and greater than 0.")
         except:
             print("Enter valid marks.")
-
-
-# ! Function to avoid getting an error on a wrong yes/no question
-def IsProperAnswer(answer):
-    # ? Checks to see if answer is a yes or no
-    while True:
-        if answer not in ["yes", "no", "y", "n"]:
-            answer = input("Please type either yes or no: ").lower()
-        else:
-            return answer
 
 
 # ! Function to avoid getting an error on an improper name
@@ -152,43 +138,30 @@ def IsProperName(name):
             else:
                 # ? If no symbols or numbers in a name, return the name
                 return name
-        except KeyboardInterrupt:
-            # ? Checks for keyboard interruption to exit program early
-            exit()
         except:
-            name = BetterInput("Enter a valid student's name: ", "sentence", str)
+            name = (
+                questionary.text("Enter a valid student's name: ", style=minimalStyle)
+                .ask()
+                .title()
+            )
 
 
-# ! Function to avoid getting an error on an improper stream
-def IsProperStream(stream):
+# ! Function to avoid getting an error on an improper class number
+def IsProperClass(classno):
+    # ? Checks for alphanumeric symbols in a name and rejects it if one exists
+    AlphabeticalSymbols = [x for x in ascii_letters + punctuation]
     while True:
         try:
-            # ? If stream is not within the given list, raise a ValueError
-            if stream.lower() not in [
-                "pcm",
-                "mpc",
-                "bipc",
-                "commerce",
-                "cec",
-                "humanities",
-                "human",
-            ]:
-                raise ValueError
+            for i in classno:
+                if i in AlphabeticalSymbols:
+                    raise ValueError
             else:
-                # ? If stream is valid, rename given stream to a common name to keep it uniform
-                if stream == "pcm":
-                    stream = "mpc"
-                if stream == "commerce":
-                    stream = "cec"
-                if stream == "human":
-                    stream = "humanities"
-                return stream
-        except KeyboardInterrupt:
-            # ? Checks for keyboard interruption to exit program early
-            exit()
+                # ? If no symbols or numbers in a name, return the name
+                return int(classno)
         except:
-            # ? If all checks fail, ask for input again.
-            stream = BetterInput("Enter a valid stream: ", "sentence", str)
+            classno = questionary.text(
+                f"Please enter a valid class number.", style=minimalStyle
+            ).ask()
 
 
 # ! Function to avoid getting an error on fcore input depending on user's stream
@@ -226,56 +199,20 @@ def IsProperFcore(Fcore, Stream):
                 if Fcore.lower() == "fa":
                     Fcore = "Fine Arts"
                 return Fcore
-        except KeyboardInterrupt:
-            # ? Checks for keyboard interruption to exit program early
-            exit()
         except:
             # ? If checks fail, ask for an input again
-            Fcore = BetterInput("Enter a valid 5th core: ", "sentence", str)
-
-
-# ! Function to avoid getting an error on choosing a 2nd language, without including French
-def IsProperLang2WOF(Lang2Name):
-    while True:
-        try:
-            # ? Checks for improper languages given and raises error
-            if Lang2Name.lower() not in ["hindi", "h", "telugu", "t"]:
-                raise ValueError
-            else:
-                # ? Refactors given input into a uniform input for all
-                if Lang2Name.lower() == "h":
-                    Lang2Name = "Hindi"
-                if Lang2Name.lower() == "t":
-                    Lang2Name = "Telugu"
-                return Lang2Name
-        except KeyboardInterrupt:
-            # ? Checks for keyboard interruption to exit program early
-            exit()
-        except:
-            Lang2Name = BetterInput("Enter a valid 2nd Language: ", "sentence", str)
-
-
-# ! Function to avoid getting an error on choosing a 2nd language, including French
-def IsProperLang2WF(Lang2Name):
-    while True:
-        try:
-            # ? Checks for improper languages given and raises error
-            if Lang2Name.lower() not in ["hindi", "h", "telugu", "t", "french", "f"]:
-                raise ValueError
-            else:
-                # ? Refactors given input into a uniform input for all
-                if Lang2Name.lower() == "h":
-                    Lang2Name = "Hindi"
-                if Lang2Name.lower() == "t":
-                    Lang2Name = "Telugu"
-                if Lang2Name.lower() == "f":
-                    Lang2Name = "French"
-                return Lang2Name
-        except KeyboardInterrupt:
-            # ? Checks for keyboard interruption to exit program early
-            exit()
-        except:
-            Lang2Name = BetterInput("Enter a valid 2nd Language: ", "sentence", str)
+            Fcore = questionary.select(
+                "Choose a valid 5th Core: ",
+                choices=[
+                    "Mathematics",
+                    "Informatics Practices",
+                    "Psychology",
+                    "Physical Education",
+                    "Fine Arts",
+                ],
+                style=minimalStyle,
+                instruction="\n",
+            ).ask()
 
 
 # ! Function to avoid getting an error on choosing a 3rd language
@@ -307,11 +244,17 @@ def IsProperLang3(Lang3Name, Lang2Name):
                 if Lang2Name == Lang3Name:
                     raise ValueError
                 return Lang3Name
-        except KeyboardInterrupt:
-            # ? Checks for keyboard interruption to exit program early
-            exit()
         except:
-            Lang3Name = BetterInput("Enter a valid 3rd Language: ", "sentence", str)
+            Lang3Name = (
+                questionary.select(
+                    "Choose a valid 3rd language: ",
+                    choices=["Hindi", "Telugu", "French", "Sanskrit"],
+                    style=minimalStyle,
+                    instruction="\n",
+                )
+                .ask()
+                .title()
+            )
 
 
 # ! Function to avoid getting an error on a wrong roll number input
@@ -323,25 +266,39 @@ def IsProperRollNum(RollNum):
                 raise ValueError
             else:
                 return RollNum
-        except KeyboardInterrupt:
-            # ? Checks for keyboard interruption to exit program early
-            exit()
         except:
-            RollNum = BetterInput("Enter a valid roll number: ", "+", int)
+            RollNum = abs(
+                int(
+                    questionary.text(
+                        "Enter a valid roll number: ", style=minimalStyle
+                    ).ask()
+                )
+            )
 
 
 # ! Function to clear the terminal screen depending on OS type
 def ClearScreen():
     # ? Checks for OS type and then clears the terminal
-    sleep(0.5)
-    if name == "posix":
-        system("clear")
-    elif name == "nt":
-        system("cls")
-    print("-" * 70)
-    print(" " * 17, "This is a Student Management system")
-    print("-" * 70)
+    sleep(0.2)
+    # ? Posix here is Macintosh and Linux, nt is Windows.
+    system("clear" if OsName == "posix" else "cls")
+    console.print(
+        Panel.fit("[bold italic #77DDD4]Student Management System", padding=(0, 22))
+    )
     print()
+
+
+# ! Function to display a status bar
+def StatBar(time: float, desc: str):
+    progress_bar = Progress(
+        TextColumn(f"{desc} "),
+        BarColumn(),
+        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+    )
+    with progress_bar as p:
+        for i in p.track(range(100), description=desc):
+            sleep(time / 100)
+    sleep(0.5)
 
 
 # endregion
@@ -354,113 +311,116 @@ def ClearScreen():
 #! --------------------------------------------------
 # region Main Program
 ########! Connecting to the server !########
-### ! <-- Connecting to the server and creating necessary tables -->
+# ! <-- Connecting to the server and creating necessary tables -->
 def Backend():
-    global db, con, cur
-    # ! <-- Connecting to MySQL -->
-    ### ! <-- MySQL Smart Password System --> ! ###
+    # ! <-- Globals for making life easier -->
+    global db, con, cur, console, minimalStyle, fernet
+
+    # ! <-- Encrypting password so people who think they're smart can't access it -->
     try:
-        if name == "nt":
+        if OsName == "nt":
             chk = popen("cd %userprofile% && dir").read()
             CWD = popen("cd %userprofile% && chdir").read()
             CWD = CWD[:-1] + "\\"
-            if "mysqlpassword" in chk:
-                p = popen("cd %userprofile% && more mysqlpassword").read()
-                p = p[:-1]
+            if "forpsd" in chk:
+                with open(CWD + "forpsd", "rb") as keyFile:
+                    key = keyFile.read()
             else:
                 raise ValueError
-        elif name == "posix":
+        elif OsName == "posix":
             chk = popen("ls ~").read()
             CWD = popen("cd ~ && pwd").read()
-            if "mysqlpassword" in chk:
-                p = popen("cat ~/mysqlpassword").read()
+            if "forpsd" in chk:
+                with open(CWD[:-1] + "/forpsd", "rb") as keyFile:
+                    key = keyFile.read()
             else:
                 raise ValueError
-    except ValueError:
-        # ? Clear the screen
-        ClearScreen()
-        # * Running this if password is not saved
-        while True:
-            p = input("Please type in your MySQL Password: ")
-            try:
-                # ? Connecting
-                con = connect(user="root", host="localhost", password=p)
-                cur = con.cursor()
-                # ? Saving the password
-                a = open(CWD[:-1] + "/mysqlpassword", "w")
-                a.write(p)
-                a.close()
-                break
-            except:
-                print("Password was wrong, please try again.")
-    # ? Connecting to the MySQL server
-    con = connect(user="root", host="localhost", password=p)
+    except:
+        key = Fernet.generate_key()
+        with open(CWD[:-1] + "/forpsd", "wb") as keyFile:
+            keyFile.write(key)
+    fernet = Fernet(key.decode("utf-8"))
+
+    # ! <-- Colors -->
+    minimalStyle = Style(
+        [
+            ("answer", "fg:#FFFFFF italic"),  # ? White
+            ("question", "fg:#FFFFFF bold"),  # ? White
+            ("pointer", "fg:#00FFFF bold"),  # ? Cyan
+            ("highlighted", "fg:#FFFFFF"),  # ? White
+            ("selected", "fg:#A9A9A9"),  # ? Grey
+            ("qmark", "fg:#77DD77"),  # ? Green
+        ]
+    )
+
+    # ? Connecting to the MySQL database
+    con = connect("StudentDatabase.db")
     cur = con.cursor()
 
     db = "studentdatabase"
 
     # ! <-- Creating basic Databases and Tables -->
-    cur.execute(f"create database if not exists {db}")
     cur.execute(
-        f"create table if not exists {db}.teacherDB(user varchar(64) primary key, pass varchar(100))"
+        f"create table if not exists teacherDB(user varchar(64) primary key, pass varchar(100))"
     )
     cur.execute(
-        f"create table if not exists {db}.allstudents(AdmNum int primary key, name varchar(100), class int, section varchar(10))"
+        f"create table if not exists allstudents(AdmNum int primary key, name varchar(100), class int, section varchar(10))"
     )
 
     # ! <-- Creating class tables for MySQL -->
     # ** <-- CAT IS CATEGORY -->
     # ? Grade 1
     cur.execute(
-        f"""CREATE TABLE if not exists {db}.catone(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Total INT, Average FLOAT)"""
+        f"""CREATE TABLE if not exists catone(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Total INT, Average FLOAT)"""
     )
 
     # ? Grade 2 - Grade 4
     cur.execute(
-        f"""CREATE TABLE if not exists {db}.cattwo(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Computers INT, Total INT, Average FLOAT)"""
+        f"""CREATE TABLE if not exists cattwo(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Computers INT, Total INT, Average FLOAT)"""
     )
 
     # ? Grade 5 - Grade 8
     cur.execute(
-        f"""CREATE TABLE if not exists {db}.catthree(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), Lang3Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Lang3 INT, Computers INT, Total INT, Average FLOAT)"""
+        f"""CREATE TABLE if not exists catthree(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), Lang3Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Lang3 INT, Computers INT, Total INT, Average FLOAT)"""
     )
 
     # ? Grade 9-10
     cur.execute(
-        f"""CREATE TABLE if not exists {db}.catfour(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Total INT, Average FLOAT)"""
+        f"""CREATE TABLE if not exists catfour(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, Lang2Name VARCHAR(50), English INT, Mathematics INT, Science INT, SocialSciences INT, Lang2 INT, Total INT, Average FLOAT)"""
     )
 
     # ? MPC
     cur.execute(
-        f"""CREATE TABLE if not exists {db}.catfive(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, Mathematics INT, Physics INT, Chemistry INT, Fcore INT, Total INT, Average FLOAT)"""
+        f"""CREATE TABLE if not exists catfive(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, Mathematics INT, Physics INT, Chemistry INT, Fcore INT, Total INT, Average FLOAT)"""
     )
 
     # ? BiPC
     cur.execute(
-        f"""CREATE TABLE if not exists {db}.catsix(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, Biology INT, Physics INT, Chemistry INT, Fcore INT, Total INT, Average FLOAT)"""
+        f"""CREATE TABLE if not exists catsix(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, Biology INT, Physics INT, Chemistry INT, Fcore INT, Total INT, Average FLOAT)"""
     )
 
     # ? Commerce
     cur.execute(
-        f"""CREATE TABLE if not exists {db}.catseven(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, Accounts INT, BusinessStudies INT, Economics INT, Fcore INT, Total INT, Average FLOAT)"""
+        f"""CREATE TABLE if not exists catseven(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, Accounts INT, BusinessStudies INT, Economics INT, Fcore INT, Total INT, Average FLOAT)"""
     )
 
     # ? Humanities
     cur.execute(
-        f"""CREATE TABLE if not exists {db}.cateight(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, History INT, PoliticalSciences INT, Economics INT, Fcore INT, Total INT, Average FLOAT)"""
+        f"""CREATE TABLE if not exists cateight(AdmNum int primary key, Name VARCHAR(50), Class INT, Section varchar(10), RollNumber INT, FcoreName VARCHAR(50), English INT, History INT, PoliticalSciences INT, Economics INT, Fcore INT, Total INT, Average FLOAT)"""
     )
     con.commit()
 
 
 ########! Related to Login !########
-### ! <-- If register is called -->
+# ! <-- If register is called -->
 def RegisterUser(User=None, Pass=None):
     # ? Clearing the screen
     ClearScreen()
     if User == None:
         while True:
             # ? Taking username incase not provided
-            User = input("Enter the username: ")
+            User = questionary.text("Enter the username: ", style=minimalStyle).ask()
+
             for i in User:
                 if i in punctuation or i in digits:
                     print("Cannot contain symbols or digits")
@@ -475,25 +435,34 @@ def RegisterUser(User=None, Pass=None):
     if Pass == None:
         while True:
             # ? Taking password incase not provided
-            Pass = pwinput("Enter the password: ")
+            Pass = questionary.password(
+                "Enter your password: ", style=minimalStyle
+            ).ask()
             if len(Pass) < 8:
                 print("Length of the password must be greater than 8")
                 continue
+            Pass = fernet.encrypt(f"{Pass}".encode())
             break
     # ? Running the signup system
-    cur.execute(f'select * from {db}.teacherDB where user="{User}"')
+    cur.execute(f'select * from teacherDB where user="{User}"')
     userFetch = cur.fetchall()
     if len(userFetch) == 0:
-        cur.execute(rf'insert into {db}.teacherDB values("{User}", "{Pass}")')
+        cur.execute(rf'insert into teacherDB values("{User}", "{Pass}")')
         con.commit()
         print("Successfully created user.")
+        input("Press enter to continue ")
     else:
         ClearScreen()
         print("This user already exists!")
-        LoginUser(User, pwinput("Enter the password for the user: "))
+        LoginUser(
+            User,
+            questionary.password(
+                "Enter the password for the user: ", style=minimalStyle
+            ).ask(),
+        )
 
 
-### ! <-- If Login is called -->
+# ! <-- If Login is called -->
 def LoginUser(User=None, Pass=None):
     # ? Number of wrong passwords entered
     NPass = 0
@@ -502,7 +471,7 @@ def LoginUser(User=None, Pass=None):
     # ? Taking username incase not provided
     if User == None:
         while True:
-            User = input("Enter your username: ")
+            User = questionary.text("Enter the username: ", style=minimalStyle).ask()
             for i in User:
                 if i in punctuation or i in digits:
                     print("Cannot contain symbols or digits")
@@ -511,17 +480,17 @@ def LoginUser(User=None, Pass=None):
                 break
     # ? Taking password incase not provided
     if Pass == None:
-        Pass = pwinput("Enter your password: ")
+        Pass = questionary.password("Enter your password: ", style=minimalStyle).ask()
     # ? Running the login system
-    cur.execute(f'select * from {db}.teacherDB where user="{User}"')
+    cur.execute(f'select * from teacherDB where user="{User}"')
     userFetch = cur.fetchall()
     if len(userFetch) == 0:
         ClearScreen()
         print("Username doesn't exist!")
-        register = IsProperAnswer(
-            input("Would you like to create a new user? ").lower()
-        )
-        if register == "yes":
+        register = questionary.confirm(
+            "Would you like to create a new user? ", style=minimalStyle
+        ).ask()
+        if register == True:
             RegisterUser()
         else:
             ClearScreen()
@@ -529,10 +498,14 @@ def LoginUser(User=None, Pass=None):
             exit()
     else:
         while True:
-            if userFetch[0][1] == rf"{Pass}":
+            userFetchPass = userFetch[0][1][2:-1]
+            decPass = fernet.decrypt(userFetchPass).decode("utf-8")
+            if decPass == rf"{Pass}":
                 ClearScreen()
                 print("Successful login!")
-                sleep(1)
+                Align.center(
+                    StatBar(2, desc="[cyan]Loading Student Database"), vertical="middle"
+                )
                 break
             else:
                 NPass += 1
@@ -542,7 +515,9 @@ def LoginUser(User=None, Pass=None):
                     exit()
                 else:
                     print("Wrong Password, please try again.")
-                    Pass = pwinput("Enter your password: ")
+                    Pass = questionary.password(
+                        "Enter your password: ", style=minimalStyle
+                    ).ask()
                     continue
 
 
@@ -553,12 +528,25 @@ def AddStudent():
     ClearScreen()
     # ? Name
     Name = IsProperName(
-        BetterInput("Enter student's name: ", filter="sentence", type=str)
-    )
+        questionary.text("Enter student's name: ", style=minimalStyle).ask()
+    ).title()
     # ? Admission Number
-    AdmNum = BetterInput(f"Enter {Name}'s admission number: ", "+", int)
     while True:
-        cur.execute(f"select name from {db}.allstudents where AdmNum={AdmNum}")
+        try:
+            AdmNum = abs(
+                int(
+                    questionary.text(
+                        f"Enter {Name}'s admission number: ", style=minimalStyle
+                    ).ask()
+                )
+            )
+            if AdmNum == 0:
+                raise ValueError
+            break
+        except:
+            print("Please enter a valid admission number.")
+    while True:
+        cur.execute(f"select name from allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -566,73 +554,95 @@ def AddStudent():
                 break
             else:
                 raise ValueError
-        except KeyboardInterrupt:
-            exit()
         except:
             print("This admission number already exists")
-            AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
-    # ? Class
+            AdmNum = abs(
+                int(
+                    questionary.text(
+                        "Enter a valid admission number: ", style=minimalStyle
+                    )
+                )
+            ).ask()
+    # ? Asking for class
     while True:
-        Class = BetterInput(f"Enter {Name}'s class: ", "+", int)
+        Class = IsProperClass(
+            questionary.text(f"Enter {Name}'s class: ", style=minimalStyle).ask()
+        )
+
         # ! Categorizing by classes
         if 1 <= Class <= 3:
             # ? Asking for 2nd language name without french
-            Lang2Name = IsProperLang2WOF(
-                BetterInput(
-                    f"Enter {Name}'s 2nd language (Hindi, Telugu): ", "sentence", str
-                )
-            )
+            Lang2Name = questionary.select(
+                f"Choose {Name}'s 2nd language: ",
+                choices=["Hindi", "Telugu"],
+                style=minimalStyle,
+                instruction="\n",
+            ).ask()
         elif Class == 4:
             # ? Asking for 2nd language name with french
-            Lang2Name = IsProperLang2WF(
-                BetterInput(
-                    f"Enter {Name}'s 2nd language (Hindi, Telugu, French): ",
-                    "sentence",
-                    str,
-                )
-            )
+            Lang2Name = questionary.select(
+                f"Choose {Name}'s 2nd language: ",
+                choices=["Hindi", "Telugu", "French"],
+                style=minimalStyle,
+                instruction="\n",
+            ).ask()
         elif 5 <= Class <= 8:
             # ? Asking for 2nd language name with french
-            Lang2Name = IsProperLang2WF(
-                BetterInput(
-                    f"Enter {Name}'s 2nd language (Hindi, Telugu, French): ",
-                    "sentence",
-                    str,
-                )
-            )
+            Lang2Name = questionary.select(
+                f"Choose {Name}'s 2nd language: ",
+                choices=["Hindi", "Telugu", "French"],
+                style=minimalStyle,
+                instruction="\n",
+            ).ask()
             # ? Asking for 3rd language name
             Lang3Name = IsProperLang3(
-                BetterInput(
-                    f"Enter {Name}'s 3rd language (Sanskrit, Hindi, Telugu, French): ",
-                    "sentence",
-                    str,
-                ),
+                questionary.select(
+                    f"Choose {Name}'s 3rd language: ",
+                    choices=["Hindi", "Telugu", "French", "Sanskrit"],
+                    style=minimalStyle,
+                    instruction="\n",
+                ).ask(),
                 Lang2Name,
             )
+
         elif 9 <= Class <= 10:
             # ? Asking for 2nd language name with french
-            Lang2Name = IsProperLang2WF(
-                BetterInput(
-                    f"Enter {Name}'s 2nd language (Hindi, Telugu, French): ",
-                    "sentence",
-                    str,
+            Lang2Name = (
+                questionary.select(
+                    f"Choose {Name}'s 2nd language: ",
+                    choices=["Hindi", "Telugu", "French"],
+                    style=minimalStyle,
+                    instruction="\n",
                 )
+                .ask()
+                .lower()
             )
         elif Class in [11, 12]:
             # ! Categorizing by stream
-            Stream = IsProperStream(
-                BetterInput(
-                    f"Enter {Name}'s stream (mpc, bipc, cec, humanities): ",
-                    "sentence",
-                    str,
+            Stream = (
+                questionary.select(
+                    f"Choose {Name}'s stream: ",
+                    choices=["MPC", "BiPC", "CEC", "Humanities"],
+                    style=minimalStyle,
+                    instruction="\n",
                 )
+                .ask()
+                .lower()
             )
             # ? Asking for 5th core name
             FcoreName = IsProperFcore(
-                BetterInput(
-                    f"Enter {Name}'s Fcore (Mathematics, Psychology, Informatics Practices, Physical Education, Fine Arts): ",
-                    "sentence",
-                ),
+                questionary.select(
+                    f"Choose {Name}'s 5th Core: ",
+                    choices=[
+                        "Mathematics",
+                        "Informatics Practices",
+                        "Psychology",
+                        "Physical Education",
+                        "Fine Arts",
+                    ],
+                    style=minimalStyle,
+                    instruction="\n",
+                ).ask(),
                 Stream,
             )
         else:
@@ -645,187 +655,263 @@ def AddStudent():
     # ? Section
     Section = IsProperSection(f"Enter {Name}'s section: ")
     # ? Roll Number
-    RollNum = IsProperRollNum(BetterInput(f"Enter {Name}'s roll number: ", "+", int))
+    while True:
+        try:
+            RollNum = IsProperRollNum(
+                abs(
+                    int(
+                        questionary.text(
+                            f"Enter {Name}'s roll number: ", style=minimalStyle
+                        ).ask()
+                    )
+                )
+            )
+            break
+        except:
+            print("Enter a valid roll number.")
+
     # ? Inserting data into a main table
     cur.execute(
-        f"insert into {db}.allstudents values({AdmNum}, '{Name}', {Class}, '{Section}')"
+        f"insert into allstudents values({AdmNum}, '{Name}', {Class}, '{Section}')"
     )
     # ? Grade one
     if Class == 1:
         cur.execute(
-            f"insert into {db}.catone(AdmNum, Name, Class, Section, RollNumber, Lang2Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}')"
+            f"insert into catone(AdmNum, Name, Class, Section, RollNumber, Lang2Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}')"
         )
     # ? Grade 2 - 4
     elif 2 <= Class <= 4:
         cur.execute(
-            f"insert into {db}.cattwo(AdmNum, Name, Class, Section, RollNumber, Lang2Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}')"
+            f"insert into cattwo(AdmNum, Name, Class, Section, RollNumber, Lang2Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}')"
         )
     # ? Grade 5 - 8
     elif 5 <= Class <= 8:
         cur.execute(
-            f"insert into {db}.catthree(AdmNum, Name, Class, Section, RollNumber, Lang2Name, Lang3Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}', '{Lang3Name}')"
+            f"insert into catthree(AdmNum, Name, Class, Section, RollNumber, Lang2Name, Lang3Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}', '{Lang3Name}')"
         )
     # ? Grade 9 - 10
     elif 9 <= Class <= 10:
         cur.execute(
-            f"insert into {db}.catfour(AdmNum, Name, Class, Section, RollNumber, Lang2Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}')"
+            f"insert into catfour(AdmNum, Name, Class, Section, RollNumber, Lang2Name) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{Lang2Name}')"
         )
     elif 11 <= Class <= 12:
         # ? Math, Physics, Chemistry
         if Stream.lower() == "mpc":
             cur.execute(
-                f"insert into {db}.catfive(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
+                f"insert into catfive(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
             )
         # ? Biology, Physics, Chemistry
         elif Stream.lower() == "bipc":
             cur.execute(
-                f"insert into {db}.catsix(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
+                f"insert into catsix(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
             )
         # ? Commerce
         elif Stream.lower() == "cec":
             cur.execute(
-                f"insert into {db}.catseven(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
+                f"insert into catseven(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
             )
         # ? Humanities
         elif Stream.lower() == "humanities":
             cur.execute(
-                f"insert into {db}.cateight(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
+                f"insert into cateight(AdmNum, Name, Class, Section, RollNumber, FcoreName) values({AdmNum}, '{Name}', {Class}, '{Section}', {RollNum}, '{FcoreName}')"
             )
     con.commit()
     ClearScreen()
     print(f"{Name} has been successfully added.")
+    input("Press enter to continue ")
 
 
 # ! <-- Editing student information -->
 def EditStudent():
     # ? Clearing Screen
     ClearScreen()
-    # ? Admission Number
-    AdmNum = BetterInput(f"Enter admission number of the student: ", "+", int)
+    # * Admission Number
+    # ? Getting autocomplete for admission number
+    cur.execute(f"select AdmNum from allstudents")
+    a = cur.fetchall()
+    adm = [str(a[i][0]) for i in range(len(a))]
+    if len(adm) == 0:
+        print("You have yet to add a student.")
+        input("Press enter to continue ")
+        return None
+    # ? Getting the actual admission number
     while True:
-        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        try:
+            AdmNum = str(
+                int(
+                    questionary.autocomplete(
+                        f"Enter admission number of the student: ",
+                        adm,
+                        style=minimalStyle,
+                    ).ask()
+                )
+            )
+            break
+        except:
+            print("Please enter a valid admission number.")
+    while True:
+        cur.execute(f"select class from allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
                 raise ValueError
             else:
                 break
-        except KeyboardInterrupt:
-            exit()
-        except:
+        except ValueError:
             print("This admission number does not exist.")
-            AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
+            while True:
+                try:
+                    AdmNum = str(
+                        int(
+                            questionary.autocomplete(
+                                f"Enter admission number of the student: ",
+                                adm,
+                                style=minimalStyle,
+                            ).ask()
+                        )
+                    )
+                    break
+                except:
+                    print("Please enter a valid admission number")
     ClearScreen()
     # ? Name
     Name = IsProperName(
-        BetterInput("Enter new student's name: ", filter="sentence", type=str)
-    )
+        questionary.text("Enter new student's name: ", style=minimalStyle).ask()
+    ).title()
 
     # ? Old Class
     OldClass = admNumFetch[0][0]
     OldStream = None
     if OldClass in [11, 12]:
         # ? Mathematics, Physics, Chemistry
-        cur.execute(f"select * from {db}.catfive where AdmNum={AdmNum}")
+        cur.execute(f"select * from catfive where AdmNum={AdmNum}")
         streamFetch = cur.fetchall()
         if len(streamFetch) != 0:
             OldStream = "mpc"
         # ? Biology, Physics, Chemistry
-        cur.execute(f"select * from {db}.catsix where AdmNum={AdmNum}")
+        cur.execute(f"select * from catsix where AdmNum={AdmNum}")
         streamFetch = cur.fetchall()
         if len(streamFetch) != 0:
             OldStream = "bipc"
         # ? Commerce
-        cur.execute(f"select * from {db}.catseven where AdmNum={AdmNum}")
+        cur.execute(f"select * from catseven where AdmNum={AdmNum}")
         streamFetch = cur.fetchall()
         if len(streamFetch) != 0:
             OldStream = "cec"
         # ? Humanities
-        cur.execute(f"select * from {db}.cateight where AdmNum={AdmNum}")
+        cur.execute(f"select * from cateight where AdmNum={AdmNum}")
         streamFetch = cur.fetchall()
         if len(streamFetch) != 0:
             OldStream = "humanities"
     # ? New Class
     while True:
-        NewClass = BetterInput(f"Enter {Name}'s new class: ", "+", int)
-        if 1 > NewClass or NewClass > 12:
-            ClearScreen()
-            print("Enter a valid class.")
-            continue
-        break
+        try:
+            NewClass = abs(
+                int(
+                    questionary.text(
+                        f"Enter {Name}'s new class: ", style=minimalStyle
+                    ).ask()
+                )
+            )
+            if 1 > NewClass or NewClass > 12:
+                ClearScreen()
+                print("Enter a valid class.")
+                continue
+            break
+        except:
+            print("Please enter a valid class.")
     # ? Section
-    Section = IsProperSection(f"Enter {Name}'s section: ")
+    Section = IsProperSection(f"Enter {Name}'s new section: ")
     # ? Roll Number
-    RollNum = IsProperRollNum(
-        BetterInput("Enter student's new roll number: ", "+", int)
-    )
+    while True:
+        try:
+            RollNum = IsProperRollNum(
+                abs(
+                    int(
+                        questionary.text(
+                            f"Enter {Name}'s new roll number: ", style=minimalStyle
+                        ).ask()
+                    )
+                )
+            )
+            break
+        except:
+            print("Enter a valid roll number.")
     # ? Updating data in the main table
     cur.execute(
-        f"update {db}.allstudents set Name='{Name}', Class={NewClass}, Section='{Section}' where AdmNum={AdmNum}"
+        f"update allstudents set Name='{Name}', Class={NewClass}, Section='{Section}' where AdmNum={AdmNum}"
     )
     # ? Clearing Screen
     ClearScreen()
     # ! Choosing new subjects
     if 1 <= NewClass <= 3:
         # ? Asking for 2nd language name without french
-        Lang2Name = IsProperLang2WOF(
-            BetterInput(
-                f"Enter {Name}'s new 2nd language (Hindi, Telugu): ",
-                "sentence",
-                str,
-            )
-        )
+        Lang2Name = questionary.select(
+            f"Choose {Name}'s new 2nd language: ",
+            choices=["Hindi", "Telugu"],
+            style=minimalStyle,
+            instruction="\n",
+        ).ask()
     elif NewClass == 4:
         # ? Asking for 2nd language name with french
-        Lang2Name = IsProperLang2WF(
-            BetterInput(
-                f"Enter {Name}'s new 2nd language (Hindi, Telugu, French): ",
-                "sentence",
-                str,
-            )
-        )
+        Lang2Name = questionary.select(
+            f"Choose {Name}'s new 2nd language: ",
+            choices=["Hindi", "Telugu", "French"],
+            style=minimalStyle,
+            instruction="\n",
+        ).ask()
     elif 5 <= NewClass <= 8:
         # ? Asking for 2nd language name with french
-        Lang2Name = IsProperLang2WF(
-            BetterInput(
-                f"Enter {Name}'s new 2nd language (Hindi, Telugu, French): ",
-                "sentence",
-                str,
-            )
-        )
+        Lang2Name = questionary.select(
+            f"Choose {Name}'s new 2nd language: ",
+            choices=["Hindi", "Telugu", "French"],
+            style=minimalStyle,
+            instruction="\n",
+        ).ask()
         # ? Asking for 3rd language name
         Lang3Name = IsProperLang3(
-            BetterInput(
-                f"Enter {Name}'s new 3rd language (Sanskrit, Hindi, Telugu, French): ",
-                "sentence",
-                str,
-            ),
+            questionary.select(
+                f"Choose {Name}'s new 3rd language: ",
+                choices=["Hindi", "Telugu", "French", "Sanskrit"],
+                style=minimalStyle,
+                instruction="\n",
+            ).ask(),
             Lang2Name,
         )
     elif 9 <= NewClass <= 10:
         # ? Asking for 2nd language name with french
-        Lang2Name = IsProperLang2WF(
-            BetterInput(
-                f"Enter {Name}'s new 2nd language (Hindi, Telugu, French): ",
-                "sentence",
-                str,
-            )
-        )
+        Lang2Name = questionary.select(
+            f"Choose {Name}'s new 2nd language: ",
+            choices=["Hindi", "Telugu", "French"],
+            style=minimalStyle,
+            instruction="\n",
+        ).ask()
     elif NewClass in [11, 12]:
         # ! Categorizing by stream
-        NewStream = IsProperStream(
-            BetterInput(
-                f"Enter {Name}'s new stream (mpc, bipc, cec, humanities): ",
-                "sentence",
-                str,
+        NewStream = (
+            questionary.select(
+                f"Choose {Name}'s stream: ",
+                choices=["MPC", "BiPC", "CEC", "Humanities"],
+                style=minimalStyle,
+                instruction="\n",
             )
+            .ask()
+            .lower()
         )
         # ? Asking for 5th core name
         FcoreName = IsProperFcore(
-            BetterInput(
-                f"Enter {Name}'s new Fcore (Mathematics, Psychology, Informatics Practices, Physical Education, Fine Arts): ",
-                "sentence",
-            ),
+            questionary.select(
+                f"Choose {Name}'s 5th Core: ",
+                choices=[
+                    "Mathematics",
+                    "Informatics Practices",
+                    "Psychology",
+                    "Physical Education",
+                    "Fine Arts",
+                ],
+                style=minimalStyle,
+                instruction="\n",
+            ).ask(),
             NewStream,
         )
     # ! If class hasn't changed, not deleting entry in particular category.
@@ -833,120 +919,145 @@ def EditStudent():
         # ? Grade one
         if OldClass == 1:
             cur.execute(
-                f"update {db}.catone set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, Lang2Name='{Lang2Name}' where AdmNum={AdmNum};"
+                f"update catone set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, Lang2Name='{Lang2Name}' where AdmNum={AdmNum};"
             )
         # ? Grade 2 - 4
         elif 2 <= OldClass <= 4:
             cur.execute(
-                f"update {db}.cattwo set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, Lang2Name='{Lang2Name}' where AdmNum={AdmNum};"
+                f"update cattwo set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, Lang2Name='{Lang2Name}' where AdmNum={AdmNum};"
             )
         # ? Grade 5 - 8
         elif 5 <= OldClass <= 8:
             cur.execute(
-                f"update {db}.catthree set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, Lang2Name='{Lang2Name}', Lang3Name='{Lang3Name}' where AdmNum={AdmNum};"
+                f"update catthree set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, Lang2Name='{Lang2Name}', Lang3Name='{Lang3Name}' where AdmNum={AdmNum};"
             )
         # ? Grade 9 - 10
         elif 9 <= OldClass <= 10:
             cur.execute(
-                f"update {db}.catfour set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, Lang2Name='{Lang2Name}' where AdmNum={AdmNum};"
+                f"update catfour set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, Lang2Name='{Lang2Name}' where AdmNum={AdmNum};"
             )
         elif 11 <= OldClass <= 12:
             if NewStream.lower() == OldStream.lower():
                 # ? Math, Physics, Chemistry
                 if NewStream.lower() == "mpc":
                     cur.execute(
-                        f"update {db}.catfive set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, FcoreName='{FcoreName}' where AdmNum={AdmNum};"
+                        f"update catfive set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, FcoreName='{FcoreName}' where AdmNum={AdmNum};"
                     )
                 # ? Biology, Physics, Chemistry
                 elif NewStream.lower() == "bipc":
                     cur.execute(
-                        f"update {db}.catsix set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, FcoreName='{FcoreName}' where AdmNum={AdmNum};"
+                        f"update catsix set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, FcoreName='{FcoreName}' where AdmNum={AdmNum};"
                     )
                 # ? Commerce
                 elif NewStream.lower() == "cec":
                     cur.execute(
-                        f"update {db}.catseven set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, FcoreName='{FcoreName}' where AdmNum={AdmNum};"
+                        f"update catseven set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, FcoreName='{FcoreName}' where AdmNum={AdmNum};"
                     )
                 # ? Humanities
                 elif NewStream.lower() == "humanities":
                     cur.execute(
-                        f"update {db}.cateight set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, FcoreName='{FcoreName}' where AdmNum={AdmNum};"
+                        f"update cateight set Name='{Name}', Class={OldClass}, Section='{Section}', RollNumber={RollNum}, FcoreName='{FcoreName}' where AdmNum={AdmNum};"
                     )
             else:
-                cur.execute(f"delete from {db}.catfive where AdmNum={AdmNum}")
-                cur.execute(f"delete from {db}.catsix where AdmNum={AdmNum}")
-                cur.execute(f"delete from {db}.catseven where AdmNum={AdmNum}")
-                cur.execute(f"delete from {db}.cateight where AdmNum={AdmNum}")
+                cur.execute(f"delete from catfive where AdmNum={AdmNum}")
+                cur.execute(f"delete from catsix where AdmNum={AdmNum}")
+                cur.execute(f"delete from catseven where AdmNum={AdmNum}")
+                cur.execute(f"delete from cateight where AdmNum={AdmNum}")
                 if NewStream.lower() == "mpc":
                     cur.execute(
-                        f"insert into {db}.catfive(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
+                        f"insert into catfive(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                     )
                 elif NewStream.lower() == "bipc":
                     cur.execute(
-                        f"insert into {db}.catsix(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
+                        f"insert into catsix(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                     )
                 elif NewStream.lower() == "cec":
                     cur.execute(
-                        f"insert into {db}.catseven(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
+                        f"insert into catseven(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                     )
                 elif NewStream.lower() == "humanities":
                     cur.execute(
-                        f"insert into {db}.cateight(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
+                        f"insert into cateight(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                     )
         # ! If classes are different, deleting entry and creating new entry in respective category.
     else:
-        cur.execute(f"delete from {db}.catone where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.cattwo where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catthree where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catfour where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catfive where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catsix where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catseven where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.cateight where AdmNum={AdmNum}")
+        cur.execute(f"delete from catone where AdmNum={AdmNum}")
+        cur.execute(f"delete from cattwo where AdmNum={AdmNum}")
+        cur.execute(f"delete from catthree where AdmNum={AdmNum}")
+        cur.execute(f"delete from catfour where AdmNum={AdmNum}")
+        cur.execute(f"delete from catfive where AdmNum={AdmNum}")
+        cur.execute(f"delete from catsix where AdmNum={AdmNum}")
+        cur.execute(f"delete from catseven where AdmNum={AdmNum}")
+        cur.execute(f"delete from cateight where AdmNum={AdmNum}")
         if NewClass == 1:
             cur.execute(
-                f"insert into {db}.catone(AdmNum, Name, Class, Section, Rollnumber, Lang2Name) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum} '{Lang2Name}')"
+                f"insert into catone(AdmNum, Name, Class, Section, Rollnumber, Lang2Name) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum} '{Lang2Name}')"
             )
         elif 2 <= NewClass <= 4:
             cur.execute(
-                f"insert into {db}.cattwo(AdmNum, Name, Class, Section, Rollnumber, Lang2Name) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{Lang2Name}')"
+                f"insert into cattwo(AdmNum, Name, Class, Section, Rollnumber, Lang2Name) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{Lang2Name}')"
             )
         elif 5 <= NewClass <= 8:
             cur.execute(
-                f"insert into {db}.catthree(AdmNum, Name, Class, Section, Rollnumber, Lang2Name, Lang3Name) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{Lang2Name}', '{Lang3Name}')"
+                f"insert into catthree(AdmNum, Name, Class, Section, Rollnumber, Lang2Name, Lang3Name) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{Lang2Name}', '{Lang3Name}')"
             )
         elif 9 <= NewClass <= 10:
             cur.execute(
-                f"insert into {db}.catfour(AdmNum, Name, Class, Section, Rollnumber, Lang2Name) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{Lang2Name}')"
+                f"insert into catfour(AdmNum, Name, Class, Section, Rollnumber, Lang2Name) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{Lang2Name}')"
             )
         elif 11 <= NewClass <= 12:
             if NewStream.lower() == "mpc":
                 cur.execute(
-                    f"insert into {db}.catfive(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
+                    f"insert into catfive(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                 )
             elif NewStream.lower() == "bipc":
                 cur.execute(
-                    f"insert into {db}.catsix(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
+                    f"insert into catsix(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                 )
             elif NewStream.lower() == "cec":
                 cur.execute(
-                    f"insert into {db}.catseven(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
+                    f"insert into catseven(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                 )
             elif NewStream.lower() == "humanities":
                 cur.execute(
-                    f"insert into {db}.cateight(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
+                    f"insert into cateight(AdmNum, Name, Class, Section, Rollnumber, FcoreName) values({AdmNum}, '{Name}', {NewClass}, '{Section}', {RollNum}, '{FcoreName}')"
                 )
     con.commit()
     ClearScreen()
     print("Data has been successfully changed.")
+    input("Press enter to continue ")
 
 
-# ! <-- Removing the student --> Add clearscreen
+# ! <-- Removing the student -->
 def RemoveStudent():
+    # ? Clearing Screen
     ClearScreen()
+    # * Admission Number
+    # ? Getting autocomplete for admission number
+    cur.execute(f"select AdmNum from allstudents")
+    a = cur.fetchall()
+    adm = [str(a[i][0]) for i in range(len(a))]
+    if len(adm) == 0:
+        print("You have yet to add a student.")
+        input("Press enter to continue ")
+        return None
+    # ? Getting the actual admission number
     while True:
-        AdmNum = BetterInput(f"Enter student's admission number to delete: ", "+", int)
-        cur.execute(f"select name from {db}.allstudents where AdmNum={AdmNum}")
+        try:
+            AdmNum = str(
+                int(
+                    questionary.autocomplete(
+                        f"Enter admission number of the student: ",
+                        adm,
+                        style=minimalStyle,
+                    ).ask()
+                )
+            )
+            break
+        except:
+            print("Please enter a valid admission number.")
+    while True:
+        cur.execute(f"select name from allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -954,53 +1065,99 @@ def RemoveStudent():
             else:
                 Name = admNumFetch[0][0]
                 break
-        except KeyboardInterrupt:
-            exit()
-        except:
-            print("This admission number doesn't exist")
+        except ValueError:
+            print("This admission number does not exist.")
+            while True:
+                try:
+                    AdmNum = str(
+                        int(
+                            questionary.autocomplete(
+                                f"Enter admission number of the student: ",
+                                adm,
+                                style=minimalStyle,
+                            ).ask()
+                        )
+                    )
+                    break
+                except:
+                    print("Please enter a valid admission number.")
     ClearScreen()
-    AreYouSure = BetterInput(
-        f"Are you sure you want to delete {Name}'s information? (Yes/No): ",
-        type=str,
-    ).lower()
-    if AreYouSure in ["yes", "y"]:
-        cur.execute(f"delete from {db}.allstudents where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catone where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.cattwo where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catthree where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catfour where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catfive where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catsix where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.catseven where AdmNum={AdmNum}")
-        cur.execute(f"delete from {db}.cateight where AdmNum={AdmNum}")
+    AreYouSure = questionary.confirm(
+        f"Are you sure you want to delete {Name}'s information? ", style=minimalStyle
+    ).ask()
+    if AreYouSure:
+        cur.execute(f"delete from allstudents where AdmNum={AdmNum}")
+        cur.execute(f"delete from catone where AdmNum={AdmNum}")
+        cur.execute(f"delete from cattwo where AdmNum={AdmNum}")
+        cur.execute(f"delete from catthree where AdmNum={AdmNum}")
+        cur.execute(f"delete from catfour where AdmNum={AdmNum}")
+        cur.execute(f"delete from catfive where AdmNum={AdmNum}")
+        cur.execute(f"delete from catsix where AdmNum={AdmNum}")
+        cur.execute(f"delete from catseven where AdmNum={AdmNum}")
+        cur.execute(f"delete from cateight where AdmNum={AdmNum}")
         con.commit()
         ClearScreen()
-        print("Successfully Deleted!")
+        print(f"Successfully Deleted {Name}!")
+        input("Press enter to continue ")
     else:
         ClearScreen()
         print("Action cancelled")
+        input("Press enter to continue ")
 
 
 ########! Related to marks !########
 # ! <-- Adding Marks -->
 def AddMarks():
-    # ? Clearing the screen
+    # ? Clearing Screen
     ClearScreen()
-    # ? Admission Number
-    AdmNum = BetterInput(f"Enter admission number of student to add marks: ", "+", int)
+    # * Admission Number
+    # ? Getting autocomplete for admission number
+    cur.execute(f"select AdmNum from allstudents")
+    a = cur.fetchall()
+    adm = [str(a[i][0]) for i in range(len(a))]
+    if len(adm) == 0:
+        print("You have yet to add a student.")
+        input("Press enter to continue ")
+        return None
+    # ? Getting the actual admission number
     while True:
-        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        try:
+            AdmNum = str(
+                int(
+                    questionary.autocomplete(
+                        f"Enter admission number of the student: ",
+                        adm,
+                        style=minimalStyle,
+                    ).ask()
+                )
+            )
+            break
+        except:
+            print("Please enter a valid admission number.")
+    while True:
+        cur.execute(f"select class from allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
                 raise ValueError
             else:
                 break
-        except KeyboardInterrupt:
-            exit()
-        except:
+        except ValueError:
             print("This admission number does not exist.")
-            AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
+            while True:
+                try:
+                    AdmNum = str(
+                        int(
+                            questionary.autocomplete(
+                                f"Enter admission number of the student: ",
+                                adm,
+                                style=minimalStyle,
+                            ).ask()
+                        )
+                    )
+                    break
+                except:
+                    print("Please enter a valid admission number.")
     ClearScreen()
     Class = admNumFetch[0][0]
     if Class == 1:
@@ -1012,7 +1169,7 @@ def AddMarks():
         Total = English + Math + Science + SocialSciences + Lang2
         Average = round((Total / 500) * 100, 2)
         cur.execute(
-            f"update {db}.catone set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+            f"update catone set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
     elif 2 <= Class <= 4:
         English = IsProperMarks("Enter marks for English: ")
@@ -1024,11 +1181,11 @@ def AddMarks():
         Total = English + Math + Science + SocialSciences + Lang2 + Computers
         Average = round((Total / 600) * 100, 2)
         cur.execute(
-            f"update {db}.cattwo set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+            f"update cattwo set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
 
     elif 5 <= Class <= 8:
-        English = IsProperMarks("Enter marks for English: ", "+", int)
+        English = IsProperMarks("Enter marks for English: ")
         Math = IsProperMarks("Enter marks for Mathematics: ")
         Science = IsProperMarks("Enter marks for Science: ")
         SocialSciences = IsProperMarks(
@@ -1040,7 +1197,7 @@ def AddMarks():
         Total = English + Math + Science + SocialSciences + Lang2 + Lang3 + Computers
         Average = round((Total / 700) * 100, 2)
         cur.execute(
-            f"update {db}.catthree set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Lang3={Lang3}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+            f"update catthree set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Lang3={Lang3}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
 
     elif 9 <= Class <= 10:
@@ -1052,12 +1209,12 @@ def AddMarks():
         Total = English + Math + Science + SocialSciences + Lang2
         Average = round((Total / 500) * 100, 2)
         cur.execute(
-            f"update {db}.catfour set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+            f"update catfour set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
 
     elif 11 <= Class <= 12:
         # ? Mathematics, Physics, Chemistry
-        cur.execute(f"select FcoreName from {db}.catfive where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from catfive where AdmNum={AdmNum}")
         MPCFetch = cur.fetchall()
         if len(MPCFetch) != 0:
             FcoreName = MPCFetch[0][0]
@@ -1069,11 +1226,11 @@ def AddMarks():
             Total = English + Math + Physics + Chemistry + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
-                f"update {db}.catfive set English={English}, Mathematics={Math}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+                f"update catfive set English={English}, Mathematics={Math}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
 
         # ? Biology, Physics, Chemistry
-        cur.execute(f"select FcoreName from {db}.catsix where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from catsix where AdmNum={AdmNum}")
         BiPCFetch = cur.fetchall()
         if len(BiPCFetch) != 0:
             FcoreName = BiPCFetch[0][0]
@@ -1085,11 +1242,11 @@ def AddMarks():
             Total = English + Biology + Physics + Chemistry + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
-                f"update {db}.catsix set English={English}, Biology={Biology}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+                f"update catsix set English={English}, Biology={Biology}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
 
         # ? Commerce
-        cur.execute(f"select FcoreName from {db}.catseven where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from catseven where AdmNum={AdmNum}")
         CECFetch = cur.fetchall()
         if len(CECFetch) != 0:
             FcoreName = CECFetch[0][0]
@@ -1101,11 +1258,11 @@ def AddMarks():
             Total = English + Accounts + BusinessStudies + Econ + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
-                f"update {db}.catseven set English={English}, Accounts={Accounts}, BusinessStudies={BusinessStudies}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+                f"update catseven set English={English}, Accounts={Accounts}, BusinessStudies={BusinessStudies}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
 
         # ? Humanities
-        cur.execute(f"select FcoreName from {db}.cateight where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from cateight where AdmNum={AdmNum}")
         HumanitiesFetch = cur.fetchall()
         if len(HumanitiesFetch) != 0:
             FcoreName = HumanitiesFetch[0][0]
@@ -1117,35 +1274,66 @@ def AddMarks():
             Total = English + History + PolSci + Econ + Fcore
             Average = round((Total / 500) * 100)
             cur.execute(
-                f"update {db}.cateight set English={English}, History={History}, PoliticalSciences={PolSci}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+                f"update cateight set English={English}, History={History}, PoliticalSciences={PolSci}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
     con.commit()
     ClearScreen()
     print(f"Marks have successfully been added.")
+    input("Press enter to continue ")
 
 
 # ! <-- Editing Marks -->
 def EditMarks():
-    # ? Clearing the screen
+    # ? Clearing Screen
     ClearScreen()
-    # ? Admission Number
-    AdmNum = BetterInput(
-        f"Enter admission number of student to change marks: ", "+", int
-    )
+    # * Admission Number
+    # ? Getting autocomplete for admission number
+    cur.execute(f"select AdmNum from allstudents")
+    a = cur.fetchall()
+    adm = [str(a[i][0]) for i in range(len(a))]
+    if len(adm) == 0:
+        print("You have yet to add a student.")
+        input("Press enter to continue ")
+        return None
+    # ? Getting the actual admission number
     while True:
-        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        try:
+            AdmNum = str(
+                int(
+                    questionary.autocomplete(
+                        f"Enter admission number of the student: ",
+                        adm,
+                        style=minimalStyle,
+                    ).ask()
+                )
+            )
+            break
+        except:
+            print("Please enter a valid admission number.")
+    while True:
+        cur.execute(f"select class from allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
                 raise ValueError
             else:
                 break
-        except KeyboardInterrupt:
-            exit()
-        except:
+        except ValueError:
             print("This admission number does not exist.")
-            AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
-    ClearScreen()
+            while True:
+                try:
+                    AdmNum = str(
+                        int(
+                            questionary.autocomplete(
+                                f"Enter admission number of the student: ",
+                                adm,
+                                style=minimalStyle,
+                            ).ask()
+                        )
+                    )
+                    break
+                except:
+                    print("Please enter a valid admission number.")
     Class = admNumFetch[0][0]
     if Class == 1:
         English = IsProperMarks("Enter new marks for English: ")
@@ -1156,7 +1344,7 @@ def EditMarks():
         Total = English + Math + Science + SocialSciences + Lang2
         Average = round((Total / 500) * 100, 2)
         cur.execute(
-            f"update {db}.catone set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+            f"update catone set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
     elif 2 <= Class <= 4:
         English = IsProperMarks("Enter new marks for English: ")
@@ -1168,7 +1356,7 @@ def EditMarks():
         Total = English + Math + Science + SocialSciences + Lang2 + Computers
         Average = round((Total / 600) * 100, 2)
         cur.execute(
-            f"update {db}.cattwo set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+            f"update cattwo set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
 
     elif 5 <= Class <= 8:
@@ -1182,7 +1370,7 @@ def EditMarks():
         Total = English + Math + Science + SocialSciences + Lang2 + Lang3 + Computers
         Average = round((Total / 700) * 100, 2)
         cur.execute(
-            f"update {db}.catthree set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Lang3={Lang3}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+            f"update catthree set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Lang3={Lang3}, Computers={Computers}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
 
     elif 9 <= Class <= 10:
@@ -1194,12 +1382,12 @@ def EditMarks():
         Total = English + Math + Science + SocialSciences + Lang2
         Average = round((Total / 500) * 100, 2)
         cur.execute(
-            f"update {db}.catfour set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+            f"update catfour set English={English}, Mathematics={Math}, Science={Science}, SocialSciences={SocialSciences}, Lang2={Lang2}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
         )
 
     elif 11 <= Class <= 12:
         # ? Mathematics, Physics, Chemistry
-        cur.execute(f"select FcoreName from {db}.catfive where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from catfive where AdmNum={AdmNum}")
         MPCFetch = cur.fetchall()
         if len(MPCFetch) != 0:
             FcoreName = MPCFetch[0][0]
@@ -1211,11 +1399,11 @@ def EditMarks():
             Total = English + Math + Physics + Chemistry + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
-                f"update {db}.catfive set English={English}, Mathematics={Math}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+                f"update catfive set English={English}, Mathematics={Math}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
 
         # ? Biology, Physics, Chemistry
-        cur.execute(f"select FcoreName from {db}.catsix where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from catsix where AdmNum={AdmNum}")
         BiPCFetch = cur.fetchall()
         if len(BiPCFetch) != 0:
             FcoreName = BiPCFetch[0][0]
@@ -1227,11 +1415,11 @@ def EditMarks():
             Total = English + Biology + Physics + Chemistry + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
-                f"update {db}.catsix set English={English}, Biology={Biology}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+                f"update catsix set English={English}, Biology={Biology}, Physics={Physics}, Chemistry={Chemistry}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
 
         # ? Commerce
-        cur.execute(f"select FcoreName from {db}.catseven where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from catseven where AdmNum={AdmNum}")
         CECFetch = cur.fetchall()
         if len(CECFetch) != 0:
             FcoreName = CECFetch[0][0]
@@ -1243,11 +1431,11 @@ def EditMarks():
             Total = English + Accounts + BusinessStudies + Econ + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
-                f"update {db}.catseven set English={English}, Accounts={Accounts}, BusinessStudies={BusinessStudies}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+                f"update catseven set English={English}, Accounts={Accounts}, BusinessStudies={BusinessStudies}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
 
         # ? Humanities
-        cur.execute(f"select FcoreName from {db}.cateight where AdmNum={AdmNum}")
+        cur.execute(f"select FcoreName from cateight where AdmNum={AdmNum}")
         HumanitiesFetch = cur.fetchall()
         if len(HumanitiesFetch) != 0:
             FcoreName = HumanitiesFetch[0][0]
@@ -1259,7 +1447,7 @@ def EditMarks():
             Total = English + History + PolSci + Econ + Fcore
             Average = round((Total / 500) * 100, 2)
             cur.execute(
-                f"update {db}.cateight set English={English}, History={History}, PoliticalSciences={PolSci}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
+                f"update cateight set English={English}, History={History}, PoliticalSciences={PolSci}, Economics={Econ}, Fcore={Fcore}, Average={Average}, Total = {Total} where AdmNum={AdmNum}"
             )
     con.commit()
     ClearScreen()
@@ -1268,13 +1456,34 @@ def EditMarks():
 
 # ! <-- Removing Marks -->
 def RemoveMarks():
-    # ? Clearing the screen
+    # ? Clearing Screen
     ClearScreen()
+    # * Admission Number
+    # ? Getting autocomplete for admission number
+    cur.execute(f"select AdmNum from allstudents")
+    a = cur.fetchall()
+    adm = [str(a[i][0]) for i in range(len(a))]
+    if len(adm) == 0:
+        print("You have yet to add a student.")
+        input("Press enter to continue ")
+        return None
+    # ? Getting the actual admission number
     while True:
-        AdmNum = BetterInput(
-            f"Enter admission number of student to remove marks: ", "+", int
-        )
-        cur.execute(f"select name from {db}.allstudents where AdmNum={AdmNum}")
+        try:
+            AdmNum = str(
+                int(
+                    questionary.autocomplete(
+                        f"Enter admission number of the student: ",
+                        adm,
+                        style=minimalStyle,
+                    ).ask()
+                )
+            )
+            break
+        except:
+            print("Please enter a valid admission number.")
+    while True:
+        cur.execute(f"select name from allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
@@ -1282,39 +1491,50 @@ def RemoveMarks():
             else:
                 Name = admNumFetch[0][0]
                 break
-        except KeyboardInterrupt:
-            exit()
-        except:
+        except ValueError:
             print("This admission number does not exist.")
+            while True:
+                try:
+                    AdmNum = str(
+                        int(
+                            questionary.autocomplete(
+                                f"Enter admission number of the student: ",
+                                adm,
+                                style=minimalStyle,
+                            ).ask()
+                        )
+                    )
+                    break
+                except:
+                    print("Please enter a valid admission number.")
     ClearScreen()
-    AreYouSure = BetterInput(
-        f"Are you sure you want to delete the marks of {Name}? (Yes/No): ",
-        type=str,
-    ).lower()
-    if AreYouSure in ["yes", "y"]:
+    AreYouSure = questionary.confirm(
+        f"Are you sure you want to delete the marks of {Name}?", style=minimalStyle
+    ).ask()
+    if AreYouSure:
         cur.execute(
-            f"update {db}.catone set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
+            f"update catone set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         cur.execute(
-            f"update {db}.cattwo set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Computers=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
+            f"update cattwo set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Computers=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         cur.execute(
-            f"update {db}.catthree set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Lang3=Null, Computers=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
+            f"update catthree set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Lang3=Null, Computers=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         cur.execute(
-            f"update {db}.catfour set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
+            f"update catfour set English=Null, Mathematics=Null, Science=Null, SocialSciences=Null, Lang2=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         cur.execute(
-            f"update {db}.catfive set English=Null, Mathematics=Null, Physics=Null, Chemistry=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
+            f"update catfive set English=Null, Mathematics=Null, Physics=Null, Chemistry=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         cur.execute(
-            f"update {db}.catsix set English=Null, Biology=Null, Physics=Null, Chemistry=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
+            f"update catsix set English=Null, Biology=Null, Physics=Null, Chemistry=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         cur.execute(
-            f"update {db}.catseven set English=Null, Accounts=Null, BusinessStudies=Null, Economics=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
+            f"update catseven set English=Null, Accounts=Null, BusinessStudies=Null, Economics=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         cur.execute(
-            f"update {db}.cateight set English=Null, History=Null, PoliticalSciences=Null, Economics=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
+            f"update cateight set English=Null, History=Null, PoliticalSciences=Null, Economics=Null, Fcore=Null, Average=Null, Total=Null where AdmNum={AdmNum}"
         )
         con.commit()
         ClearScreen()
@@ -1327,41 +1547,79 @@ def RemoveMarks():
 ########! Related to viewing data !########
 # ! <-- Showing graph for Marks and Subjects -->
 def ShowGraph():
-    # ? Clearing the screen
+    # ? Clearing Screen
     ClearScreen()
-    # ? Admission Number
-    AdmNum = BetterInput(f"Enter admission number to view mark statistics: ", "+", int)
+    # * Admission Number
+    # ? Getting autocomplete for admission number
+    cur.execute(f"select AdmNum from allstudents")
+    a = cur.fetchall()
+    adm = [str(a[i][0]) for i in range(len(a))]
+    if len(adm) == 0:
+        print("You have yet to add a student.")
+        input("Press enter to continue ")
+        return None
+    # ? Getting the actual admission number
     while True:
-        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        try:
+            AdmNum = str(
+                int(
+                    questionary.autocomplete(
+                        f"Enter admission number of the student: ",
+                        adm,
+                        style=minimalStyle,
+                    ).ask()
+                )
+            )
+            break
+        except:
+            print("Please enter a valid admission number.")
+    while True:
+        cur.execute(f"select class from allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
                 raise ValueError
             else:
                 break
-        except KeyboardInterrupt:
-            exit()
-        except:
+        except ValueError:
             print("This admission number does not exist.")
-            AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
-    ClearScreen()
+            while True:
+                try:
+                    AdmNum = str(
+                        int(
+                            questionary.autocomplete(
+                                f"Enter admission number of the student: ",
+                                adm,
+                                style=minimalStyle,
+                            ).ask()
+                        )
+                    )
+                    break
+                except:
+                    print("Please enter a valid admission number.")
     Class = admNumFetch[0][0]
 
     # ? Class 1
 
     if Class == 1:
-        cur.execute(f"select * from {db}.catone where AdmNum={AdmNum}")
+        cur.execute(f"select * from catone where AdmNum={AdmNum}")
         result = cur.fetchall()[0]
-        SubMarks = result[4:9]
+        SubMarks = result[6:11]
         name = result[1]
-        Subjects = ["English", "Mathematics", "Science", "Social Sciences", "2ndLang"]
+        Subjects = [
+            "English",
+            "Mathematics",
+            "Science",
+            "Social Sciences",
+            "2ndLang",
+        ]
 
     # ? Class 2 - Class 4
 
     elif 2 <= Class <= 4:
-        cur.execute(f"select * from {db}.cattwo where AdmNum={AdmNum}")
+        cur.execute(f"select * from cattwo where AdmNum={AdmNum}")
         result = cur.fetchall()[0]
-        SubMarks = result[4:10]
+        SubMarks = result[6:12]
         name = result[1]
         Subjects = [
             "English",
@@ -1375,9 +1633,9 @@ def ShowGraph():
     # ? Class 5 - Class 8
 
     elif 5 <= Class <= 8:
-        cur.execute(f"select * from {db}.catthree where AdmNum={AdmNum}")
+        cur.execute(f"select * from catthree where AdmNum={AdmNum}")
         result = cur.fetchall()[0]
-        SubMarks = result[4:11]
+        SubMarks = result[7:14]
         name = result[1]
         Subjects = [
             "English",
@@ -1392,24 +1650,36 @@ def ShowGraph():
     # ? Class 9 to Class 10
 
     elif 9 <= Class <= 10:
-        cur.execute(f"select * from {db}.catfour where AdmNum={AdmNum}")
+        cur.execute(f"select * from catfour where AdmNum={AdmNum}")
         result = cur.fetchall()[0]
-        SubMarks = result[4:9]
+        SubMarks = result[6:11]
         name = result[1]
-        Subjects = ["English", "Mathematics", "Science", "Social Sciences", "2ndLang"]
+        Subjects = [
+            "English",
+            "Mathematics",
+            "Science",
+            "Social Sciences",
+            "2ndLang",
+        ]
 
     elif 11 <= Class <= 12:
         # ? Mathematics, Physics, Chemistry
-        cur.execute(f"select * from {db}.catfive where AdmNum = {AdmNum}")
+        cur.execute(f"select * from catfive where AdmNum = {AdmNum}")
         MPCResult = cur.fetchall()
         if len(MPCResult) != 0:
             MPCResult = MPCResult[0]
             SubMarks = MPCResult[6:11]
             name = MPCResult[1]
-            Subjects = ["English", "Mathematics", "Physics", "Chemistry", "5th Core"]
+            Subjects = [
+                "English",
+                "Mathematics",
+                "Physics",
+                "Chemistry",
+                "5th Core",
+            ]
 
         # ? Biology, Physics, Chemistry
-        cur.execute(f"select * from {db}.catsix where AdmNum = {AdmNum}")
+        cur.execute(f"select * from catsix where AdmNum = {AdmNum}")
         BiPCResult = cur.fetchall()
         if len(BiPCResult) != 0:
             BiPCResult = BiPCResult[0]
@@ -1418,7 +1688,7 @@ def ShowGraph():
             Subjects = ["English", "Biology", "Physics", "Chemistry", "5th Core"]
 
         # ? Commerce
-        cur.execute(f"select * from {db}.catseven where AdmNum = {AdmNum}")
+        cur.execute(f"select * from catseven where AdmNum = {AdmNum}")
         CECResult = cur.fetchall()
         if len(CECResult) != 0:
             CECResult = CECResult[0]
@@ -1433,7 +1703,7 @@ def ShowGraph():
             ]
 
         # ? Humanities
-        cur.execute(f"select * from {db}.cateight where AdmNum = {AdmNum}")
+        cur.execute(f"select * from cateight where AdmNum = {AdmNum}")
         HumanitiesResult = cur.fetchall()
         if len(HumanitiesResult) != 0:
             HumanitiesResult = HumanitiesResult[0]
@@ -1447,51 +1717,74 @@ def ShowGraph():
                 "5th Core",
             ]
     try:
-        print("Loading graph", end="\r")
-        sleep(0.4)
-        print("Loading graph.", end="\r")
-        sleep(0.4)
-        print("Loading graph..", end="\r")
-        sleep(0.4)
-        print("Loading graph...")
-        sleep(0.4)
-        title(f"Name: {name} - Admission Number: {AdmNum}")
+        title(f"Name: {name}    Admission Number: {AdmNum}")
         bar(Subjects, SubMarks)
         xlabel("Subjects")
         ylabel("Marks")
+        StatBar(1.2, "[cyan] Loading Graph")
         show()
-    except KeyboardInterrupt:
-        exit()
     except:
         print("Marks do not exist.")
+        input("Press enter to continue ")
 
 
 # ! <-- Displaying individual student records -->
 def StudentRecords():
-    # ? Clearing the screen
     ClearScreen()
-    # ? Admission Number
-    AdmNum = BetterInput(
-        f"Enter admission number to view student's records: ", "+", int
-    )
+    # * Admission Number
+    # ? Getting autocomplete for admission number
+    cur.execute(f"select AdmNum from allstudents")
+    a = cur.fetchall()
+    adm = [str(a[i][0]) for i in range(len(a))]
+    if len(adm) == 0:
+        print("You have yet to add a student.")
+        input("Press enter to continue ")
+        return None
+    # ? Getting the actual admission number
     while True:
-        cur.execute(f"select class from {db}.allstudents where AdmNum={AdmNum}")
+        try:
+            AdmNum = str(
+                int(
+                    questionary.autocomplete(
+                        f"Enter admission number of the student: ",
+                        adm,
+                        style=minimalStyle,
+                    ).ask()
+                )
+            )
+            break
+        except:
+            print("Please enter a valid admission number.")
+    while True:
+        cur.execute(f"select class from allstudents where AdmNum={AdmNum}")
         admNumFetch = cur.fetchall()
         try:
             if len(admNumFetch) == 0:
                 raise ValueError
             else:
                 break
-        except KeyboardInterrupt:
-            exit()
-        except:
+        except ValueError:
             print("This admission number does not exist.")
-            AdmNum = BetterInput(f"Enter a valid admission number: ", "+", int)
+            while True:
+                try:
+                    AdmNum = str(
+                        int(
+                            questionary.autocomplete(
+                                f"Enter admission number of the student: ",
+                                adm,
+                                style=minimalStyle,
+                            ).ask()
+                        )
+                    )
+                    break
+                except:
+                    print("Please enter a valid admission number.")
+    StatBar(1.2, "[cyan] Loading Records")
     ClearScreen()
     Class = admNumFetch[0][0]
     # ? Class 1
     if Class == 1:
-        cur.execute(f"select * from {db}.catone where AdmNum={AdmNum}")
+        cur.execute(f"select * from catone where AdmNum={AdmNum}")
         res = cur.fetchall()[0]
         result = {
             "Admission Number": res[0],
@@ -1508,15 +1801,60 @@ def StudentRecords():
             "Total": res[11],
             "Average %": res[12],
         }
+
+        table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+        table.add_column("Admission Number", style="green")
+        table.add_column("Name", style="cyan")
+        table.add_column("Class", style="cyan")
+        table.add_column("Section", style="cyan")
+        table.add_column("Roll Number", style="cyan")
+        table.add_column("2nd Language", style="cyan")
+        table.add_column("English", style="magenta")
+        table.add_column("Mathematics", style="magenta")
+        table.add_column("Science", style="magenta")
+        table.add_column("Social Sciences", style="magenta")
+        table.add_column(res[5], style="magenta")
+        table.add_column("Total", style="red")
+        table.add_column("Average %", style="red")
+        table.add_row(
+            str(res[0]),
+            str(res[1]),
+            str(res[2]),
+            str(res[3]),
+            str(res[4]),
+            str(res[5]),
+            str(res[6]),
+            str(res[7]),
+            str(res[8]),
+            str(res[9]),
+            str(res[10]),
+            str(res[11]),
+            str(res[12]),
+        )
+
         if result["English"] == None:
-            result = dict(list(result.items())[:6])
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table.add_column("Admission Number", style="green")
+            table.add_column("Name", style="cyan")
+            table.add_column("Class", style="cyan")
+            table.add_column("Section", style="cyan")
+            table.add_column("Roll Number", style="cyan")
+            table.add_column("2nd Language", style="cyan")
+            table.add_row(
+                str(res[0]),
+                str(res[1]),
+                str(res[2]),
+                str(res[3]),
+                str(res[4]),
+                str(res[5]),
+            )
             prompt = f"{res[1]}'s details: "
         else:
             prompt = f"{res[1]}'s report card: "
 
     # ? Class 2 - Class 4
     elif 2 <= Class <= 4:
-        cur.execute(f"select * from {db}.cattwo where AdmNum={AdmNum}")
+        cur.execute(f"select * from cattwo where AdmNum={AdmNum}")
         res = cur.fetchall()[0]
         result = {
             "Admission Number": res[0],
@@ -1534,14 +1872,60 @@ def StudentRecords():
             "Total": res[12],
             "Average %": res[13],
         }
+        table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+        table.add_column("Admission Number", style="green")
+        table.add_column("Name", style="cyan")
+        table.add_column("Class", style="cyan")
+        table.add_column("Section", style="cyan")
+        table.add_column("Roll Number", style="cyan")
+        table.add_column("2nd Language", style="cyan")
+        table.add_column("English", style="magenta")
+        table.add_column("Mathematics", style="magenta")
+        table.add_column("Science", style="magenta")
+        table.add_column("Social Sciences", style="magenta")
+        table.add_column(res[5], style="magenta")
+        table.add_column("Computers", style="magenta")
+        table.add_column("Total", style="red")
+        table.add_column("Average %", style="red")
+        table.add_row(
+            str(res[0]),
+            str(res[1]),
+            str(res[2]),
+            str(res[3]),
+            str(res[4]),
+            str(res[5]),
+            str(res[6]),
+            str(res[7]),
+            str(res[8]),
+            str(res[9]),
+            str(res[10]),
+            str(res[11]),
+            str(res[12]),
+            str(res[13]),
+        )
+
         if result["English"] == None:
-            result = dict(list(result.items())[:6])
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table.add_column("Admission Number", style="green")
+            table.add_column("Name", style="cyan")
+            table.add_column("Class", style="cyan")
+            table.add_column("Section", style="cyan")
+            table.add_column("Roll Number", style="cyan")
+            table.add_column("2nd Language", style="cyan")
+            table.add_row(
+                str(res[0]),
+                str(res[1]),
+                str(res[2]),
+                str(res[3]),
+                str(res[4]),
+                str(res[5]),
+            )
             prompt = f"{res[1]}'s details: "
         else:
             prompt = f"{res[1]}'s report card: "
     # ? Class 5 - Class 8
     elif 5 <= Class <= 8:
-        cur.execute(f"select * from {db}.catthree where AdmNum={AdmNum}")
+        cur.execute(f"select * from catthree where AdmNum={AdmNum}")
         res = cur.fetchall()[0]
         result = {
             "Admission Number": res[0],
@@ -1561,14 +1945,63 @@ def StudentRecords():
             "Total": res[14],
             "Average %": res[15],
         }
+        table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+        table.add_column("Admission Number", style="green")
+        table.add_column("Name", style="cyan")
+        table.add_column("Class", style="cyan")
+        table.add_column("Section", style="cyan")
+        table.add_column("Roll Number", style="cyan")
+        table.add_column("2nd Language", style="cyan")
+        table.add_column("3rd Language", style="cyan")
+        table.add_column("English", style="magenta")
+        table.add_column("Mathematics", style="magenta")
+        table.add_column("Science", style="magenta")
+        table.add_column("Social Sciences", style="magenta")
+        table.add_column(res[5], style="magenta")
+        table.add_column(res[6], style="magenta")
+        table.add_column("Computers", style="magenta")
+        table.add_column("Total", style="red")
+        table.add_column("Average %", style="red")
+        table.add_row(
+            str(res[0]),
+            str(res[1]),
+            str(res[2]),
+            str(res[3]),
+            str(res[4]),
+            str(res[5]),
+            str(res[6]),
+            str(res[7]),
+            str(res[8]),
+            str(res[9]),
+            str(res[10]),
+            str(res[11]),
+            str(res[12]),
+            str(res[13]),
+            str(res[14]),
+        )
         if result["English"] == None:
-            result = dict(list(result.items())[:7])
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table.add_column("Admission Number", style="green")
+            table.add_column("Name", style="cyan")
+            table.add_column("Class", style="cyan")
+            table.add_column("Section", style="cyan")
+            table.add_column("Roll Number", style="cyan")
+            table.add_column("2nd Language", style="cyan")
+            table.add_row(
+                str(res[0]),
+                str(res[1]),
+                str(res[2]),
+                str(res[3]),
+                str(res[4]),
+                str(res[5]),
+                str(res[6]),
+            )
             prompt = f"{res[1]}'s details: "
         else:
             prompt = f"{res[1]}'s report card: "
     # ? Class 9 & 10
     elif 9 <= Class <= 10:
-        cur.execute(f"select * from {db}.catfour where AdmNum={AdmNum}")
+        cur.execute(f"select * from catfour where AdmNum={AdmNum}")
         res = cur.fetchall()[0]
         result = {
             "Admission Number": res[0],
@@ -1585,15 +2018,56 @@ def StudentRecords():
             "Total": res[11],
             "Average %": res[12],
         }
+        table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+        table.add_column("Admission Number", style="green")
+        table.add_column("Name", style="cyan")
+        table.add_column("Class", style="cyan")
+        table.add_column("Section", style="cyan")
+        table.add_column("Roll Number", style="cyan")
+        table.add_column("English", style="magenta")
+        table.add_column("Mathematics", style="magenta")
+        table.add_column("Science", style="magenta")
+        table.add_column("Social Sciences", style="magenta")
+        table.add_column(res[5], style="magenta")
+        table.add_column("Total", style="red")
+        table.add_column("Average %", style="red")
+        table.add_row(
+            str(res[0]),
+            str(res[1]),
+            str(res[2]),
+            str(res[3]),
+            str(res[4]),
+            str(res[5]),
+            str(res[6]),
+            str(res[7]),
+            str(res[8]),
+            str(res[9]),
+            str(res[10]),
+            str(res[11]),
+        )
         if result["English"] == None:
-            result = dict(list(result.items())[:6])
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table.add_column("Admission Number", style="green")
+            table.add_column("Name", style="cyan")
+            table.add_column("Class", style="cyan")
+            table.add_column("Section", style="cyan")
+            table.add_column("Roll Number", style="cyan")
+            table.add_column("2nd Language", style="cyan")
+            table.add_row(
+                str(res[0]),
+                str(res[1]),
+                str(res[2]),
+                str(res[3]),
+                str(res[4]),
+                str(res[5]),
+            )
             prompt = f"{res[1]}'s details: "
         else:
             prompt = f"{res[1]}'s report card: "
     # ? Class 11 & 12
     elif 11 <= Class <= 12:
         # ? Mathematics, Physics, Chemistry
-        cur.execute(f"select * from {db}.catfive where AdmNum={AdmNum}")
+        cur.execute(f"select * from catfive where AdmNum={AdmNum}")
         res = cur.fetchall()
         if len(res) != 0:
             res = res[0]
@@ -1612,13 +2086,56 @@ def StudentRecords():
                 "Total": res[11],
                 "Average %": res[12],
             }
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table.add_column("Admission Number", style="green")
+            table.add_column("Name", style="cyan")
+            table.add_column("Class", style="cyan")
+            table.add_column("Section", style="cyan")
+            table.add_column("Roll Number", style="cyan")
+            table.add_column("5th Core", style="cyan")
+            table.add_column("English", style="magenta")
+            table.add_column("Mathematics", style="magenta")
+            table.add_column("Science", style="magenta")
+            table.add_column("Social Sciences", style="magenta")
+            table.add_column(res[5], style="magenta")
+            table.add_column("Total", style="red")
+            table.add_column("Average %", style="red")
+            table.add_row(
+                str(res[0]),
+                str(res[1]),
+                str(res[2]),
+                str(res[3]),
+                str(res[4]),
+                str(res[5]),
+                str(res[6]),
+                str(res[7]),
+                str(res[8]),
+                str(res[9]),
+                str(res[10]),
+                str(res[11]),
+                str(res[12]),
+            )
             if result["English"] == None:
-                result = dict(list(result.items())[:6])
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table.add_column("Admission Number", style="magenta")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core", style="cyan")
+                table.add_row(
+                    str(res[0]),
+                    str(res[1]),
+                    str(res[2]),
+                    str(res[3]),
+                    str(res[4]),
+                    str(res[5]),
+                )
                 prompt = f"{res[1]}'s details: "
             else:
                 prompt = f"{res[1]}'s report card: "
         # ? Biology, Physics, Chemistry
-        cur.execute(f"select * from {db}.catsix where AdmNum={AdmNum}")
+        cur.execute(f"select * from catsix where AdmNum={AdmNum}")
         res = cur.fetchall()
         if len(res) != 0:
             res = res[0]
@@ -1637,13 +2154,56 @@ def StudentRecords():
                 "Total": res[11],
                 "Average %": res[12],
             }
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table.add_column("Admission Number", style="green")
+            table.add_column("Name", style="cyan")
+            table.add_column("Class", style="cyan")
+            table.add_column("Section", style="cyan")
+            table.add_column("Roll Number", style="cyan")
+            table.add_column("5th Core", style="cyan")
+            table.add_column("English", style="magenta")
+            table.add_column("Mathematics", style="magenta")
+            table.add_column("Science", style="magenta")
+            table.add_column("Social Sciences", style="magenta")
+            table.add_column(res[5], style="magenta")
+            table.add_column("Total", style="red")
+            table.add_column("Average %", style="red")
+            table.add_row(
+                str(res[0]),
+                str(res[1]),
+                str(res[2]),
+                str(res[3]),
+                str(res[4]),
+                str(res[5]),
+                str(res[6]),
+                str(res[7]),
+                str(res[8]),
+                str(res[9]),
+                str(res[10]),
+                str(res[11]),
+                str(res[12]),
+            )
             if result["English"] == None:
-                result = dict(list(result.items())[:6])
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core", style="cyan")
+                table.add_row(
+                    str(res[0]),
+                    str(res[1]),
+                    str(res[2]),
+                    str(res[3]),
+                    str(res[4]),
+                    str(res[5]),
+                )
                 prompt = f"{res[1]}'s details: "
             else:
                 prompt = f"{res[1]}'s report card: "
         # ? Commerce
-        cur.execute(f"select * from {db}.catseven where AdmNum={AdmNum}")
+        cur.execute(f"select * from catseven where AdmNum={AdmNum}")
         res = cur.fetchall()
         if len(res) != 0:
             res = res[0]
@@ -1662,13 +2222,56 @@ def StudentRecords():
                 "Total": res[11],
                 "Average %": res[12],
             }
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table.add_column("Admission Number", style="green")
+            table.add_column("Name", style="cyan")
+            table.add_column("Class", style="cyan")
+            table.add_column("Section", style="cyan")
+            table.add_column("Roll Number", style="cyan")
+            table.add_column("5th Core", style="cyan")
+            table.add_column("English", style="magenta")
+            table.add_column("Mathematics", style="magenta")
+            table.add_column("Science", style="magenta")
+            table.add_column("Social Sciences", style="magenta")
+            table.add_column(res[5], style="magenta")
+            table.add_column("Total", style="red")
+            table.add_column("Average %", style="red")
+            table.add_row(
+                str(res[0]),
+                str(res[1]),
+                str(res[2]),
+                str(res[3]),
+                str(res[4]),
+                str(res[5]),
+                str(res[6]),
+                str(res[7]),
+                str(res[8]),
+                str(res[9]),
+                str(res[10]),
+                str(res[11]),
+                str(res[12]),
+            )
             if result["English"] == None:
-                result = dict(list(result.items())[:6])
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core", style="cyan")
+                table.add_row(
+                    str(res[0]),
+                    str(res[1]),
+                    str(res[2]),
+                    str(res[3]),
+                    str(res[4]),
+                    str(res[5]),
+                )
                 prompt = f"{res[1]}'s details: "
             else:
                 prompt = f"{res[1]}'s report card: "
         # ? Humanities
-        cur.execute(f"select * from {db}.cateight where AdmNum={AdmNum}")
+        cur.execute(f"select * from cateight where AdmNum={AdmNum}")
         res = cur.fetchall()
         if len(res) != 0:
             res = res[0]
@@ -1687,2320 +2290,1049 @@ def StudentRecords():
                 "Total": res[11],
                 "Average %": res[12],
             }
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table.add_column("Admission Number", style="green")
+            table.add_column("Name", style="cyan")
+            table.add_column("Class", style="cyan")
+            table.add_column("Section", style="cyan")
+            table.add_column("Roll Number", style="cyan")
+            table.add_column("5th Core", style="cyan")
+            table.add_column("English", style="magenta")
+            table.add_column("Mathematics", style="magenta")
+            table.add_column("Science", style="magenta")
+            table.add_column("Social Sciences", style="magenta")
+            table.add_column(res[5], style="magenta")
+            table.add_column("Total", style="red")
+            table.add_column("Average %", style="red")
+            table.add_row(
+                str(res[0]),
+                str(res[1]),
+                str(res[2]),
+                str(res[3]),
+                str(res[4]),
+                str(res[5]),
+                str(res[6]),
+                str(res[7]),
+                str(res[8]),
+                str(res[9]),
+                str(res[10]),
+                str(res[11]),
+                str(res[12]),
+            )
             if result["English"] == None:
-                result = dict(list(result.items())[:6])
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core", style="cyan")
+                table.add_row(
+                    str(res[0]),
+                    str(res[1]),
+                    str(res[2]),
+                    str(res[3]),
+                    str(res[4]),
+                    str(res[5]),
+                )
                 prompt = f"{res[1]}'s details: "
             else:
                 prompt = f"{res[1]}'s report card: "
 
     # ! Displaying Records/Report Card
     print(prompt)
+    console.print(table)
+
     print()
-    Result = series(result).to_string()
-    print(Result)
-    a = input("")
-    if a:
-        pass
+    input("Press enter to continue ")
 
 
-# ! <-- Displaying one categories records -->
+# ! <-- Displaying one or more classes records -->
 def ClassRecords(Class=None):
-    # ? Clearing the screen
     ClearScreen()
     # ? Class for the records
     if Class == None:
-        while True:
-            try:
-                Class = BetterInput(
-                    "What class do you want the student records for? ", "+", int
-                )
-                if 0 > Class or Class > 12:
-                    raise ValueError
-                break
-            except KeyboardInterrupt:
-                exit()
-            except:
-                print("Enter a valid class")
-    if Class == 1:
-        Grade = 1
-    if Class == 2:
-        Grade = 2
-    if Class == 3:
-        Grade = 3
-    if Class == 4:
-        Grade = 4
-    if Class == 5:
-        Grade = 5
-    if Class == 6:
-        Grade = 6
-    if Class == 7:
-        Grade = 7
-    if Class == 8:
-        Grade = 8
-    if Class == 9:
-        Grade = 9
-    if Class == 10:
-        Grade = 10
-    if Class == 11:
-        Grade = 11
-    if Class == 12:
-        Grade = 12
+        Class = questionary.checkbox(
+            "What classes do you want records for?",
+            choices=[str(x) for x in range(1, 13)],
+            style=minimalStyle,
+        ).ask()
+    else:
+        Class = str(Class)
+    StatBar(1.2, "[cyan] Loading Records")
+    ClearScreen()
     # ? Grade 1
-    if Grade == 1:
-        cur.execute(f"select * from {db}.catone where class={Class}")
+    Grade = Class
+    if "1" in Grade:
+        Class = 1
+        cur.execute(f"select * from catone where class={Class}")
         res = cur.fetchall()
-        if len(res) != 0:
-            res = [x for x in res]
-            (
-                AdmNumList,
-                NameList,
-                ClassList,
-                SectionList,
-                RollNumList,
-                Lang2NameList,
-                EngList,
-                MathList,
-                ScienceList,
-                SocialList,
-                Lang2List,
-                TotList,
-                AvgList,
-            ) = (
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-            )
-            for i in range(len(res)):
-                # ? Adding values to list for dataframe
-                AdmNumList.append(res[i][0])
-                NameList.append(res[i][1])
-                ClassList.append(res[i][2])
-                SectionList.append(res[i][3])
-                RollNumList.append(res[i][4])
-                Lang2NameList.append(res[i][5])
-                EngList.append(res[i][6])
-                MathList.append(res[i][7])
-                ScienceList.append(res[i][8])
-                SocialList.append(res[i][9])
-                Lang2List.append(res[i][10])
-                TotList.append(res[i][11])
-                AvgList.append(res[i][12])
-            # ? Dataframe Values
-            result = {
-                "Admission Number": AdmNumList,
-                "Name": NameList,
-                "Class": ClassList,
-                "Section": SectionList,
-                "Roll Number": RollNumList,
-                "2nd Language Name": Lang2NameList,
-                "English": EngList,
-                "Mathematics": MathList,
-                "Science": ScienceList,
-                "Social Sciences": SocialList,
-                "2nd Language": Lang2List,
-                "Total": TotList,
-                "Average %": AvgList,
-            }
-        else:
-            result = {
-                "Admission Number": [None],
-                "Name": [None],
-                "Class": [None],
-                "Section": [None],
-                "Roll Number": [None],
-                "2nd Language Name": [None],
-                "English": [None],
-                "Mathematics": [None],
-                "Science": [None],
-                "Social Sciences": [None],
-                "2nd Language": [None],
-                "Total": [None],
-                "Average %": [None],
-            }
 
-    # ? Grade 2 to Grade 4
-    if 2 <= Grade <= 4:
-        cur.execute(f"select * from {db}.cattwo where class={Class}")
-        res = cur.fetchall()
         if len(res) != 0:
             res = [x for x in res]
-            (
-                AdmNumList,
-                NameList,
-                ClassList,
-                SectionList,
-                RollNumList,
-                Lang2NameList,
-                EngList,
-                MathList,
-                ScienceList,
-                SocialList,
-                Lang2List,
-                ComputersList,
-                TotList,
-                AvgList,
-            ) = ([], [], [], [], [], [], [], [], [], [], [], [], [], [])
-            # ? Adding values to list for dataframe
+            console.print(
+                Panel.fit("[bold italic bright_yellow]Grade 1", padding=(0, 20))
+            )
+            table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+            table.add_column("Admission Number", style="green")
+            table.add_column("Name", style="cyan")
+            table.add_column("Class", style="cyan")
+            table.add_column("Section", style="cyan")
+            table.add_column("Roll Number", style="cyan")
+            table.add_column("2nd Language Name", style="cyan")
+            table.add_column("English", style="magenta")
+            table.add_column("Mathematics", style="magenta")
+            table.add_column("Science", style="magenta")
+            table.add_column("Social Sciences", style="magenta")
+            table.add_column("2nd Language", style="magenta")
+            table.add_column("Total", style="red")
+            table.add_column("Average %", style="red")
             for i in range(len(res)):
-                AdmNumList.append(res[i][0])
-                NameList.append(res[i][1])
-                ClassList.append(res[i][2])
-                SectionList.append(res[i][3])
-                RollNumList.append(res[i][4])
-                Lang2NameList.append(res[i][5])
-                EngList.append(res[i][6])
-                MathList.append(res[i][7])
-                ScienceList.append(res[i][8])
-                SocialList.append(res[i][9])
-                Lang2List.append(res[i][10])
-                ComputersList.append(res[i][11])
-                TotList.append(res[i][12])
-                AvgList.append(res[i][13])
-            # ? Dataframe Values
-            result = {
-                "Admission Number": AdmNumList,
-                "Name": NameList,
-                "Class": ClassList,
-                "Section": SectionList,
-                "Roll Number": RollNumList,
-                "2nd Language Name": Lang2NameList,
-                "English": EngList,
-                "Mathematics": MathList,
-                "Science": ScienceList,
-                "Social Sciences": SocialList,
-                "2nd Language": Lang2List,
-                "Computers": ComputersList,
-                "Total": TotList,
-                "Average %": AvgList,
-            }
+                table.add_row(
+                    str(res[i][0]),
+                    str(res[i][1]),
+                    str(res[i][2]),
+                    str(res[i][3]),
+                    str(res[i][4]),
+                    str(res[i][5]),
+                    str(res[i][6]),
+                    str(res[i][7]),
+                    str(res[i][8]),
+                    str(res[i][9]),
+                    str(res[i][10]),
+                    str(res[i][11]),
+                    str(res[i][12]),
+                )
+            console.print(table)
+            print()
         else:
-            result = {
-                "Admission Number": [None],
-                "Name": [None],
-                "Class": [None],
-                "Section": [None],
-                "Roll Number": [None],
-                "2nd Language Name": [None],
-                "English": [None],
-                "Mathematics": [None],
-                "Science": [None],
-                "Social Sciences": [None],
-                "2nd Language": [None],
-                "Computers": [None],
-                "Total": [None],
-                "Average %": [None],
-            }
+            print(f"There are no students in Grade 1")
+            print()
+
+    # ? Grade 2 - Grade 4
+    if "2" in Grade or "3" in Grade or "4" in Grade:
+        if "2" in Grade:
+            cur.execute(f"select * from cattwo where class=2")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit("[bold italic bright_yellow]Grade 2", padding=(0, 20))
+                )
+                table = Table(
+                    show_header=True,
+                    header_style="bold",
+                    box=box.ROUNDED,
+                )
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("2nd Language Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("Mathematics", style="magenta")
+                table.add_column("Science", style="magenta")
+                table.add_column("Social Sciences", style="magenta")
+                table.add_column("2nd Language", style="magenta")
+                table.add_column("Computers", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                        str(res[i][13]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print(f"There are no students in Grade 2")
+                print()
+        if "3" in Grade:
+            cur.execute(f"select * from cattwo where class=3")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit("[bold italic bright_yellow]Grade 3", padding=(0, 20))
+                )
+                table = table(
+                    show_header=True,
+                    header_style="bold",
+                    box=box.rounded,
+                )
+                table.add_column("admission number", style="green")
+                table.add_column("name", style="cyan")
+                table.add_column("class", style="cyan")
+                table.add_column("section", style="cyan")
+                table.add_column("roll number", style="cyan")
+                table.add_column("2nd language name", style="cyan")
+                table.add_column("english", style="magenta")
+                table.add_column("mathematics", style="magenta")
+                table.add_column("science", style="magenta")
+                table.add_column("social sciences", style="magenta")
+                table.add_column("2nd language", style="magenta")
+                table.add_column("computers", style="magenta")
+                table.add_column("total", style="red")
+                table.add_column("average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                        str(res[i][13]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print(f"There are no students in Grade 3")
+                print()
+        if "4" in Grade:
+            cur.execute(f"select * from cattwo where class=4")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit("[bold italic bright_yellow]Grade 4", padding=(0, 20))
+                )
+                table = table(show_header=True, header_style="bold", box=box.rounded)
+                table.add_column("admission number", style="green")
+                table.add_column("name", style="cyan")
+                table.add_column("class", style="cyan")
+                table.add_column("section", style="cyan")
+                table.add_column("roll number", style="cyan")
+                table.add_column("2nd language name", style="cyan")
+                table.add_column("english", style="magenta")
+                table.add_column("mathematics", style="magenta")
+                table.add_column("science", style="magenta")
+                table.add_column("social sciences", style="magenta")
+                table.add_column("2nd language", style="magenta")
+                table.add_column("computers", style="magenta")
+                table.add_column("total", style="red")
+                table.add_column("average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                        str(res[i][13]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print(f"There are no students in Grade 4")
+                print()
 
     # ? Grade 5 - Grade 8
-    if 5 <= Grade <= 8:
-        cur.execute(f"select * from {db}.catthree where class={Class}")
-        res = cur.fetchall()
-        if len(res) != 0:
-            res = [x for x in res]
-            (
-                AdmNumList,
-                NameList,
-                ClassList,
-                SectionList,
-                RollNumList,
-                Lang2NameList,
-                Lang3NameList,
-                EngList,
-                MathList,
-                ScienceList,
-                SocialList,
-                Lang2List,
-                Lang3List,
-                ComputersList,
-                TotList,
-                AvgList,
-            ) = ([], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [])
-            # ? Adding values to list for dataframe
-            for i in range(len(res)):
-                AdmNumList.append(res[i][0])
-                NameList.append(res[i][1])
-                ClassList.append(res[i][2])
-                SectionList.append(res[i][3])
-                RollNumList.append(res[i][4])
-                Lang2NameList.append(res[i][5])
-                Lang3NameList.append(res[i][6])
-                EngList.append(res[i][7])
-                MathList.append(res[i][8])
-                ScienceList.append(res[i][9])
-                SocialList.append(res[i][10])
-                Lang2List.append(res[i][11])
-                Lang3List.append(res[i][12])
-                ComputersList.append(res[i][13])
-                TotList.append(res[i][14])
-                AvgList.append(res[i][15])
-                # ? Dataframe Values
-            result = {
-                "Admission Number": AdmNumList,
-                "Name": NameList,
-                "Class": ClassList,
-                "Section": SectionList,
-                "Roll Number": RollNumList,
-                "2nd Language Name": Lang2NameList,
-                "3nd Language Name": Lang3NameList,
-                "English": EngList,
-                "Mathematics": MathList,
-                "Science": ScienceList,
-                "Social Sciences": SocialList,
-                "2nd Language": Lang2List,
-                "3rd Language": Lang3List,
-                "Computers": ComputersList,
-                "Total": TotList,
-                "Average %": AvgList,
-            }
-        else:
-            result = {
-                "Admission Number": [None],
-                "Name": [None],
-                "Class": [None],
-                "Section": [None],
-                "Roll Number": [None],
-                "2nd Language Name": [None],
-                "3nd Language Name": [None],
-                "English": [None],
-                "Mathematics": [None],
-                "Science": [None],
-                "Social Sciences": [None],
-                "2nd Language": [None],
-                "3rd Language": [None],
-                "Computers": [None],
-                "Total": [None],
-                "Average %": [None],
-            }
+    if "5" in Grade or "6" in Grade or "7" in Grade or "8" in Grade:
+        if "5" in Grade:
+            cur.execute(f"select * from catthree where class=5")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit("[bold italic bright_yellow]Grade 5", padding=(0, 20))
+                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("2nd Language Name", style="cyan")
+                table.add_column("3rd Language Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("Mathematics", style="magenta")
+                table.add_column("Science", style="magenta")
+                table.add_column("Social Sciences", style="magenta")
+                table.add_column("2nd Language", style="magenta")
+                table.add_column("3rd Language", style="magenta")
+                table.add_column("Computers", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                        str(res[i][13]),
+                        str(res[i][14]),
+                        str(res[i][15]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print(f"There are no students in Grade 5")
+                print()
+        if "6" in Grade:
+            cur.execute(f"select * from catthree where class=6")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit("[bold italic bright_yellow]Grade 6", padding=(0, 20))
+                )
+                table = Table(
+                    show_header=True,
+                    header_style="bold",
+                    box=box.ROUNDED,
+                )
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("2nd Language Name", style="cyan")
+                table.add_column("3rd Language Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("Mathematics", style="magenta")
+                table.add_column("Science", style="magenta")
+                table.add_column("Social Sciences", style="magenta")
+                table.add_column("2nd Language", style="magenta")
+                table.add_column("3rd Language", style="magenta")
+                table.add_column("Computers", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                        str(res[i][13]),
+                        str(res[i][14]),
+                        str(res[i][15]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print(f"There are no students in Grade 6")
+                print()
+        if "7" in Grade:
+            cur.execute(f"select * from catthree where class=7")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit("[bold italic bright_yellow]Grade 7", padding=(0, 20))
+                )
+                table = Table(
+                    show_header=True,
+                    header_style="bold",
+                    box=box.ROUNDED,
+                )
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("2nd Language Name", style="cyan")
+                table.add_column("3rd Language Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("Mathematics", style="magenta")
+                table.add_column("Science", style="magenta")
+                table.add_column("Social Sciences", style="magenta")
+                table.add_column("2nd Language", style="magenta")
+                table.add_column("3rd Language", style="magenta")
+                table.add_column("Computers", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                        str(res[i][13]),
+                        str(res[i][14]),
+                        str(res[i][15]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print(f"There are no students in Grade 7")
+                print()
+        if "8" in Grade:
+            cur.execute(f"select * from catthree where class=8")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit("[bold italic bright_yellow]Grade 8", padding=(0, 20))
+                )
+                table = Table(
+                    show_header=True,
+                    header_style="bold",
+                    box=box.ROUNDED,
+                )
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("2nd Language Name", style="cyan")
+                table.add_column("3rd Language Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("Mathematics", style="magenta")
+                table.add_column("Science", style="magenta")
+                table.add_column("Social Sciences", style="magenta")
+                table.add_column("2nd Language", style="magenta")
+                table.add_column("3rd Language", style="magenta")
+                table.add_column("Computers", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                        str(res[i][13]),
+                        str(res[i][14]),
+                        str(res[i][15]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print(f"There are no students in Grade 8")
+                print()
 
     # ? Grade 9 - Grade 10
-    if 9 <= Grade <= 10:
-        cur.execute(f"select * from {db}.catfour where class={Class}")
-        res = cur.fetchall()
-        if len(res) != 0:
-            res = [x for x in res]
-            (
-                AdmNumList,
-                NameList,
-                ClassList,
-                SectionList,
-                RollNumList,
-                Lang2NameList,
-                EngList,
-                MathList,
-                ScienceList,
-                SocialList,
-                Lang2List,
-                TotList,
-                AvgList,
-            ) = (
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-            )
-            # ? Adding values to list for dataframe
-            for i in range(len(res)):
-                AdmNumList.append(res[i][0])
-                NameList.append(res[i][1])
-                ClassList.append(res[i][2])
-                SectionList.append(res[i][3])
-                RollNumList.append(res[i][4])
-                Lang2NameList.append(res[i][5])
-                EngList.append(res[i][6])
-                MathList.append(res[i][7])
-                ScienceList.append(res[i][8])
-                SocialList.append(res[i][9])
-                Lang2List.append(res[i][10])
-                TotList.append(res[i][11])
-                AvgList.append(res[i][12])
-            # ? Dataframe Values
-            result = {
-                "Admission Number": AdmNumList,
-                "Name": NameList,
-                "Class": ClassList,
-                "Section": SectionList,
-                "Roll Number": RollNumList,
-                "2nd Language Name": Lang2NameList,
-                "English": EngList,
-                "Mathematics": MathList,
-                "Science": ScienceList,
-                "Social Sciences": SocialList,
-                "2nd Language": Lang2List,
-                "Total": TotList,
-                "Average %": AvgList,
-            }
-        else:
-            result = {
-                "Admission Number": [None],
-                "Name": [None],
-                "Class": [None],
-                "Section": [None],
-                "Roll Number": [None],
-                "2nd Language Name": [None],
-                "English": [None],
-                "Mathematics": [None],
-                "Science": [None],
-                "Social Sciences": [None],
-                "2nd Language": [None],
-                "Total": [None],
-                "Average %": [None],
-            }
+    if "9" in Grade or "10" in Grade:
+        if "9" in Grade:
+            cur.execute(f"select * from catfour where class=9")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit("[bold italic bright_yellow]Grade 9", padding=(0, 20))
+                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("2nd Language Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("Mathematics", style="magenta")
+                table.add_column("Science", style="magenta")
+                table.add_column("Social Sciences", style="magenta")
+                table.add_column("2nd Language", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print(f"There are no students in Grade 9")
+                print()
+        if "10" in Grade:
+            cur.execute(f"select * from catfour where class=10")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit("[bold italic bright_yellow]Grade 10", padding=(0, 20))
+                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("2nd Language Name", style="cyan")
+                table.add_column("English", style="magenta")
+                table.add_column("Mathematics", style="magenta")
+                table.add_column("Science", style="magenta")
+                table.add_column("Social Sciences", style="magenta")
+                table.add_column("2nd Language", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print("There are no students in Grade 10")
+                print()
 
-    # ? Mathematics, Physics, Chemistry
-    cur.execute(f"select * from {db}.catfive where class={Class}")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            FcoreNameList,
-            EngList,
-            MathList,
-            PhysicsList,
-            ChemistryList,
-            FcoreList,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            FcoreNameList.append(res[i][5])
-            EngList.append(res[i][6])
-            MathList.append(res[i][7])
-            PhysicsList.append(res[i][8])
-            ChemistryList.append(res[i][9])
-            FcoreList.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        MPCResult = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "5th Core Name": FcoreNameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Physics": PhysicsList,
-            "Chemistry": ChemistryList,
-            "5th Core": FcoreList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        MPCResult = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "5th Core Name": [None],
-            "English": [None],
-            "Maths": [None],
-            "Physics": [None],
-            "Chemistry": [None],
-            "5th Core": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+    if "11" in Grade or "12" in Grade:
+        if "11" in Grade:
+            # ? Mathematics, Physics, Chemistry
+            cur.execute("select * from catfive where class=11")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit(
+                        "[bold italic bright_yellow]Grade 11 MPC", padding=(0, 20)
+                    )
+                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core Name", style="yellow")
+                table.add_column("English", style="magenta")
+                table.add_column("Mathematics", style="magenta")
+                table.add_column("Physics", style="magenta")
+                table.add_column("Chemistry", style="magenta")
+                table.add_column("5th Core", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print()
+                print("There are no students in Grade 11 MPC")
 
-    # ? Biology, Physics, Chemistry
-    cur.execute(f"select * from {db}.catsix where class={Class}")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            FcoreNameList,
-            EngList,
-            BioList,
-            PhysicsList,
-            ChemistryList,
-            FcoreList,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            FcoreNameList.append(res[i][5])
-            EngList.append(res[i][6])
-            BioList.append(res[i][7])
-            PhysicsList.append(res[i][8])
-            ChemistryList.append(res[i][9])
-            FcoreList.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        BiPCResult = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "5th Core Name": FcoreNameList,
-            "English": EngList,
-            "Biology": BioList,
-            "Physics": PhysicsList,
-            "Chemistry": ChemistryList,
-            "5th Core": FcoreList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        BiPCResult = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "5th Core Name": [None],
-            "English": [None],
-            "Biology": [None],
-            "Physics": [None],
-            "Chemistry": [None],
-            "5th Core": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+            # ? Biology, Physics, Chemistry
+            cur.execute("select * from catsix where class=11")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit(
+                        "[bold italic bright_yellow]Grade 11 BiPC", padding=(0, 20)
+                    )
+                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core Name", style="yellow")
+                table.add_column("English", style="magenta")
+                table.add_column("Biology", style="magenta")
+                table.add_column("Physics", style="magenta")
+                table.add_column("Chemistry", style="magenta")
+                table.add_column("5th Core", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print()
+                print("There are no students in Grade 11 BiPC")
 
-    # ? Commerce
-    cur.execute(f"select * from {db}.catseven where class={Class}")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            FcoreNameList,
-            EngList,
-            AccountsList,
-            BStList,
-            EconList,
-            FcoreList,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            FcoreNameList.append(res[i][5])
-            EngList.append(res[i][6])
-            AccountsList.append(res[i][7])
-            BStList.append(res[i][8])
-            EconList.append(res[i][9])
-            FcoreList.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        CommerceResult = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "5th Core Name": FcoreNameList,
-            "English": EngList,
-            "Accounts": AccountsList,
-            "Business Studies": BStList,
-            "Economics": EconList,
-            "5th Core": FcoreList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        CommerceResult = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "5th Core Name": [None],
-            "English": [None],
-            "Accounts": [None],
-            "Business Studies": [None],
-            "Economics": [None],
-            "5th Core": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+            # ? Commerce
+            cur.execute("select * from catseven where class=11")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit(
+                        "[bold italic bright_yellow]Grade 11 Commerce",
+                        padding=(0, 20),
+                    )
+                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core Name", style="yellow")
+                table.add_column("English", style="magenta")
+                table.add_column("Accounts", style="magenta")
+                table.add_column("Business Studies", style="magenta")
+                table.add_column("Economics", style="magenta")
+                table.add_column("5th Core", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print()
+                print("There are no students in Grade 11 CEC")
 
-    # ? Humanities
-    cur.execute(f"select * from {db}.cateight where class={Class}")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            FcoreNameList,
-            EngList,
-            HistoryList,
-            PolSciList,
-            EconList,
-            FcoreList,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            FcoreNameList.append(res[i][5])
-            EngList.append(res[i][6])
-            HistoryList.append(res[i][7])
-            PolSciList.append(res[i][8])
-            EconList.append(res[i][9])
-            FcoreList.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        HumanitiesResult = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "5th Core Name": FcoreNameList,
-            "English": EngList,
-            "History": HistoryList,
-            "Political Sciences": PolSciList,
-            "Economics": EconList,
-            "5th Core": FcoreList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        HumanitiesResult = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "5th Core Name": [None],
-            "English": [None],
-            "History": [None],
-            "Political Sciences": [None],
-            "Economics": [None],
-            "5th Core": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+            # ? Humanities
+            cur.execute("select * from cateight where class=11")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit(
+                        "[bold italic bright_yellow]Grade 11 Humanities",
+                        padding=(0, 20),
+                    )
+                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core Name", style="yellow")
+                table.add_column("English", style="magenta")
+                table.add_column("History", style="magenta")
+                table.add_column("Political Sciences", style="magenta")
+                table.add_column("Economics", style="magenta")
+                table.add_column("5th Core", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print()
+                print("There are no students in Grade 11 Humanities")
+        if "12" in Grade:
+            # ? Mathematics, Physics, Chemistry
+            cur.execute("select * from catfive where class=12")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit(
+                        "[bold italic bright_yellow]Grade 12 MPC", padding=(0, 20)
+                    )
+                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core Name", style="yellow")
+                table.add_column("English", style="magenta")
+                table.add_column("Mathematics", style="magenta")
+                table.add_column("Physics", style="magenta")
+                table.add_column("Chemistry", style="magenta")
+                table.add_column("5th Core", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print()
+                print("There are no students in Grade 12 MPC")
 
-    # ? Uploading the dataframe to web browser
+            # ? Biology, Physics, Chemistry
+            cur.execute("select * from catsix where class=12")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit(
+                        "[bold italic bright_yellow]Grade 12 BiPC", padding=(0, 20)
+                    )
+                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core Name", style="yellow")
+                table.add_column("English", style="magenta")
+                table.add_column("Biology", style="magenta")
+                table.add_column("Physics", style="magenta")
+                table.add_column("Chemistry", style="magenta")
+                table.add_column("5th Core", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print()
+                print("There are no students in Grade 12 BiPC")
+
+            # ? Commerce
+            cur.execute("select * from catseven where class=12")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit(
+                        "[bold italic bright_yellow]Grade 12 Commerce",
+                        padding=(0, 20),
+                    )
+                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core Name", style="yellow")
+                table.add_column("English", style="magenta")
+                table.add_column("Accounts", style="magenta")
+                table.add_column("Business Studies", style="magenta")
+                table.add_column("Economics", style="magenta")
+                table.add_column("5th Core", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print()
+                print("There are no students in Grade 12 CEC")
+
+            # ? Humanities
+            cur.execute("select * from cateight where class=12")
+            res = cur.fetchall()
+            if len(res) != 0:
+                res = [x for x in res]
+                console.print(
+                    Panel.fit(
+                        "[bold italic bright_yellow]Grade 12 Humanities",
+                        padding=(0, 20),
+                    )
+                )
+                table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+                table.add_column("Admission Number", style="green")
+                table.add_column("Name", style="cyan")
+                table.add_column("Class", style="cyan")
+                table.add_column("Section", style="cyan")
+                table.add_column("Roll Number", style="cyan")
+                table.add_column("5th Core Name", style="yellow")
+                table.add_column("English", style="magenta")
+                table.add_column("History", style="magenta")
+                table.add_column("Political Sciences", style="magenta")
+                table.add_column("Economics", style="magenta")
+                table.add_column("5th Core", style="magenta")
+                table.add_column("Total", style="red")
+                table.add_column("Average %", style="red")
+                for i in range(len(res)):
+                    table.add_row(
+                        str(res[i][0]),
+                        str(res[i][1]),
+                        str(res[i][2]),
+                        str(res[i][3]),
+                        str(res[i][4]),
+                        str(res[i][5]),
+                        str(res[i][6]),
+                        str(res[i][7]),
+                        str(res[i][8]),
+                        str(res[i][9]),
+                        str(res[i][10]),
+                        str(res[i][11]),
+                        str(res[i][12]),
+                    )
+                console.print(table)
+                print()
+            else:
+                print()
+                print("There are no students in Grade 12 Humanities")
+    input("Press enter to continue ")
     ClearScreen()
-    print("Opening class records in your default browser!")
-    if Class in [11, 12]:
-        # ? For class 11 and 12 creating 4 different dataframes
-        # ? MPC
-        df1 = dataframe(MPCResult)
-        # ? BiPC
-        df2 = dataframe(BiPCResult)
-        # ? Commerce
-        df3 = dataframe(CommerceResult)
-        # ? Humanities
-        df4 = dataframe(HumanitiesResult)
-
-        # ? Uploading code
-        with open(f"Class {Class} Record.html", "w") as f:
-            f.write(
-                '<head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous"></head>'
-            )
-            f.write(
-                "<h5 class='text-center fw-bolder'>Maths, Physics, Chemistry: </h5>"
-            )
-            f.write(
-                "<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap'); body{padding:50px 20px;font-family:'JetBrains Mono',sans-serif!important;} table{margin:auto; margin-bottom:20px;width:175vh!important;} tr{border-bottom:1px solid #000;} th,tr,td{text-align:center!important;} table {border-collapse: separate; border-spacing: 10px 0;} td {padding: 10px 0;} table td + td, th + th{ border-left:1px solid #000; } table { border-collapse:collapse; } table thead tr { border-bottom: 1px solid #000; } </style>"
-            )
-            df1.to_html(f, index=False)
-        with open(f"Class {Class} Record.html", "a") as f:
-            f.write(
-                "<h5 class='text-center fw-bolder'>Biology, Physics, Chemistry: </h5>"
-            )
-            df2.to_html(f, index=False)
-        with open(f"Class {Class} Record.html", "a") as f:
-            f.write("<h5 class='text-center fw-bolder'>Commerce: </h5>")
-            df3.to_html(f, index=False)
-        with open(f"Class {Class} Record.html", "a") as f:
-            f.write("<h5 class='text-center fw-bolder'>Humanities: </h5>")
-            df4.to_html(f, index=False)
-
-        filename = f"Class {Class} Record.html"
-        open_new_tab(filename)
-    else:
-        # ? For the other classes creating 1 dataframe
-        try:
-            df = dataframe(result)
-        except KeyboardInterrupt:
-            exit()
-        except:
-            print("Data for this class is not available.")
-        with open(f"Class {Grade} Record.html", "w") as f:
-            f.write(f"<h5 class='text-center fw-bolder'>Grade {Grade}: </h5>")
-            f.write(
-                '<head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous"></head>'
-            )
-            f.write(
-                "<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap'); body{padding:50px 20px;font-family:'JetBrains Mono',sans-serif!important;} table{margin:auto; margin-bottom:20px;width:175vh!important;} tr{border-bottom:1px solid #000;} th,tr,td{text-align:center!important;} table {border-collapse: separate; border-spacing: 10px 0;} td {padding: 10px 0;} table td + td, th + th{ border-left:1px solid #000; } table { border-collapse:collapse; } table thead tr { border-bottom: 1px solid #000; } </style>"
-            )
-            df.to_html(f, index=False)
-
-        filename = f"Class {Grade} Record.html"
-        open_new_tab(filename)
 
 
 # ! <-- Displaying all students in the school -->
 def SchoolRecords():
+    ClassRecords([str(x) for x in range(1, 13)])
+
+
+# ! <-- Exporting all students to multiple *.csv files -->
+def ExportCSV():
     # ? Clearing the screen
     ClearScreen()
-    # ? Grade 1
-    cur.execute(f"select * from {db}.catone where class=1")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            Lang2NameList,
-            EngList,
-            MathList,
-            ScienceList,
-            SocialList,
-            Lang2List,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
-        for i in range(len(res)):
-            # ? Adding values to list for dataframe
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            Lang2NameList.append(res[i][5])
-            EngList.append(res[i][6])
-            MathList.append(res[i][7])
-            ScienceList.append(res[i][8])
-            SocialList.append(res[i][9])
-            Lang2List.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        # ? Dataframe Values
-        result1 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "2nd Language Name": Lang2NameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Science": ScienceList,
-            "Social Sciences": SocialList,
-            "2nd Language": Lang2List,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        result1 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "2nd Language Name": [None],
-            "English": [None],
-            "Mathematics": [None],
-            "Science": [None],
-            "Social Sciences": [None],
-            "2nd Language": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
 
-    # ? Grade 2 to Grade 4
-    cur.execute(f"select * from {db}.cattwo where class=2")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            Lang2NameList,
-            EngList,
-            MathList,
-            ScienceList,
-            SocialList,
-            Lang2List,
-            ComputersList,
-            TotList,
-            AvgList,
-        ) = ([], [], [], [], [], [], [], [], [], [], [], [], [], [])
-        # ? Adding values to list for dataframe
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            Lang2NameList.append(res[i][5])
-            EngList.append(res[i][6])
-            MathList.append(res[i][7])
-            ScienceList.append(res[i][8])
-            SocialList.append(res[i][9])
-            Lang2List.append(res[i][10])
-            ComputersList.append(res[i][11])
-            TotList.append(res[i][12])
-            AvgList.append(res[i][13])
-        # ? Dataframe Values
-        result2 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "2nd Language Name": Lang2NameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Science": ScienceList,
-            "Social Sciences": SocialList,
-            "2nd Language": Lang2List,
-            "Computers": ComputersList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        result2 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "2nd Language Name": [None],
-            "English": [None],
-            "Mathematics": [None],
-            "Science": [None],
-            "Social Sciences": [None],
-            "2nd Language": [None],
-            "Computers": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+    # ? Creating Exports folder if it does not exist
+    CWD = getcwd()
+    if not path.exists("Exports"):
+        makedirs("Exports")
+    if OsName == "nt":
+        dir = CWD + "/Exports"
+    elif OsName == "posix":
+        dir = CWD + "/Exports"
 
-    # ? Grade 3
-    cur.execute(f"select * from {db}.cattwo where class=3")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            Lang2NameList,
-            EngList,
-            MathList,
-            ScienceList,
-            SocialList,
-            Lang2List,
-            ComputersList,
-            TotList,
-            AvgList,
-        ) = ([], [], [], [], [], [], [], [], [], [], [], [], [], [])
-        # ? Adding values to list for dataframe
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            Lang2NameList.append(res[i][5])
-            EngList.append(res[i][6])
-            MathList.append(res[i][7])
-            ScienceList.append(res[i][8])
-            SocialList.append(res[i][9])
-            Lang2List.append(res[i][10])
-            ComputersList.append(res[i][11])
-            TotList.append(res[i][12])
-            AvgList.append(res[i][13])
-        # ? Dataframe Values
-        result3 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "2nd Language Name": Lang2NameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Science": ScienceList,
-            "Social Sciences": SocialList,
-            "2nd Language": Lang2List,
-            "Computers": ComputersList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        result3 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "2nd Language Name": [None],
-            "English": [None],
-            "Mathematics": [None],
-            "Science": [None],
-            "Social Sciences": [None],
-            "2nd Language": [None],
-            "Computers": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+    # ? Displaying status bar
+    progress_bar = Progress(
+        TextColumn("Exporting Data "),
+        BarColumn(),
+        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+    )
+    with progress_bar as p:
+        # ? Displaying progress bar
+        for i in p.track(range(100), description="Exporting Data"):
+            sleep(1.2 / 100)
 
-    # ? Grade 4
-    cur.execute(f"select * from {db}.cattwo where class=4")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            Lang2NameList,
-            EngList,
-            MathList,
-            ScienceList,
-            SocialList,
-            Lang2List,
-            ComputersList,
-            TotList,
-            AvgList,
-        ) = ([], [], [], [], [], [], [], [], [], [], [], [], [], [])
-        # ? Adding values to list for dataframe
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            Lang2NameList.append(res[i][5])
-            EngList.append(res[i][6])
-            MathList.append(res[i][7])
-            ScienceList.append(res[i][8])
-            SocialList.append(res[i][9])
-            Lang2List.append(res[i][10])
-            ComputersList.append(res[i][11])
-            TotList.append(res[i][12])
-            AvgList.append(res[i][13])
-        # ? Dataframe Values
-        result4 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "2nd Language Name": Lang2NameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Science": ScienceList,
-            "Social Sciences": SocialList,
-            "2nd Language": Lang2List,
-            "Computers": ComputersList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        result4 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "2nd Language Name": [None],
-            "English": [None],
-            "Mathematics": [None],
-            "Science": [None],
-            "Social Sciences": [None],
-            "2nd Language": [None],
-            "Computers": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+        # ? Disabling print
+        DisablePrint()
+        # ? Exporting the records
+        class1Frame = pd.read_sql(f"select * from catone where class={1}", con)
+        class1Frame.to_csv(f"{dir}/Class1.csv", index=False)
 
-    # ? Grade 5
-    cur.execute(f"select * from {db}.catthree where class=5")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            Lang2NameList,
-            Lang3NameList,
-            EngList,
-            MathList,
-            ScienceList,
-            SocialList,
-            Lang2List,
-            Lang3List,
-            ComputersList,
-            TotList,
-            AvgList,
-        ) = ([], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [])
-        # ? Adding values to list for dataframe
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            Lang2NameList.append(res[i][5])
-            Lang3NameList.append(res[i][6])
-            EngList.append(res[i][7])
-            MathList.append(res[i][8])
-            ScienceList.append(res[i][9])
-            SocialList.append(res[i][10])
-            Lang2List.append(res[i][11])
-            Lang3List.append(res[i][12])
-            ComputersList.append(res[i][13])
-            TotList.append(res[i][14])
-            AvgList.append(res[i][15])
-            # ? Dataframe Values
-        result5 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "2nd Language Name": Lang2NameList,
-            "3nd Language Name": Lang3NameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Science": ScienceList,
-            "Social Sciences": SocialList,
-            "2nd Language": Lang2List,
-            "3rd Language": Lang3List,
-            "Computers": ComputersList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        result5 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "2nd Language Name": [None],
-            "3nd Language Name": [None],
-            "English": [None],
-            "Mathematics": [None],
-            "Science": [None],
-            "Social Sciences": [None],
-            "2nd Language": [None],
-            "3rd Language": [None],
-            "Computers": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+        class2Frame = pd.read_sql(f"select * from cattwo where class={2}", con)
+        class2Frame.to_csv(f"{dir}/Class2.csv", index=False)
 
-    # ? Grade 6
-    cur.execute(f"select * from {db}.catthree where class=6")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            Lang2NameList,
-            Lang3NameList,
-            EngList,
-            MathList,
-            ScienceList,
-            SocialList,
-            Lang2List,
-            Lang3List,
-            ComputersList,
-            TotList,
-            AvgList,
-        ) = ([], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [])
-        # ? Adding values to list for dataframe
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            Lang2NameList.append(res[i][5])
-            Lang3NameList.append(res[i][6])
-            EngList.append(res[i][7])
-            MathList.append(res[i][8])
-            ScienceList.append(res[i][9])
-            SocialList.append(res[i][10])
-            Lang2List.append(res[i][11])
-            Lang3List.append(res[i][12])
-            ComputersList.append(res[i][13])
-            TotList.append(res[i][14])
-            AvgList.append(res[i][15])
-            # ? Dataframe Values
-        result6 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "2nd Language Name": Lang2NameList,
-            "3nd Language Name": Lang3NameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Science": ScienceList,
-            "Social Sciences": SocialList,
-            "2nd Language": Lang2List,
-            "3rd Language": Lang3List,
-            "Computers": ComputersList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        result6 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "2nd Language Name": [None],
-            "3nd Language Name": [None],
-            "English": [None],
-            "Mathematics": [None],
-            "Science": [None],
-            "Social Sciences": [None],
-            "2nd Language": [None],
-            "3rd Language": [None],
-            "Computers": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+        class3Frame = pd.read_sql(f"select * from cattwo where class={3}", con)
+        class3Frame.to_csv(f"{dir}/Class3.csv", index=False)
 
-    # ? Grade 7
-    cur.execute(f"select * from {db}.catthree where class=7")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            Lang2NameList,
-            Lang3NameList,
-            EngList,
-            MathList,
-            ScienceList,
-            SocialList,
-            Lang2List,
-            Lang3List,
-            ComputersList,
-            TotList,
-            AvgList,
-        ) = ([], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [])
-        # ? Adding values to list for dataframe
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            Lang2NameList.append(res[i][5])
-            Lang3NameList.append(res[i][6])
-            EngList.append(res[i][7])
-            MathList.append(res[i][8])
-            ScienceList.append(res[i][9])
-            SocialList.append(res[i][10])
-            Lang2List.append(res[i][11])
-            Lang3List.append(res[i][12])
-            ComputersList.append(res[i][13])
-            TotList.append(res[i][14])
-            AvgList.append(res[i][15])
-            # ? Dataframe Values
-        result7 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "2nd Language Name": Lang2NameList,
-            "3nd Language Name": Lang3NameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Science": ScienceList,
-            "Social Sciences": SocialList,
-            "2nd Language": Lang2List,
-            "3rd Language": Lang3List,
-            "Computers": ComputersList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        result7 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "2nd Language Name": [None],
-            "3nd Language Name": [None],
-            "English": [None],
-            "Mathematics": [None],
-            "Science": [None],
-            "Social Sciences": [None],
-            "2nd Language": [None],
-            "3rd Language": [None],
-            "Computers": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+        class4Frame = pd.read_sql(f"select * from cattwo where class={4}", con)
+        class4Frame.to_csv(f"{dir}/Class4.csv", index=False)
 
-    # ? Grade 8
-    cur.execute(f"select * from {db}.catthree where class=8")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            Lang2NameList,
-            Lang3NameList,
-            EngList,
-            MathList,
-            ScienceList,
-            SocialList,
-            Lang2List,
-            Lang3List,
-            ComputersList,
-            TotList,
-            AvgList,
-        ) = ([], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [])
-        # ? Adding values to list for dataframe
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            Lang2NameList.append(res[i][5])
-            Lang3NameList.append(res[i][6])
-            EngList.append(res[i][7])
-            MathList.append(res[i][8])
-            ScienceList.append(res[i][9])
-            SocialList.append(res[i][10])
-            Lang2List.append(res[i][11])
-            Lang3List.append(res[i][12])
-            ComputersList.append(res[i][13])
-            TotList.append(res[i][14])
-            AvgList.append(res[i][15])
-            # ? Dataframe Values
-        result8 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "2nd Language Name": Lang2NameList,
-            "3nd Language Name": Lang3NameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Science": ScienceList,
-            "Social Sciences": SocialList,
-            "2nd Language": Lang2List,
-            "3rd Language": Lang3List,
-            "Computers": ComputersList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        result8 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "2nd Language Name": [None],
-            "3nd Language Name": [None],
-            "English": [None],
-            "Mathematics": [None],
-            "Science": [None],
-            "Social Sciences": [None],
-            "2nd Language": [None],
-            "3rd Language": [None],
-            "Computers": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+        class5Frame = pd.read_sql(f"select * from catthree where class={5}", con)
+        class5Frame.to_csv(f"{dir}/Class5.csv", index=False)
 
-    # ? Grade 9
-    cur.execute(f"select * from {db}.catfour where class=9")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            Lang2NameList,
-            EngList,
-            MathList,
-            ScienceList,
-            SocialList,
-            Lang2List,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
-        # ? Adding values to list for dataframe
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            Lang2NameList.append(res[i][5])
-            EngList.append(res[i][6])
-            MathList.append(res[i][7])
-            ScienceList.append(res[i][8])
-            SocialList.append(res[i][9])
-            Lang2List.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        # ? Dataframe Values
-        result9 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "2nd Language Name": Lang2NameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Science": ScienceList,
-            "Social Sciences": SocialList,
-            "2nd Language": Lang2List,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        result9 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "2nd Language Name": [None],
-            "English": [None],
-            "Mathematics": [None],
-            "Science": [None],
-            "Social Sciences": [None],
-            "2nd Language": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+        class6Frame = pd.read_sql(f"select * from catthree where class={6}", con)
+        class6Frame.to_csv(f"{dir}/Class6.csv", index=False)
 
-    # ? Grade 10
-    cur.execute(f"select * from {db}.catfour where class=10")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            Lang2NameList,
-            EngList,
-            MathList,
-            ScienceList,
-            SocialList,
-            Lang2List,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
-        # ? Adding values to list for dataframe
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            Lang2NameList.append(res[i][5])
-            EngList.append(res[i][6])
-            MathList.append(res[i][7])
-            ScienceList.append(res[i][8])
-            SocialList.append(res[i][9])
-            Lang2List.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        # ? Dataframe Values
-        result10 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "2nd Language Name": Lang2NameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Science": ScienceList,
-            "Social Sciences": SocialList,
-            "2nd Language": Lang2List,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        result10 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "2nd Language Name": [None],
-            "English": [None],
-            "Mathematics": [None],
-            "Science": [None],
-            "Social Sciences": [None],
-            "2nd Language": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+        class7Frame = pd.read_sql(f"select * from catthree where class={7}", con)
+        class7Frame.to_csv(f"{dir}/Class7.csv", index=False)
 
-    # ? Grade 11
-    # ? Mathematics, Physics, Chemistry
-    cur.execute(f"select * from {db}.catfive where class=11")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            FcoreNameList,
-            EngList,
-            MathList,
-            PhysicsList,
-            ChemistryList,
-            FcoreList,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            FcoreNameList.append(res[i][5])
-            EngList.append(res[i][6])
-            MathList.append(res[i][7])
-            PhysicsList.append(res[i][8])
-            ChemistryList.append(res[i][9])
-            FcoreList.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        MPCResult1 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "5th Core Name": FcoreNameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Physics": PhysicsList,
-            "Chemistry": ChemistryList,
-            "5th Core": FcoreList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        MPCResult1 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "5th Core Name": [None],
-            "English": [None],
-            "Maths": [None],
-            "Physics": [None],
-            "Chemistry": [None],
-            "5th Core": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+        class8Frame = pd.read_sql(f"select * from catthree where class={8}", con)
+        class8Frame.to_csv(f"{dir}/Class8.csv", index=False)
 
-    # ? Biology, Physics, Chemistry
-    cur.execute(f"select * from {db}.catsix where class=11")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            FcoreNameList,
-            EngList,
-            BioList,
-            PhysicsList,
-            ChemistryList,
-            FcoreList,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            FcoreNameList.append(res[i][5])
-            EngList.append(res[i][6])
-            BioList.append(res[i][7])
-            PhysicsList.append(res[i][8])
-            ChemistryList.append(res[i][9])
-            FcoreList.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        BiPCResult1 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "5th Core Name": FcoreNameList,
-            "English": EngList,
-            "Biology": BioList,
-            "Physics": PhysicsList,
-            "Chemistry": ChemistryList,
-            "5th Core": FcoreList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        BiPCResult1 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "5th Core Name": [None],
-            "English": [None],
-            "Biology": [None],
-            "Physics": [None],
-            "Chemistry": [None],
-            "5th Core": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+        class9Frame = pd.read_sql(f"select * from catfour where class={9}", con)
+        class9Frame.to_csv(f"{dir}/Class9.csv", index=False)
+        class10Frame = pd.read_sql(f"select * from catfour where class={10}", con)
+        class10Frame.to_csv(f"{dir}/Class10.csv", index=False)
 
-    # ? Commerce
-    cur.execute(f"select * from {db}.catseven where class=11")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            FcoreNameList,
-            EngList,
-            AccountsList,
-            BStList,
-            EconList,
-            FcoreList,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            FcoreNameList.append(res[i][5])
-            EngList.append(res[i][6])
-            AccountsList.append(res[i][7])
-            BStList.append(res[i][8])
-            EconList.append(res[i][9])
-            FcoreList.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        CommerceResult1 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "5th Core Name": FcoreNameList,
-            "English": EngList,
-            "Accounts": AccountsList,
-            "Business Studies": BStList,
-            "Economics": EconList,
-            "5th Core": FcoreList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        CommerceResult1 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "5th Core Name": [None],
-            "English": [None],
-            "Accounts": [None],
-            "Business Studies": [None],
-            "Economics": [None],
-            "5th Core": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+        class11MPCFrame = pd.read_sql(f"select * from catfive where class={11}", con)
+        class11MPCFrame.to_csv(f"{dir}/Class11-MPC.csv", index=False)
 
-    # ? Humanities
-    cur.execute(f"select * from {db}.cateight where class=11")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            FcoreNameList,
-            EngList,
-            HistoryList,
-            PolSciList,
-            EconList,
-            FcoreList,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            FcoreNameList.append(res[i][5])
-            EngList.append(res[i][6])
-            HistoryList.append(res[i][7])
-            PolSciList.append(res[i][8])
-            EconList.append(res[i][9])
-            FcoreList.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        HumanitiesResult1 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "5th Core Name": FcoreNameList,
-            "English": EngList,
-            "History": HistoryList,
-            "Political Sciences": PolSciList,
-            "Economics": EconList,
-            "5th Core": FcoreList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        HumanitiesResult1 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "5th Core Name": [None],
-            "English": [None],
-            "History": [None],
-            "Political Sciences": [None],
-            "Economics": [None],
-            "5th Core": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
-    # ? Mathematics, Physics, Chemistry
-    cur.execute(f"select * from {db}.catfive where class=12")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            FcoreNameList,
-            EngList,
-            MathList,
-            PhysicsList,
-            ChemistryList,
-            FcoreList,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            FcoreNameList.append(res[i][5])
-            EngList.append(res[i][6])
-            MathList.append(res[i][7])
-            PhysicsList.append(res[i][8])
-            ChemistryList.append(res[i][9])
-            FcoreList.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        MPCResult2 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "5th Core Name": FcoreNameList,
-            "English": EngList,
-            "Mathematics": MathList,
-            "Physics": PhysicsList,
-            "Chemistry": ChemistryList,
-            "5th Core": FcoreList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        MPCResult2 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "5th Core Name": [None],
-            "English": [None],
-            "Maths": [None],
-            "Physics": [None],
-            "Chemistry": [None],
-            "5th Core": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+        class11BiPCFrame = pd.read_sql(f"select * from catsix where class={11}", con)
+        class11BiPCFrame.to_csv(f"{dir}/Class11-BiPC.csv", index=False)
 
-    # ? Biology, Physics, Chemistry
-    cur.execute(f"select * from {db}.catsix where class=12")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            FcoreNameList,
-            EngList,
-            BioList,
-            PhysicsList,
-            ChemistryList,
-            FcoreList,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
+        class11CommerceFrame = pd.read_sql(
+            f"select * from catseven where class={11}", con
         )
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            FcoreNameList.append(res[i][5])
-            EngList.append(res[i][6])
-            BioList.append(res[i][7])
-            PhysicsList.append(res[i][8])
-            ChemistryList.append(res[i][9])
-            FcoreList.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        BiPCResult2 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "5th Core Name": FcoreNameList,
-            "English": EngList,
-            "Biology": BioList,
-            "Physics": PhysicsList,
-            "Chemistry": ChemistryList,
-            "5th Core": FcoreList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        BiPCResult2 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "5th Core Name": [None],
-            "English": [None],
-            "Biology": [None],
-            "Physics": [None],
-            "Chemistry": [None],
-            "5th Core": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+        class11CommerceFrame.to_csv(f"{dir}/Class11-Commerce.csv", index=False)
 
-    # ? Commerce
-    cur.execute(f"select * from {db}.catseven where class=12")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            FcoreNameList,
-            EngList,
-            AccountsList,
-            BStList,
-            EconList,
-            FcoreList,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
+        class11HumanitiesFrame = pd.read_sql(
+            f"select * from cateight where class={11}", con
         )
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            FcoreNameList.append(res[i][5])
-            EngList.append(res[i][6])
-            AccountsList.append(res[i][7])
-            BStList.append(res[i][8])
-            EconList.append(res[i][9])
-            FcoreList.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        CommerceResult2 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "5th Core Name": FcoreNameList,
-            "English": EngList,
-            "Accounts": AccountsList,
-            "Business Studies": BStList,
-            "Economics": EconList,
-            "5th Core": FcoreList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        CommerceResult2 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "5th Core Name": [None],
-            "English": [None],
-            "Accounts": [None],
-            "Business Studies": [None],
-            "Economics": [None],
-            "5th Core": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+        class11HumanitiesFrame.to_csv(f"{dir}/Class11-Humanities.csv", index=False)
 
-    # ? Humanities
-    cur.execute(f"select * from {db}.cateight where class=12")
-    res = cur.fetchall()
-    if len(res) != 0:
-        res = [x for x in res]
-        (
-            AdmNumList,
-            NameList,
-            ClassList,
-            SectionList,
-            RollNumList,
-            FcoreNameList,
-            EngList,
-            HistoryList,
-            PolSciList,
-            EconList,
-            FcoreList,
-            TotList,
-            AvgList,
-        ) = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
-        for i in range(len(res)):
-            AdmNumList.append(res[i][0])
-            NameList.append(res[i][1])
-            ClassList.append(res[i][2])
-            SectionList.append(res[i][3])
-            RollNumList.append(res[i][4])
-            FcoreNameList.append(res[i][5])
-            EngList.append(res[i][6])
-            HistoryList.append(res[i][7])
-            PolSciList.append(res[i][8])
-            EconList.append(res[i][9])
-            FcoreList.append(res[i][10])
-            TotList.append(res[i][11])
-            AvgList.append(res[i][12])
-        HumanitiesResult2 = {
-            "Admission Number": AdmNumList,
-            "Name": NameList,
-            "Class": ClassList,
-            "Section": SectionList,
-            "Roll Number": RollNumList,
-            "5th Core Name": FcoreNameList,
-            "English": EngList,
-            "History": HistoryList,
-            "Political Sciences": PolSciList,
-            "Economics": EconList,
-            "5th Core": FcoreList,
-            "Total": TotList,
-            "Average %": AvgList,
-        }
-    else:
-        HumanitiesResult2 = {
-            "Admission Number": [None],
-            "Name": [None],
-            "Class": [None],
-            "Section": [None],
-            "Roll Number": [None],
-            "5th Core Name": [None],
-            "English": [None],
-            "History": [None],
-            "Political Sciences": [None],
-            "Economics": [None],
-            "5th Core": [None],
-            "Total": [None],
-            "Average %": [None],
-        }
+        class12MPCFrame = pd.read_sql(f"select * from catfive where class={12}", con)
+        class12MPCFrame.to_csv(f"{dir}/Class12-MPC.csv", index=False)
 
-    # ? Adding the results to a dataframe
-    df1 = dataframe(result1)
-    df2 = dataframe(result2)
-    df3 = dataframe(result3)
-    df4 = dataframe(result4)
-    df5 = dataframe(result5)
-    df6 = dataframe(result6)
-    df7 = dataframe(result7)
-    df8 = dataframe(result8)
-    df9 = dataframe(result9)
-    df10 = dataframe(result10)
-    dfmpc1 = dataframe(MPCResult1)
-    dfbipc1 = dataframe(BiPCResult1)
-    dfcec1 = dataframe(CommerceResult1)
-    dfhuman1 = dataframe(HumanitiesResult1)
-    dfmpc2 = dataframe(MPCResult2)
-    dfbipc2 = dataframe(BiPCResult2)
-    dfcec2 = dataframe(CommerceResult2)
-    dfhuman2 = dataframe(HumanitiesResult2)
+        class12BiPCFrame = pd.read_sql(f"select * from catsix where class={12}", con)
+        class12BiPCFrame.to_csv(f"{dir}/Class12-BiPC.csv", index=False)
 
-    print("Opening the entire school's records in your default browser! ")
+        class12CommerceFrame = pd.read_sql(
+            f"select * from catseven where class={12}", con
+        )
+        class12CommerceFrame.to_csv(f"{dir}/Class12-Commerce.csv", index=False)
 
-    with open(f"All Student Records.html", "w") as f:
-        f.write(f"<h5 class='text-center fw-bolder'>Grade 1: </h5>")
-        f.write(
-            '<head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous"></head>'
+        class12HumanitiesFrame = pd.read_sql(
+            f"select * from cateight where class={12}", con
         )
-        f.write(
-            "<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap'); body{padding:50px 20px;font-family:'JetBrains Mono',sans-serif!important;} table{margin:auto; margin-bottom:20px;width:175vh!important;} tr{border-bottom:1px solid #000;} th,tr,td{text-align:center!important;} table {border-collapse: separate; border-spacing: 10px 0;} td {padding: 10px 0;} table td + td, th + th{ border-left:1px solid #000; } table { border-collapse:collapse; } table thead tr { border-bottom: 1px solid #000; } </style>"
-        )
-        df1.to_html(f, index=False)
-        f.write(f"<h5 class='text-center fw-bolder'>Grade 2: </h5>")
-        f.write(
-            '<head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous"></head>'
-        )
-        f.write(
-            "<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap'); body{padding:50px 20px;font-family:'JetBrains Mono',sans-serif!important;} table{margin:auto; margin-bottom:20px;width:175vh!important;} tr{border-bottom:1px solid #000;} th,tr,td{text-align:center!important;} table {border-collapse: separate; border-spacing: 10px 0;} td {padding: 10px 0;} table td + td, th + th{ border-left:1px solid #000; } table { border-collapse:collapse; } table thead tr { border-bottom: 1px solid #000; } </style>"
-        )
-        df2.to_html(f, index=False)
-        f.write(f"<h5 class='text-center fw-bolder'>Grade 3: </h5>")
-        f.write(
-            '<head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous"></head>'
-        )
-        f.write(
-            "<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap'); body{padding:50px 20px;font-family:'JetBrains Mono',sans-serif!important;} table{margin:auto; margin-bottom:20px;width:175vh!important;} tr{border-bottom:1px solid #000;} th,tr,td{text-align:center!important;} table {border-collapse: separate; border-spacing: 10px 0;} td {padding: 10px 0;} table td + td, th + th{ border-left:1px solid #000; } table { border-collapse:collapse; } table thead tr { border-bottom: 1px solid #000; } </style>"
-        )
-        df3.to_html(f, index=False)
-        f.write(f"<h5 class='text-center fw-bolder'>Grade 4: </h5>")
-        f.write(
-            '<head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous"></head>'
-        )
-        f.write(
-            "<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap'); body{padding:50px 20px;font-family:'JetBrains Mono',sans-serif!important;} table{margin:auto; margin-bottom:20px;width:175vh!important;} tr{border-bottom:1px solid #000;} th,tr,td{text-align:center!important;} table {border-collapse: separate; border-spacing: 10px 0;} td {padding: 10px 0;} table td + td, th + th{ border-left:1px solid #000; } table { border-collapse:collapse; } table thead tr { border-bottom: 1px solid #000; } </style>"
-        )
-        df4.to_html(f, index=False)
-        f.write(f"<h5 class='text-center fw-bolder'>Grade 5: </h5>")
-        f.write(
-            '<head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous"></head>'
-        )
-        f.write(
-            "<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap'); body{padding:50px 20px;font-family:'JetBrains Mono',sans-serif!important;} table{margin:auto; margin-bottom:20px;width:175vh!important;} tr{border-bottom:1px solid #000;} th,tr,td{text-align:center!important;} table {border-collapse: separate; border-spacing: 10px 0;} td {padding: 10px 0;} table td + td, th + th{ border-left:1px solid #000; } table { border-collapse:collapse; } table thead tr { border-bottom: 1px solid #000; } </style>"
-        )
-        df5.to_html(f, index=False)
-        f.write(f"<h5 class='text-center fw-bolder'>Grade 6: </h5>")
-        f.write(
-            '<head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous"></head>'
-        )
-        f.write(
-            "<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap'); body{padding:50px 20px;font-family:'JetBrains Mono',sans-serif!important;} table{margin:auto; margin-bottom:20px;width:175vh!important;} tr{border-bottom:1px solid #000;} th,tr,td{text-align:center!important;} table {border-collapse: separate; border-spacing: 10px 0;} td {padding: 10px 0;} table td + td, th + th{ border-left:1px solid #000; } table { border-collapse:collapse; } table thead tr { border-bottom: 1px solid #000; } </style>"
-        )
-        df6.to_html(f, index=False)
-        f.write(f"<h5 class='text-center fw-bolder'>Grade 7: </h5>")
-        f.write(
-            '<head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous"></head>'
-        )
-        f.write(
-            "<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap'); body{padding:50px 20px;font-family:'JetBrains Mono',sans-serif!important;} table{margin:auto; margin-bottom:20px;width:175vh!important;} tr{border-bottom:1px solid #000;} th,tr,td{text-align:center!important;} table {border-collapse: separate; border-spacing: 10px 0;} td {padding: 10px 0;} table td + td, th + th{ border-left:1px solid #000; } table { border-collapse:collapse; } table thead tr { border-bottom: 1px solid #000; } </style>"
-        )
-        df7.to_html(f, index=False)
-        f.write(f"<h5 class='text-center fw-bolder'>Grade 8: </h5>")
-        f.write(
-            '<head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous"></head>'
-        )
-        f.write(
-            "<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap'); body{padding:50px 20px;font-family:'JetBrains Mono',sans-serif!important;} table{margin:auto; margin-bottom:20px;width:175vh!important;} tr{border-bottom:1px solid #000;} th,tr,td{text-align:center!important;} table {border-collapse: separate; border-spacing: 10px 0;} td {padding: 10px 0;} table td + td, th + th{ border-left:1px solid #000; } table { border-collapse:collapse; } table thead tr { border-bottom: 1px solid #000; } </style>"
-        )
-        df8.to_html(f, index=False)
-        f.write(f"<h5 class='text-center fw-bolder'>Grade 9: </h5>")
-        f.write(
-            '<head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous"></head>'
-        )
-        f.write(
-            "<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap'); body{padding:50px 20px;font-family:'JetBrains Mono',sans-serif!important;} table{margin:auto; margin-bottom:20px;width:175vh!important;} tr{border-bottom:1px solid #000;} th,tr,td{text-align:center!important;} table {border-collapse: separate; border-spacing: 10px 0;} td {padding: 10px 0;} table td + td, th + th{ border-left:1px solid #000; } table { border-collapse:collapse; } table thead tr { border-bottom: 1px solid #000; } </style>"
-        )
-        df9.to_html(f, index=False)
-        f.write(f"<h5 class='text-center fw-bolder'>Grade 10: </h5>")
-        f.write(
-            '<head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous"></head>'
-        )
-        f.write(
-            "<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap'); body{padding:50px 20px;font-family:'JetBrains Mono',sans-serif!important;} table{margin:auto; margin-bottom:20px;width:175vh!important;} tr{border-bottom:1px solid #000;} th,tr,td{text-align:center!important;} table {border-collapse: separate; border-spacing: 10px 0;} td {padding: 10px 0;} table td + td, th + th{ border-left:1px solid #000; } table { border-collapse:collapse; } table thead tr { border-bottom: 1px solid #000; } </style>"
-        )
-        df10.to_html(f, index=False)
-        f.write(f"<h5 class='text-center fw-bolder'>Grade 11: </h5>")
-        f.write(
-            f"<h6 class='text-center fw-bolder'>Mathematics, Physics, Chemistry: </h6>"
-        )
-        dfmpc1.to_html(f, index=False)
-        f.write(f"<h6 class='text-center fw-bolder'>Biology, Physics, Chemistry: </h6>")
-        dfbipc1.to_html(f, index=False)
-        f.write(f"<h6 class='text-center fw-bolder'>Commerce: </h6>")
-        dfcec1.to_html(f, index=False)
-        f.write(f"<h6 class='text-center fw-bolder'>Humanities: </h6>")
-        dfhuman1.to_html(f, index=False)
-        f.write(f"<h5 class='text-center fw-bolder'>Grade 12: </h5>")
-        f.write(
-            f"<h6 class='text-center fw-bolder'>Mathematics, Physics, Chemistry: </h6>"
-        )
-        dfmpc2.to_html(f, index=False)
-        f.write(f"<h6 class='text-center fw-bolder'>Biology, Physics, Chemistry: </h6>")
-        dfbipc2.to_html(f, index=False)
-        f.write(f"<h6 class='text-center fw-bolder'>Commerce: </h6>")
-        dfcec2.to_html(f, index=False)
-        f.write(f"<h6 class='text-center fw-bolder'>Humanities: </h6>")
-        dfhuman2.to_html(f, index=False)
+        class12HumanitiesFrame.to_csv(f"{dir}/Class12-Humanities.csv", index=False)
 
-    filename = f"All Student Records.html"
-    open_new_tab(filename)
+    sleep(0.5)
+    # ? Enabling print again
+    EnablePrint()
+    # ? Clearing the screen
+    ClearScreen()
+    print(f"All CSVs have been exported to a folder: [cyan bold]{dir}[/cyan bold]")
+    input("Press enter to continue ")
 
 
 # endregion
@@ -4012,91 +3344,112 @@ def SchoolRecords():
 #! ---------- Running the program
 #! --------------------------------------------------
 # region Running the program
-########! Imports !########
 ########! Required for the script to work !########
 # ? This runs basic functions such as creating required databases and tables as well as basic variables.
 Backend()
 
-
 ########! Printing Options on the Screen !########
 # ? Login, if username and password do not exist, it will ask if you want to create a user.
 # ? Add attributes if you want to provide username and password
-# ? For example: LoginUser('Username', 'Password')
+# ? For example: LoginUser("Username", "Password")
 LoginUser()
 
 while True:
     # ? Clearing the screen
     ClearScreen()
     # ? Printing the options
-    print("Press 1 for student information")
-    print("Press 2 for marks information")
-    print("Press 3 for records")
-    print("Press 0 to quit")
-    choice = BetterInput(
-        "Enter your choice: ", "+", int, "Enter a valid number between 0 and 3."
-    )
+
+    choice = questionary.select(
+        "What do you want to do?",
+        choices=[
+            "Student information",
+            "Marks information",
+            "Records",
+            "Export All Data",
+            "Quit",
+        ],
+        style=minimalStyle,
+        instruction="\n",
+    ).ask()
+
     ClearScreen()
-    if choice == 1:
-        # ? If student information is called
-        print("Press 1 to add a student")
-        print("Press 2 to edit a student")
-        print("Press 3 to remove a student")
-        print("Press 0 to quit")
-        choice = BetterInput(
-            "Enter your choice: ", "+", int, "Enter a valid number between 0 and 3."
-        )
-        if choice == 1:
+    if choice == "Student information":
+        studentInfoChoice = questionary.select(
+            "What do you want to do?",
+            choices=[
+                "Add a student",
+                "Edit a student",
+                "Remove a student",
+                "Back",
+                "Quit",
+            ],
+            style=minimalStyle,
+            instruction="\n",
+        ).ask()
+
+        if studentInfoChoice == "Add a student":
             AddStudent()
-        elif choice == 2:
+        elif studentInfoChoice == "Edit a student":
             EditStudent()
-        elif choice == 3:
+        elif studentInfoChoice == "Remove a student":
             RemoveStudent()
+        elif studentInfoChoice == "Back":
+            ClearScreen()
         else:
-            # ? If quit is called or a bad choice is given
+            # ? If quit is called
             exit()
-    elif choice == 2:
-        # ? If marks information is called
-        print("Press 1 to add marks for a student")
-        print("Press 2 to edit marks for a student")
-        print("Press 3 to remove marks for a student")
-        print("Press 4 to view a subject/marks graph for a student")
-        print("Press 0 to quit")
-        choice = BetterInput(
-            "Enter your choice: ", "+", int, "Enter a valid number between 0 and 4."
-        )
-        if choice == 1:
+    elif choice == "Marks information":
+        marksInfoChoice = questionary.select(
+            "What do you want to do?",
+            choices=["Add marks", "Edit marks", "Remove marks", "Back", "Quit"],
+            style=minimalStyle,
+            instruction="\n",
+        ).ask()
+        if marksInfoChoice == "Add marks":
             AddMarks()
-        elif choice == 2:
+        elif marksInfoChoice == "Edit marks":
             EditMarks()
-        elif choice == 3:
+        elif marksInfoChoice == "Remove marks":
             RemoveMarks()
-        elif choice == 4:
-            ShowGraph()
+        elif marksInfoChoice == "Back":
+            ClearScreen()
         else:
-            # ? If quit is called or a bad choice is given
+            # ? If quit is called
             exit()
-    elif choice == 3:
-        # ? If records is called
-        print("Press 1 to view student records")
-        print("Press 2 to view class records")
-        print("Press 3 to view the school's records")
-        print("Press 0 to quit")
-        choice = BetterInput(
-            "Enter your choice: ", "+", int, "Enter a valid number between 0 and 3."
-        )
-        if choice == 1:
+    elif choice == "Records":
+        recordsChoice = questionary.select(
+            "What do you want to do?",
+            choices=[
+                "Student Records",
+                "Class Records",
+                "School Records",
+                "Show Subject-Marks Graph",
+                "Back",
+                "Quit",
+            ],
+            style=minimalStyle,
+            instruction="\n",
+        ).ask()
+
+        if recordsChoice == "Student Records":
             StudentRecords()
-        elif choice == 2:
+        elif recordsChoice == "Class Records":
             ClassRecords()
-        elif choice == 3:
+        elif recordsChoice == "School Records":
             SchoolRecords()
+        elif recordsChoice == "Show Subject-Marks Graph":
+            ShowGraph()
+        elif recordsChoice == "Back":
+            ClearScreen()
         else:
-            # ? If quit is called or a bad choice is given
+            # ? If quit is called
             exit()
-    else:
-        # ? If quit is called or a bad choice is given
+    elif choice == "Export All Data":
+        ExportCSV()
+    elif choice == "Quit":
         exit()
+
 # endregion
 #! --------------------------------------------------
 #! --------------------------------------------------
-## Ending of the program
+# Ending of the program
