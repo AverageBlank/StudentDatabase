@@ -4,7 +4,7 @@ Add description here later
 
 ## Requirements:
 ### Python
-Python is the language used in this program.
+Python3 is the language used to make this program.
 It can be installed via https://www.python.org/downloads/
 
 - A list of all libraries used can be found below
