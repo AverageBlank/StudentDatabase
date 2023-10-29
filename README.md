@@ -1,6 +1,5 @@
 # Student Database Management
-Add description here later
-
+The Student Database Management System is a user-friendly solution designed for schools. It simplifies tasks such as academic record management per subject, allowing educational institutions to efficiently handle student data. With its streamlined approach, this system enables schools to concentrate on providing quality education while seamlessly managing administrative processes. Discover the simplicity and practicality of the Student Database Management System, where institutions find a reliable ally in student data management.
 
 ## Requirements:
 ### Python
@@ -17,3 +16,7 @@ It can be installed via https://www.python.org/downloads/
 ```
 pip install -r Requirements.txt
 ```
+
+
+
+Also please report any bugs!!
