@@ -1,6 +1,5 @@
 questionary          # To provide better CLI for user while taking input
 rich                 # For printing visual text blocks and tables
-sqlite3              # Connecting to the SQLite database
 cryptography         # Using to encrypt passwords upon account creation
 pandas               # For reading data off of CSV files and uploading to them
 matplotlib           # Plotting graphs for the students
